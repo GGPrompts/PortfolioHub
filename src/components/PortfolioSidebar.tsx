@@ -19,12 +19,12 @@ export default function PortfolioSidebar() {
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
   const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
   
-  // Define widths for each state
+  // Define widths for each state - now cumulative
   const widths = {
-    collapsed: 48,    // Icon bar only
-    search: 200,      // Search/filter bar
-    normal: 320,      // Project controls
-    expanded: 816     // Wide view
+    collapsed: 48,     // Icon bar only
+    search: 48 + 200,  // Icon bar + search panel
+    normal: 48 + 320,  // Icon bar + project controls
+    expanded: 48 + 320 + 500  // Icon bar + controls + journal
   }
   
   // Spring animation for smooth transitions
@@ -79,76 +79,28 @@ export default function PortfolioSidebar() {
       className={styles.sidebar}
       style={{ width: springProps.width }}
     >
-      {/* Toggle Buttons */}
-      <div className={styles.toggleButtons}>
-        {sidebarState !== 'collapsed' && (
-          <button 
-            className={`${styles.toggleButton} ${styles.collapseButton}`}
-            onClick={() => setSidebarState('collapsed')}
-            title="Collapse to icons"
-          >
-            ◀
-          </button>
-        )}
-        {sidebarState === 'collapsed' && (
-          <button 
-            className={styles.toggleButton}
-            onClick={() => setSidebarState('search')}
-            title="Show search/filters"
-          >
-            ▶
-          </button>
-        )}
-        {sidebarState === 'search' && (
-          <button 
-            className={`${styles.toggleButton}`}
-            onClick={() => setSidebarState('normal')}
-            title="Show project controls"
-          >
-            ▶
-          </button>
-        )}
-        {sidebarState === 'normal' && (
-          <button 
-            className={`${styles.toggleButton} ${styles.expandButton}`}
-            onClick={() => setSidebarState('expanded')}
-            title="Expand to wide view"
-          >
-            ▶▶
-          </button>
-        )}
-        {sidebarState === 'expanded' && (
-          <button 
-            className={`${styles.toggleButton} ${styles.shrinkButton}`}
-            onClick={() => setSidebarState('normal')}
-            title="Shrink to sidebar"
-          >
-            ◀◀
-          </button>
-        )}
-      </div>
+      <div className={styles.sidebarContainer}>
       
-      {/* Collapsed State - Icon Bar */}
-      {sidebarState === 'collapsed' && (
+        {/* Icon Bar - Always Visible */}
         <div className={styles.iconBar}>
           <div 
-            className={styles.icon} 
+            className={`${styles.icon} ${sidebarState === 'normal' || sidebarState === 'expanded' ? styles.active : ''}`}
             title="Projects"
-            onClick={() => setSidebarState('normal')}
+            onClick={() => setSidebarState(sidebarState === 'normal' ? 'collapsed' : 'normal')}
           >
             📁
           </div>
           <div 
-            className={styles.icon} 
+            className={`${styles.icon} ${sidebarState === 'search' ? styles.active : ''}`}
             title="Filter/Search"
-            onClick={() => setSidebarState('search')}
+            onClick={() => setSidebarState(sidebarState === 'search' ? 'collapsed' : 'search')}
           >
             🔍
           </div>
           <div 
-            className={styles.icon} 
+            className={`${styles.icon} ${sidebarState === 'expanded' ? styles.active : ''}`}
             title="Dev Journals"
-            onClick={() => setSidebarState('expanded')}
+            onClick={() => setSidebarState(sidebarState === 'expanded' ? 'normal' : 'expanded')}
           >
             📓
           </div>
@@ -176,10 +128,9 @@ export default function PortfolioSidebar() {
             🛑
           </div>
         </div>
-      )}
       
-      {/* Search State - Filter Sidebar */}
-      {sidebarState === 'search' && (
+        {/* Search Panel - Visible in search state */}
+        {sidebarState === 'search' && (
         <div className={styles.searchContent}>
           <h3 className={styles.title}>🔍 Search & Filter</h3>
           
@@ -223,10 +174,10 @@ export default function PortfolioSidebar() {
             </div>
           </div>
         </div>
-      )}
-      
-      {/* Normal State - Project Controls */}
-      {sidebarState === 'normal' && (
+        )}
+        
+        {/* Project Controls - Visible in normal and expanded states */}
+        {(sidebarState === 'normal' || sidebarState === 'expanded') && (
         <div className={styles.normalContent}>
           <h3 className={styles.title}>📁 Project Controls</h3>
           
@@ -320,10 +271,10 @@ export default function PortfolioSidebar() {
             </div>
           </div>
         </div>
-      )}
-      
-      {/* Expanded State - Dev Journal View */}
-      {sidebarState === 'expanded' && (
+        )}
+        
+        {/* Dev Journal - Visible in expanded state */}
+        {sidebarState === 'expanded' && (
         <div className={styles.expandedContent}>
           <div className={styles.expandedHeader}>
             <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
@@ -367,6 +318,7 @@ export default function PortfolioSidebar() {
           )}
         </div>
       )}
+      </div>
     </animated.div>
   )
 }

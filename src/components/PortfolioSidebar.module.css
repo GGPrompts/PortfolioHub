@@ -4,33 +4,19 @@
   top: 0;
   left: 0;
   bottom: 0;
-  background: linear-gradient(
-    to right,
-    rgba(10, 10, 10, 0.98) 0%,
-    rgba(20, 20, 20, 0.95) 100%
-  );
-  border-right: 1px solid rgba(0, 255, 136, 0.3);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   z-index: 100;
-  transition: box-shadow 0.3s ease;
   overflow: visible;
 }
 
-.sidebar:hover {
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+.sidebarContainer {
+  display: flex;
+  height: 100%;
+  position: relative;
 }
 
-/* Toggle Buttons */
+/* Remove old toggle buttons - no longer needed */
 .toggleButtons {
-  position: absolute;
-  top: 60px;
-  left: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 200;
-  transform: translateX(-2px);
+  display: none;
 }
 
 .toggleButton {
@@ -57,13 +43,22 @@
   transform: translateX(2px);
 }
 
-/* Collapsed State - Icon Bar */
+/* Icon Bar - Always visible */
 .iconBar {
+  width: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px 0;
   gap: 20px;
+  background: linear-gradient(
+    to right,
+    rgba(10, 10, 10, 0.98) 0%,
+    rgba(20, 20, 20, 0.95) 100%
+  );
+  border-right: 1px solid rgba(0, 255, 136, 0.3);
+  position: relative;
+  z-index: 3;
 }
 
 .icon {
@@ -85,6 +80,11 @@
   background: rgba(0, 255, 136, 0.1);
 }
 
+.icon.active {
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: inset 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
 .iconDivider {
   width: 80%;
   height: 1px;
@@ -92,14 +92,20 @@
   margin: 10px 0;
 }
 
-/* Normal State - Sidebar Content */
+/* Normal State - Project Controls */
 .normalContent {
+  width: 320px;
   padding: 20px;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  background: rgba(15, 15, 15, 0.95);
+  border-right: 1px solid rgba(0, 255, 136, 0.2);
+  position: relative;
+  z-index: 2;
+  animation: slideIn 0.3s ease-out;
 }
 
 /* Quick Actions - Start All Button */
@@ -280,13 +286,18 @@
   margin: 5px 0;
 }
 
-/* Expanded State */
+/* Expanded State - Dev Journal */
 .expandedContent {
+  width: 500px;
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  background: rgba(10, 10, 10, 0.98);
+  border-right: 1px solid rgba(0, 255, 136, 0.3);
+  z-index: 1;
+  animation: slideIn 0.3s ease-out;
 }
 
 /* Holographic effect */
@@ -543,10 +554,27 @@
 
 /* Search State Styles */
 .searchContent {
+  width: 200px;
   padding: 20px;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  background: rgba(15, 15, 15, 0.95);
+  border-right: 1px solid rgba(0, 255, 136, 0.2);
+  position: relative;
+  z-index: 2;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .searchSection {

@@ -90,7 +90,7 @@ body {
   z-index: 1;
 }
 
-.status-btn, .back-btn, .external-btn {
+.status-btn, .back-btn, .external-btn, .refresh-btn {
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: #00ff88;
@@ -104,7 +104,7 @@ body {
   z-index: 1;
 }
 
-.status-btn:hover, .back-btn:hover, .external-btn:hover {
+.status-btn:hover, .back-btn:hover, .external-btn:hover, .refresh-btn:hover {
   background: rgba(0, 255, 136, 0.2);
   border-color: rgba(0, 255, 136, 0.5);
   transform: translateY(-2px);
@@ -133,6 +133,24 @@ body {
   background: rgba(255, 136, 0, 0.2);
   border-color: rgba(255, 136, 0, 0.5);
   box-shadow: 0 4px 12px rgba(255, 136, 0, 0.3);
+}
+
+.refresh-btn {
+  background: rgba(136, 255, 0, 0.1);
+  border-color: rgba(136, 255, 0, 0.3);
+  color: #88ff00;
+}
+
+.refresh-btn:hover {
+  background: rgba(136, 255, 0, 0.2);
+  border-color: rgba(136, 255, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(136, 255, 0, 0.3);
+  animation: spin 0.5s ease-in-out;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-2px) rotate(0deg); }
+  100% { transform: translateY(-2px) rotate(360deg); }
 }
 
 /* Project View Container */

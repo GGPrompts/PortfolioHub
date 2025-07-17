@@ -12,6 +12,7 @@ export default function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [showGrid, setShowGrid] = useState(true)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Load projects from manifest
   useEffect(() => {
@@ -76,6 +77,11 @@ export default function App() {
     selectProject(null)
   }
 
+  const handleRefreshProject = () => {
+    // Increment key to force iframe reload
+    setRefreshKey(prev => prev + 1)
+  }
+
   // Define widths for sidebar states (matching PortfolioSidebar)
   const sidebarWidths = {
     collapsed: 48,
@@ -127,6 +133,13 @@ export default function App() {
                   <span className="project-type">{selectedProject.displayType}</span>
                 </div>
                 <div className="project-actions">
+                  <button 
+                    className="refresh-btn"
+                    onClick={handleRefreshProject}
+                    title="Refresh project"
+                  >
+                    🔄 Refresh
+                  </button>
                   {selectedProject.displayType === 'external' && (
                     <button 
                       className="external-btn"
@@ -163,6 +176,7 @@ export default function App() {
               project={selectedProject} 
               onClose={handleBackToGrid}
               isInline={true}
+              key={refreshKey}
             />
           </div>
         ) : null}

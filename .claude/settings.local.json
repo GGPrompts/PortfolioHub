@@ -7,7 +7,12 @@
       "Bash(xcopy:*)",
       "Bash(powershell:*)",
       "Bash(git push:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(PORT=3002 npm start)",
+      "Bash(set PORT=3002)",
+      "Bash($env:PORT=3002)"
     ],
     "deny": []
   }

@@ -4,9 +4,9 @@
 
 .projectGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 30px;
-  max-width: 1600px;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 24px;
+  max-width: 1800px;
   margin: 0 auto;
 }
 

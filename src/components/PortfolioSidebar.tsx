@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSpring, animated } from '@react-spring/web'
 import { usePortfolioStore } from '../store/portfolioStore'
 import { checkPort } from '../utils/portManager'
+import GitUpdateButton from './GitUpdateButton'
 import styles from './PortfolioSidebar.module.css'
 
 export default function PortfolioSidebar() {
@@ -280,6 +281,15 @@ export default function PortfolioSidebar() {
                       >
                         📓 View journal
                       </button>
+                      <div style={{ padding: '4px' }}>
+                        <GitUpdateButton 
+                          type="project" 
+                          projectId={project.id}
+                          projectName={project.title}
+                          size="small" 
+                          variant="minimal"
+                        />
+                      </div>
                       {project.repository && (
                         <button
                           className={styles.dropdownItem}

@@ -5,6 +5,7 @@ import ProjectGrid from './components/ProjectGrid'
 import ThreeProjectPreview from './components/ThreeProjectPreview'
 import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
+import GitUpdateButton from './components/GitUpdateButton'
 import { getRunningProjects, getProjectPort } from './utils/portManager'
 import './App.css'
 
@@ -144,6 +145,11 @@ export default function App() {
                   <p>A collection of creative coding experiments and applications</p>
                 </div>
                 <div className="header-actions">
+                  <GitUpdateButton 
+                    type="portfolio" 
+                    size="medium" 
+                    variant="secondary"
+                  />
                   <button 
                     className={`view-toggle-btn ${is3DView ? 'active' : ''}`}
                     onClick={() => setIs3DView(!is3DView)}

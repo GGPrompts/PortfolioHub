@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
+import GitUpdateButton from './GitUpdateButton'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -146,6 +147,13 @@ export default function LiveProjectPreview({
           </div>
           
           <div className={styles.projectActions}>
+            <GitUpdateButton 
+              type="project" 
+              projectId={project.id}
+              projectName={project.title}
+              size="small" 
+              variant="minimal"
+            />
             <button
               onClick={() => onProjectClick(project)}
               className={styles.viewButton}

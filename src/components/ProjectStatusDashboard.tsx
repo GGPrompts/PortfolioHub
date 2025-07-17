@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { usePortfolioStore } from '../store/portfolioStore'
 import { getAllPortStatuses, getRunningProjects, getProjectPort } from '../utils/portManager'
+import GitUpdateButton from './GitUpdateButton'
 import styles from './ProjectStatusDashboard.module.css'
 
 interface ProjectStatusDashboardProps {
@@ -115,6 +116,11 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
         <div>
           <h2>Project Status Dashboard</h2>
           <div className={styles.controls}>
+            <GitUpdateButton 
+              type="all" 
+              size="medium" 
+              variant="primary"
+            />
             <div className={styles.summary}>
               <span className={styles.running}>{runningCount}</span>
               <span>/</span>

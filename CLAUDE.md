@@ -1,25 +1,165 @@
 # Claude Development Portfolio
 
 ## Overview
-This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects.
+This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with an immersive 3D interface and comprehensive development tools.
+
+## Key Features
+- **3D Project Visualization**: Interactive Three.js environment with rotating project preview screens
+- **Live Project Previews**: Real-time iframe displays with monitor-style UI and status indicators
+- **Git Integration**: Update buttons throughout the interface with clipboard-based commands
+- **Project Template System**: One-command project creation with automatic port assignment
+- **Development Journals**: Track progress for each project with markdown support
+- **PowerShell Automation**: Scripts for project management and lifecycle operations
 
 ## Structure
 ```
 claude-dev-portfolio/
-├── src/                    # Portfolio React app
-├── projects/              # All development projects
-├── scripts/               # Utility scripts
-└── docs/                  # Documentation
+├── src/                        # Portfolio React app
+│   ├── components/             # React components (sidebar, grid, viewer)
+│   │   ├── ThreeProjectPreview.tsx      # 3D visualization component
+│   │   ├── LiveProjectPreview.tsx       # Monitor-style project displays
+│   │   ├── PortfolioSidebar.tsx         # Navigation with journal panel
+│   │   └── GitUpdateButton.tsx          # Git integration component
+│   ├── store/                  # State management
+│   └── utils/                  # Port manager, project launcher
+├── projects/                   # All development projects
+│   ├── manifest.json           # Project configuration and metadata
+│   ├── dev-journals/           # Development logs for each project
+│   └── [project-folders]/      # Individual project directories
+├── project-template/           # Template for creating new projects
+├── scripts/                    # PowerShell automation scripts
+│   ├── start-all.ps1          # Start all projects automatically
+│   └── create-project.ps1     # Create new project from template
+└── docs/                      # Documentation
 ```
 
 ## Quick Start
-1. Install dependencies: `npm install`
-2. Start portfolio: `npm run dev`
-3. Start all projects: `.\scripts\start-all.ps1`
+```bash
+# Install dependencies
+npm install
 
-## Projects
-- **3d-matrix-cards**: Three.js interactive card display
-- **matrix-cards**: React cyberpunk card components
-- **sleak-card**: Modern card system with water effects
-- **ggprompts**: Main AI prompt platform
-- **ggprompts-style-guide**: Design system documentation
+# Start portfolio hub (runs on port 5173)
+npm run dev
+
+# Start all projects automatically
+.\scripts\start-all.ps1
+
+# Create new project
+.\scripts\create-project.ps1 -ProjectName "my-new-project" -Description "Project description"
+```
+
+## Current Projects
+- **3d-matrix-cards**: Three.js interactive card display with cyberpunk aesthetics
+- **matrix-cards**: React cyberpunk card components with dynamic animations
+- **sleak-card**: Modern card system with water effects and responsive design
+- **ggprompts**: Main AI prompt platform with advanced features
+- **ggprompts-style-guide**: Design system documentation and component library
+
+## Recent Updates (2025-07-17)
+- **Enhanced 3D View**: Fixed screen orientation, improved lighting, reduced rotation speed
+- **Monitor-Style UI**: Realistic monitor displays with status bars and professional styling
+- **Git Update System**: Comprehensive update buttons with secure clipboard-based commands
+- **Project Template**: Complete template system with automated project creation
+- **Sidebar Improvements**: Fixed z-index issues, enhanced animations, journal panel integration
+
+## Development Workflow
+
+### Creating New Projects
+```bash
+# Create a new project with automatic setup
+.\scripts\create-project.ps1 -ProjectName "my-awesome-project" -Description "Description here"
+
+# The script will:
+# - Create project directory from template
+# - Assign available port automatically
+# - Initialize git repository
+# - Create development journal
+# - Provide manifest.json entry to copy
+```
+
+### Git Integration
+The portfolio includes comprehensive git update functionality:
+- **Portfolio Update**: Updates the main portfolio application
+- **Project Updates**: Updates individual projects in their directories
+- **Global Update**: Updates portfolio and all projects in sequence
+- **Secure Commands**: Uses clipboard-based command copying for security
+
+### 3D View Controls
+- **Mouse**: Click and drag to rotate the camera around projects
+- **Wheel**: Zoom in and out of the 3D scene
+- **Projects**: Click on project screens to view them in the main display
+- **Performance**: Optimized rendering with reduced rotation speed and improved materials
+
+### Project Status Monitoring
+Each project card displays:
+- **Live Preview**: Real-time iframe showing the running application
+- **Status Indicator**: Green for running, red for stopped, yellow for loading
+- **Server Info**: Port number and build command
+- **Quick Actions**: Git updates, project management buttons
+
+## Architecture Details
+
+### Port Management
+- **Portfolio**: Runs on port 5173 (Vite dev server)
+- **Projects**: Auto-assigned ports starting from 3000 (3001, 3002, 3003, etc.)
+- **Conflict Detection**: Automatic port assignment prevents conflicts
+- **Range**: Projects use ports 3000-3099 for organized management
+
+### Component Architecture
+```
+src/components/
+├── ThreeProjectPreview.tsx     # 3D scene with Three.js
+├── LiveProjectPreview.tsx      # Monitor-style project cards
+├── PortfolioSidebar.tsx        # Navigation and journal panel
+├── GitUpdateButton.tsx         # Git integration component
+├── ProjectGrid.tsx             # Traditional grid layout
+└── [other components]/         # Additional UI components
+```
+
+### State Management
+- **React Spring**: Animations and transitions
+- **Local State**: Component-specific state management
+- **Project Data**: Loaded from `projects/manifest.json`
+- **Real-time Updates**: Live status monitoring for all projects
+
+## Troubleshooting
+
+### Common Issues
+1. **Port Conflicts**: Use `netstat -ano | findstr :PORT` to check port usage
+2. **3D Performance**: Reduce project count or disable 3D view on older hardware
+3. **PowerShell Execution**: Set execution policy with `Set-ExecutionPolicy RemoteSigned`
+4. **Git Commands**: Ensure git is installed and accessible from command line
+
+### Project Won't Start
+```bash
+# Check if port is in use
+netstat -ano | findstr :3001
+
+# Kill process if needed
+taskkill /PID [process-id] /F
+
+# Restart project
+cd projects/project-name
+npm run dev
+```
+
+### 3D View Issues
+- **Screens Facing Wrong Direction**: Fixed in recent update (screens now face outward)
+- **Too Bright/Green**: Switched to MeshBasicMaterial for better visibility
+- **Performance**: Reduced rotation speed and optimized rendering
+
+### Git Update Problems
+- **Commands Not Working**: Try copying from clipboard manually
+- **Permission Issues**: Run as administrator if needed
+- **Repository Issues**: Ensure git remotes are properly configured
+
+## Future Development
+
+See `PLAN.md` for detailed future development roadmap including:
+- GitHub integration buttons
+- VS Code integration
+- Enhanced project management
+- Advanced 3D controls
+- Documentation improvements
+
+For detailed next steps and implementation plans, refer to the comprehensive development plan in `PLAN.md`.

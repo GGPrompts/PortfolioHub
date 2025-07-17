@@ -212,6 +212,15 @@ $projects = @{
         }
         Command = "npm run dev"
     }
+    "3D File System" = @{
+        Path = "$rootPath\projects\3d-file-system"
+        Port = 3004
+        EnvVars = @{
+            BROWSER = "none"
+            OPEN_BROWSER = "false"
+        }
+        Command = "npm run dev"
+    }
 }
 
 # Show current status first
@@ -237,6 +246,7 @@ Write-Host "🎯 Portfolio Development Environment Management Complete!" -Foregr
 Write-Host ""
 Write-Host "Access your projects:" -ForegroundColor Cyan
 Write-Host "  📊 Portfolio:              http://localhost:3000" -ForegroundColor White
+Write-Host "  🗂️ 3D File System:         http://localhost:3004" -ForegroundColor White
 Write-Host "  🎴 Matrix Cards:           http://localhost:3002" -ForegroundColor White
 Write-Host "  💎 Sleak Card:             http://localhost:3003" -ForegroundColor White
 Write-Host "  🤖 GGPrompts:              http://localhost:9323" -ForegroundColor White

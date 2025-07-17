@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSpring, animated } from '@react-spring/web'
 import { usePortfolioStore } from '../store/portfolioStore'
+import { checkPort } from '../utils/portManager'
 import styles from './PortfolioSidebar.module.css'
 
 export default function PortfolioSidebar() {
@@ -10,16 +11,19 @@ export default function PortfolioSidebar() {
     selectedProject,
     projects,
     activeFilter,
-    setActiveFilter
+    setActiveFilter,
+    selectProject
   } = usePortfolioStore()
   
   const [journalContent, setJournalContent] = useState<string>('')
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
+  const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
   
   // Define widths for each state
   const widths = {
     collapsed: 48,    // Icon bar only
-    normal: 256,      // Sidebar width
+    search: 200,      // Search/filter bar
+    normal: 320,      // Project controls
     expanded: 816     // Wide view
   }
   
@@ -53,6 +57,23 @@ export default function PortfolioSidebar() {
     }
   }, [sidebarState, selectedProject])
   
+  // Check project statuses
+  useEffect(() => {
+    const checkStatuses = async () => {
+      const statuses = new Map<string, boolean>()
+      for (const project of projects) {
+        if (project.localPort) {
+          const isRunning = await checkPort(project.localPort)
+          statuses.set(project.id, isRunning)
+        }
+      }
+      setProjectStatuses(statuses)
+    }
+    checkStatuses()
+    const interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
+    return () => clearInterval(interval)
+  }, [projects])
+  
   return (
     <animated.div 
       className={styles.sidebar}
@@ -60,7 +81,7 @@ export default function PortfolioSidebar() {
     >
       {/* Toggle Buttons */}
       <div className={styles.toggleButtons}>
-        {(sidebarState === 'normal' || sidebarState === 'expanded') && (
+        {sidebarState !== 'collapsed' && (
           <button 
             className={`${styles.toggleButton} ${styles.collapseButton}`}
             onClick={() => setSidebarState('collapsed')}
@@ -72,8 +93,17 @@ export default function PortfolioSidebar() {
         {sidebarState === 'collapsed' && (
           <button 
             className={styles.toggleButton}
+            onClick={() => setSidebarState('search')}
+            title="Show search/filters"
+          >
+            ▶
+          </button>
+        )}
+        {sidebarState === 'search' && (
+          <button 
+            className={`${styles.toggleButton}`}
             onClick={() => setSidebarState('normal')}
-            title="Expand sidebar"
+            title="Show project controls"
           >
             ▶
           </button>
@@ -101,53 +131,70 @@ export default function PortfolioSidebar() {
       {/* Collapsed State - Icon Bar */}
       {sidebarState === 'collapsed' && (
         <div className={styles.iconBar}>
-          <div className={styles.icon} title="Projects">📁</div>
-          <div className={styles.icon} title="Filter">🔍</div>
-          <div className={styles.icon} title="Info">ℹ️</div>
+          <div 
+            className={styles.icon} 
+            title="Projects"
+            onClick={() => setSidebarState('normal')}
+          >
+            📁
+          </div>
+          <div 
+            className={styles.icon} 
+            title="Filter/Search"
+            onClick={() => setSidebarState('search')}
+          >
+            🔍
+          </div>
+          <div 
+            className={styles.icon} 
+            title="Dev Journals"
+            onClick={() => setSidebarState('expanded')}
+          >
+            📓
+          </div>
+          <div className={styles.iconDivider}></div>
+          <div 
+            className={styles.icon} 
+            title="Start All Projects"
+            onClick={() => {
+              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1'
+              navigator.clipboard.writeText(command)
+              alert('Start command copied to clipboard!')
+            }}
+          >
+            🚀
+          </div>
+          <div 
+            className={styles.icon} 
+            title="Kill All Projects"
+            onClick={() => {
+              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\kill-all-servers.ps1'
+              navigator.clipboard.writeText(command)
+              alert('Kill command copied to clipboard!')
+            }}
+          >
+            🛑
+          </div>
         </div>
       )}
       
-      {/* Normal State - Project Info Sidebar */}
-      {sidebarState === 'normal' && (
-        <div className={styles.normalContent}>
-          <h3 className={styles.title}>Project Portfolio</h3>
+      {/* Search State - Filter Sidebar */}
+      {sidebarState === 'search' && (
+        <div className={styles.searchContent}>
+          <h3 className={styles.title}>🔍 Search & Filter</h3>
           
-          {/* Quick Actions */}
-          <div className={styles.quickActions}>
-            <button 
-              className={styles.startAllBtn}
-              onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-improved.ps1'
-                navigator.clipboard.writeText(command).then(() => {
-                  alert(
-                    '✅ Command copied to clipboard!\n\n' +
-                    'To start all projects:\n' +
-                    '1. Open PowerShell (Win+X, then A)\n' +
-                    '2. Paste the command (Ctrl+V)\n' +
-                    '3. Press Enter\n\n' +
-                    'Features:\n' +
-                    '• No auto-opening browsers\n' +
-                    '• Smart port detection\n' +
-                    '• Proper port assignments\n' +
-                    '• All projects in separate terminals'
-                  )
-                }).catch(() => {
-                  alert(
-                    'To start all projects, run this in PowerShell:\n\n' +
-                    command + '\n\n' +
-                    'This will launch all projects without auto-opening browsers!'
-                  )
-                })
-              }}
-              title="Copy improved command to start all projects"
-            >
-              🚀 Start All Projects
-            </button>
+          {/* Search Input */}
+          <div className={styles.searchSection}>
+            <input 
+              type="text" 
+              placeholder="Search projects..."
+              className={styles.searchInput}
+            />
           </div>
           
           {/* Filter Section */}
           <div className={styles.section}>
-            <h4>Filter Projects</h4>
+            <h4>Filter by Tag</h4>
             <div className={styles.filterTags}>
               <button
                 className={`${styles.filterTag} ${activeFilter === 'all' ? styles.active : ''}`}
@@ -167,47 +214,109 @@ export default function PortfolioSidebar() {
             </div>
           </div>
           
-          {/* Selected Project Info */}
+          {/* Quick Stats */}
           <div className={styles.section}>
-            <h4>Selected Project</h4>
-            <div className={styles.projectInfo}>
-              {selectedProject ? (
-                <>
-                  <p className={styles.projectName}>{selectedProject.title}</p>
-                  <p className={styles.projectDesc}>{selectedProject.description}</p>
-                  <div className={styles.projectTech}>
-                    {selectedProject.tech.map(tech => (
-                      <span key={tech} className={styles.techBadge}>{tech}</span>
-                    ))}
-                  </div>
-                  <div className={styles.projectActions}>
-                    {selectedProject.repository && (
-                      <a href={selectedProject.repository} target="_blank" rel="noopener noreferrer" 
-                         className={styles.actionLink}>
-                        View Repository
-                      </a>
-                    )}
-                    {selectedProject.demoUrl && (
-                      <a href={selectedProject.demoUrl} target="_blank" rel="noopener noreferrer"
-                         className={styles.actionLink}>
-                        Live Demo
-                      </a>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <p className={styles.noSelection}>Click a project to view details</p>
-              )}
+            <h4>Quick Stats</h4>
+            <div className={styles.stats}>
+              <p>Total: {projects.length}</p>
+              <p>Running: {Array.from(projectStatuses.values()).filter(Boolean).length}</p>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Normal State - Project Controls */}
+      {sidebarState === 'normal' && (
+        <div className={styles.normalContent}>
+          <h3 className={styles.title}>📁 Project Controls</h3>
           
-          {/* Stats */}
+          {/* Quick Actions */}
+          <div className={styles.quickActions}>
+            <button 
+              className={styles.startAllBtn}
+              onClick={() => {
+                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1'
+                navigator.clipboard.writeText(command)
+                alert('Start all command copied!')
+              }}
+              title="Copy command to start all projects"
+            >
+              🚀 Start All
+            </button>
+            <button 
+              className={styles.killAllBtn}
+              onClick={() => {
+                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\kill-all-servers.ps1'
+                navigator.clipboard.writeText(command)
+                alert('Kill all command copied!')
+              }}
+              title="Copy command to kill all projects"
+            >
+              🛑 Kill All
+            </button>
+          </div>
+          
+          {/* Project List with Controls */}
           <div className={styles.section}>
-            <h4>Portfolio Stats</h4>
-            <div className={styles.stats}>
-              <p>Total Projects: {projects.length}</p>
-              <p>Active: {projects.filter(p => p.status === 'active').length}</p>
-              <p>Technologies: {Array.from(new Set(projects.flatMap(p => p.tech))).length}</p>
+            <h4>Projects</h4>
+            <div className={styles.projectList}>
+              {projects.map(project => {
+                const isRunning = projectStatuses.get(project.id) || false
+                return (
+                  <div 
+                    key={project.id} 
+                    className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
+                    onClick={() => selectProject(project)}
+                  >
+                    <div className={styles.projectHeader}>
+                      <span className={styles.projectTitle}>{project.title}</span>
+                      <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
+                        {isRunning ? '🟢' : '🔴'}
+                      </span>
+                    </div>
+                    <div className={styles.projectControls}>
+                      {project.localPort && (
+                        <>
+                          <button
+                            className={styles.controlBtn}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id} && ${project.buildCommand || 'npm run dev'}`
+                              navigator.clipboard.writeText(command)
+                              alert(`Start command for ${project.title} copied!`)
+                            }}
+                            disabled={isRunning}
+                            title="Start this project"
+                          >
+                            ▶️
+                          </button>
+                          <button
+                            className={styles.controlBtn}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              alert(`To kill ${project.title}, close its terminal window or use Task Manager`)
+                            }}
+                            disabled={!isRunning}
+                            title="Kill this project"
+                          >
+                            ⏹️
+                          </button>
+                          <a
+                            href={`http://localhost:${project.localPort}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.controlBtn}
+                            onClick={(e) => e.stopPropagation()}
+                            title="Open in new tab"
+                          >
+                            🔗
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

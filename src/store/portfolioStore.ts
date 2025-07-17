@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SidebarState = 'collapsed' | 'normal' | 'expanded'
+export type SidebarState = 'collapsed' | 'search' | 'normal' | 'expanded'
 export type ProjectDisplayType = 'iframe' | 'external' | 'embed'
 
 export interface Project {
@@ -50,7 +50,8 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
   toggleSidebar: () => {
     const current = get().sidebarState
     const nextState = 
-      current === 'collapsed' ? 'normal' :
+      current === 'collapsed' ? 'search' :
+      current === 'search' ? 'normal' :
       current === 'normal' ? 'expanded' :
       'collapsed'
     set({ sidebarState: nextState })

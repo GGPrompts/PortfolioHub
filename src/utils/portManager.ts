@@ -14,7 +14,8 @@ export const DEFAULT_PORTS = {
   'matrix-cards': 3002,
   'sleak-card': 3003,
   'ggprompts-main': 9323,
-  'ggprompts-style-guide': 3001
+  'ggprompts-style-guide': 3001,
+  '3d-file-system': 3004
 };
 
 // Fallback ports if defaults are taken

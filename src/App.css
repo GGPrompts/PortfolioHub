@@ -90,7 +90,7 @@ body {
   z-index: 1;
 }
 
-.status-btn, .back-btn, .external-btn, .refresh-btn {
+.status-btn, .back-btn, .external-btn, .refresh-btn, .view-toggle-btn {
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: #00ff88;
@@ -151,6 +151,18 @@ body {
 @keyframes spin {
   0% { transform: translateY(-2px) rotate(0deg); }
   100% { transform: translateY(-2px) rotate(360deg); }
+}
+
+.view-toggle-btn.active {
+  background: rgba(0, 255, 136, 0.3);
+  border-color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+  transform: translateY(-1px);
+}
+
+.view-toggle-btn.active:hover {
+  background: rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
 }
 
 /* Project View Container */

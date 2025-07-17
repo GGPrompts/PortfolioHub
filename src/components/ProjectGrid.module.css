@@ -1,5 +1,5 @@
 .gridContainer {
-  padding: 0 40px 60px;
+  padding: 40px 40px 60px;
 }
 
 .projectGrid {
@@ -8,6 +8,7 @@
   gap: 24px;
   max-width: 1800px;
   margin: 0 auto;
+  grid-auto-rows: minmax(420px, auto);
 }
 
 .projectCard {

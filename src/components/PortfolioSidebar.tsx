@@ -43,6 +43,7 @@ export default function PortfolioSidebar() {
   const journalSpring = useSpring({
     opacity: sidebarState === 'expanded' ? 1 : 0,
     transform: sidebarState === 'expanded' ? 'translateX(0px)' : 'translateX(-20px)',
+    pointerEvents: sidebarState === 'expanded' ? 'auto' : 'none',
     config: {
       tension: 280,
       friction: 32

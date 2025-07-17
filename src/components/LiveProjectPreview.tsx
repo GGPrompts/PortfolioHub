@@ -97,15 +97,18 @@ export default function LiveProjectPreview({
           </div>
         )}
 
-        {/* Preview Controls */}
+      </div>
+
+      {/* Status Bar - Between monitor and description */}
+      <div className={styles.statusBar}>
+        <div className={styles.statusIndicator}>
+          <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}></span>
+          <span className={styles.statusText}>
+            {isRunning ? `SERVER :${port}` : 'OFFLINE'}
+          </span>
+        </div>
+        
         <div className={styles.previewControls}>
-          <div className={styles.statusIndicator}>
-            <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}></span>
-            <span className={styles.statusText}>
-              {isRunning ? `Running :${port}` : 'Stopped'}
-            </span>
-          </div>
-          
           {isRunning && previewUrl && (
             <div className={styles.controlButtons}>
               <button

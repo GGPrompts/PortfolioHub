@@ -2,18 +2,23 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { usePortfolioStore } from './store/portfolioStore'
 import PortfolioSidebar from './components/PortfolioSidebar'
 import ProjectGrid from './components/ProjectGrid'
+import ThreeProjectPreview from './components/ThreeProjectPreview'
 import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
+import { getRunningProjects, getProjectPort } from './utils/portManager'
 import './App.css'
 
 export default function App() {
-  const { setProjects, selectedProject, selectProject, sidebarState } = usePortfolioStore()
+  const { projects, setProjects, selectedProject, selectProject, sidebarState } = usePortfolioStore()
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [showGrid, setShowGrid] = useState(true)
+  const [is3DView, setIs3DView] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [refreshKey, setRefreshKey] = useState(0)
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<string | null>(null)
+  const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
+  const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
 
   // Load projects from manifest
   useEffect(() => {
@@ -45,6 +50,33 @@ export default function App() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Check running status for 3D view
+  useEffect(() => {
+    const checkRunningStatus = async () => {
+      const running = await getRunningProjects()
+      const newRunningStatus: { [key: string]: boolean } = {}
+      const newPortStatus: { [key: string]: number | null } = {}
+      
+      for (const project of projects) {
+        if (project.displayType === 'external') {
+          const isRunning = running.has(project.id)
+          const port = await getProjectPort(project)
+          newRunningStatus[project.id] = isRunning
+          newPortStatus[project.id] = port
+        }
+      }
+      
+      setRunningStatus(newRunningStatus)
+      setProjectPorts(newPortStatus)
+    }
+    
+    if (projects.length > 0) {
+      checkRunningStatus()
+      const interval = setInterval(checkRunningStatus, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [projects])
   
   // Core project display logic
   const showProject = useCallback(async (project: any) => {
@@ -113,6 +145,13 @@ export default function App() {
                 </div>
                 <div className="header-actions">
                   <button 
+                    className={`view-toggle-btn ${is3DView ? 'active' : ''}`}
+                    onClick={() => setIs3DView(!is3DView)}
+                    title={is3DView ? 'Switch to grid view' : 'Switch to 3D view'}
+                  >
+                    {is3DView ? '📋 Grid View' : '🌐 3D View'}
+                  </button>
+                  <button 
                     className="status-btn"
                     onClick={() => setIsDashboardOpen(true)}
                     title="View project status and management"
@@ -122,7 +161,16 @@ export default function App() {
                 </div>
               </div>
             </header>
-            <ProjectGrid onProjectClick={handleProjectClick} />
+            {is3DView ? (
+              <ThreeProjectPreview 
+                projects={projects}
+                runningStatus={runningStatus}
+                projectPorts={projectPorts}
+                onProjectClick={handleProjectClick}
+              />
+            ) : (
+              <ProjectGrid onProjectClick={handleProjectClick} />
+            )}
           </>
         ) : selectedProject ? (
           <div className="project-view-container">

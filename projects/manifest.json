@@ -1,0 +1,100 @@
+{
+  "projects": [
+    {
+      "id": "3d-matrix-cards",
+      "title": "3D Matrix Cards",
+      "description": "Interactive 3D card display system with Matrix-style effects. Features multiple layouts, touch controls, and realistic card rendering.",
+      "displayType": "iframe",
+      "path": "projects/3d-matrix-cards/index.html",
+      "thumbnail": "thumbnails/3d-matrix-cards.png",
+      "tags": ["3D", "Animation", "Interactive", "WebGL"],
+      "tech": ["Three.js", "JavaScript", "CSS"],
+      "status": "active",
+      "features": [
+        "Multiple 3D layouts (Grid, Sphere, Helix, Table)",
+        "Matrix rain background effects",
+        "Touch and mouse controls",
+        "Realistic card reflections"
+      ]
+    },
+    {
+      "id": "matrix-cards",
+      "title": "Matrix Cards",
+      "description": "Cyberpunk-themed React card components featuring Matrix and Neon Glass styles. Plans for 3D casino/game hall experience.",
+      "displayType": "external",
+      "localPort": 3002,
+      "buildCommand": "npm start",
+      "path": "projects/matrix-cards",
+      "thumbnail": "thumbnails/matrix-cards.png",
+      "tags": ["React", "Cards", "UI Components", "Cyberpunk"],
+      "tech": ["React", "CSS Modules", "Three.js (planned)"],
+      "status": "active",
+      "features": [
+        "Matrix & Neon Glass card styles",
+        "3D flip animations",
+        "Responsive design",
+        "Dark/Cyber theme toggle"
+      ]
+    },
+    {
+      "id": "sleak-card",
+      "title": "Sleak Card Component",
+      "description": "Modern React card system with water effects, flip animations, and multiple color variants. Mobile-optimized with playing card proportions.",
+      "displayType": "external",
+      "localPort": 3003,
+      "buildCommand": "npm start",
+      "path": "projects/sleak-card",
+      "thumbnail": "thumbnails/sleak-card.png",
+      "tags": ["React", "Cards", "UI Components", "Animations"],
+      "tech": ["React 19", "CSS Modules", "Water Effects"],
+      "status": "active",
+      "features": [
+        "7 color variants + glow effects",
+        "Dark/Light theme support",
+        "Water background animations",
+        "Mobile-optimized scrolling",
+        "List view mode"
+      ]
+    },
+    {
+      "id": "ggprompts-main",
+      "title": "GGPrompts",
+      "description": "AI prompt management platform with real-time collaboration, template system, and community features. Built with React and Supabase.",
+      "displayType": "external",
+      "localPort": 9323,
+      "buildCommand": "npm run dev",
+      "repository": "https://github.com/yourusername/ggprompts",
+      "thumbnail": "thumbnails/ggprompts-main.png",
+      "tags": ["React", "Full-Stack", "Real-time", "Database"],
+      "tech": ["React", "Vite", "Supabase", "PostgreSQL", "TanStack Query"],
+      "status": "active",
+      "features": [
+        "Real-time collaboration",
+        "Template-based prompt system",
+        "User authentication & profiles",
+        "Community forums",
+        "Performance monitoring"
+      ]
+    },
+    {
+      "id": "ggprompts-style-guide",
+      "title": "GGPrompts Style Guide",
+      "description": "Comprehensive design system and component library for GGPrompts. Interactive documentation with live examples and CSS architecture guidelines.",
+      "displayType": "external",
+      "localPort": 3001,
+      "buildCommand": "npm run dev",
+      "repository": "https://github.com/yourusername/ggprompts-style-guide",
+      "thumbnail": "thumbnails/ggprompts-style-guide.png",
+      "tags": ["Design System", "Documentation", "React", "Components"],
+      "tech": ["React", "Vite", "CSS Modules", "TypeScript"],
+      "status": "active",
+      "features": [
+        "Component library with live examples",
+        "CSS architecture documentation",
+        "Interactive card game demo",
+        "Design tokens & theming",
+        "Migration guides"
+      ]
+    }
+  ]
+}

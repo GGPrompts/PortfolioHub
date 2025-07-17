@@ -1,0 +1,250 @@
+.gridContainer {
+  padding: 0 40px 60px;
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.projectCard {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.projectCard:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+}
+
+.cardHoverEffect {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.projectCard:hover .cardHoverEffect {
+  opacity: 1;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.thumbnailContainer {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 255, 0.05));
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.projectCard:hover .thumbnail {
+  transform: scale(1.05);
+}
+
+.placeholderThumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(0, 255, 136, 0.1), transparent);
+}
+
+.placeholderIcon {
+  font-size: 60px;
+  opacity: 0.3;
+  filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+}
+
+.displayTypeBadge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #00ff88;
+  font-weight: 500;
+}
+
+.projectContent {
+  padding: 25px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.projectTitle {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.projectCard:hover .projectTitle {
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.projectDescription {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  flex: 1;
+}
+
+.projectMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.techStack {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.techBadge {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.projectCard:hover .techBadge {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+.projectStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.statusDot.active {
+  background: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.statusDot.archived {
+  background: #ffaa00;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.statusDot.experimental {
+  background: #00aaff;
+  box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+}
+
+.statusDot.running {
+  background: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  animation: pulse-running 2s ease-in-out infinite;
+}
+
+.statusDot.stopped {
+  background: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.runningText {
+  color: #00ff88;
+  font-weight: 500;
+}
+
+.stoppedText {
+  color: #ff4444;
+  font-weight: 500;
+}
+
+@keyframes pulse-running {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Loading Animation */
+.projectCard.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gridContainer {
+    padding: 0 20px 40px;
+  }
+  
+  .projectGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .thumbnailContainer {
+    height: 180px;
+  }
+  
+  .projectContent {
+    padding: 20px;
+  }
+  
+  .projectTitle {
+    font-size: 18px;
+  }
+}

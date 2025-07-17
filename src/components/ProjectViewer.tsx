@@ -62,7 +62,9 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
       'ggprompts-main': 'D:/ClaudeWindows/claude-dev-portfolio/projects/ggprompts',
       'ggprompts-style-guide': 'D:/ClaudeWindows/claude-dev-portfolio/projects/ggprompts-style-guide',
       'matrix-cards': 'D:/ClaudeWindows/claude-dev-portfolio/projects/matrix-cards',
-      'sleak-card': 'D:/ClaudeWindows/claude-dev-portfolio/projects/sleak-card'
+      'sleak-card': 'D:/ClaudeWindows/claude-dev-portfolio/projects/sleak-card',
+      '3d-matrix-cards': 'D:/ClaudeWindows/claude-dev-portfolio/projects/3d-matrix-cards',
+      '3d-file-system': 'D:/ClaudeWindows/claude-dev-portfolio/projects/3d-file-system'
     }
     return paths[projectId] || 'project-directory'
   }

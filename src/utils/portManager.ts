@@ -98,20 +98,13 @@ export async function getProjectPort(project: Project): Promise<number | null> {
     return null;
   }
   
-  // Check if running on default port
-  const defaultPort = DEFAULT_PORTS[project.id];
-  if (defaultPort && await checkPort(defaultPort)) {
-    return defaultPort;
+  // Only check the project's designated port
+  const projectPort = project.localPort;
+  if (await checkPort(projectPort)) {
+    return projectPort;
   }
   
-  // Check fallback ports
-  for (const port of FALLBACK_PORTS) {
-    if (await checkPort(port)) {
-      // Additional check could be done here to verify it's actually our project
-      return port;
-    }
-  }
-  
+  // Project is not running
   return null;
 }
 

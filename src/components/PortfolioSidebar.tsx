@@ -12,19 +12,21 @@ export default function PortfolioSidebar() {
     projects,
     activeFilter,
     setActiveFilter,
-    selectProject
+    selectProject,
+    expandedProjects,
+    toggleProjectExpanded
   } = usePortfolioStore()
   
   const [journalContent, setJournalContent] = useState<string>('')
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
   const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
+  const [searchQuery, setSearchQuery] = useState('')
   
   // Define widths for each state - now cumulative
   const widths = {
     collapsed: 48,     // Icon bar only
-    search: 48 + 150,  // Icon bar + narrow search panel
-    normal: 48 + 320,  // Icon bar + project controls
-    expanded: 48 + 320 + 500  // Icon bar + controls + journal
+    normal: 48 + 320,  // Icon bar + projects panel
+    expanded: 48 + 320 + 500  // Icon bar + projects + journal
   }
   
   // Spring animation for smooth transitions
@@ -38,6 +40,22 @@ export default function PortfolioSidebar() {
   
   // Get unique tags for filtering
   const allTags = Array.from(new Set(projects.flatMap(p => p.tags)))
+  
+  // Filter projects based on search query
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = searchQuery === '' || 
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = activeFilter === 'all' || project.tags.includes(activeFilter)
+    return matchesSearch && matchesFilter
+  })
+  
+  // Handle navigation to portfolio home
+  const handlePortfolioHome = () => {
+    selectProject(null)
+    setSidebarState('normal')
+    // This will trigger the App component to show the grid
+  }
   
   // Load dev journal when in expanded view and project selected
   useEffect(() => {
@@ -83,37 +101,19 @@ export default function PortfolioSidebar() {
         {/* Toggle Arrows - positioned on each panel edge */}
         {sidebarState === 'collapsed' && (
           <button 
-            className={`${styles.arrowButton} ${styles.expandSearch}`}
-            onClick={() => setSidebarState('search')}
-            title="Show search panel"
+            className={`${styles.arrowButton} ${styles.expandProjects}`}
+            onClick={() => setSidebarState('normal')}
+            title="Show projects panel"
           >
             ▶
           </button>
         )}
-        {sidebarState === 'search' && (
-          <>
-            <button 
-              className={`${styles.arrowButton} ${styles.collapseSearch}`}
-              onClick={() => setSidebarState('collapsed')}
-              title="Hide search panel"
-            >
-              ◀
-            </button>
-            <button 
-              className={`${styles.arrowButton} ${styles.expandNormal}`}
-              onClick={() => setSidebarState('normal')}
-              title="Show project controls"
-            >
-              ▶
-            </button>
-          </>
-        )}
         {sidebarState === 'normal' && (
           <>
             <button 
-              className={`${styles.arrowButton} ${styles.collapseNormal}`}
-              onClick={() => setSidebarState('search')}
-              title="Hide project controls"
+              className={`${styles.arrowButton} ${styles.collapseProjects}`}
+              onClick={() => setSidebarState('collapsed')}
+              title="Hide projects panel"
             >
               ◀
             </button>
@@ -140,17 +140,10 @@ export default function PortfolioSidebar() {
         <div className={styles.iconBar}>
           <div 
             className={`${styles.icon} ${sidebarState === 'normal' || sidebarState === 'expanded' ? styles.active : ''}`}
-            title="Projects"
-            onClick={() => setSidebarState('normal')}
+            title="Portfolio Home"
+            onClick={handlePortfolioHome}
           >
             📁
-          </div>
-          <div 
-            className={`${styles.icon} ${sidebarState === 'search' ? styles.active : ''}`}
-            title="Filter/Search"
-            onClick={() => setSidebarState('search')}
-          >
-            🔍
           </div>
           <div 
             className={`${styles.icon} ${sidebarState === 'expanded' ? styles.active : ''}`}
@@ -184,148 +177,142 @@ export default function PortfolioSidebar() {
           </div>
         </div>
       
-        {/* Search Panel - Visible in search state */}
-        {sidebarState === 'search' && (
-        <div className={styles.searchContent}>
-          <h3 className={styles.compactTitle}>🔍</h3>
+        {/* Projects Panel - Visible in normal and expanded states */}
+        {(sidebarState === 'normal' || sidebarState === 'expanded') && (
+        <div className={styles.projectsPanel}>
+          <h3 className={styles.title}>PROJECTS</h3>
           
-          {/* Search Input */}
+          {/* Search Bar */}
           <div className={styles.searchSection}>
             <input 
               type="text" 
               placeholder="Search projects..."
               className={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          {/* Filter Section */}
-          <div className={styles.section}>
-            <h4>Filter by Tag</h4>
-            <div className={styles.filterTags}>
-              <button
-                className={`${styles.filterTag} ${activeFilter === 'all' ? styles.active : ''}`}
-                onClick={() => setActiveFilter('all')}
-              >
-                All ({projects.length})
-              </button>
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  className={`${styles.filterTag} ${activeFilter === tag ? styles.active : ''}`}
-                  onClick={() => setActiveFilter(tag)}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+          {/* Project List with Collapsible Dropdowns */}
+          <div className={styles.projectList}>
+            {filteredProjects.map(project => {
+              const isRunning = projectStatuses.get(project.id) || false
+              const isExpanded = expandedProjects.has(project.id)
+              
+              return (
+                <div key={project.id} className={styles.projectContainer}>
+                  <div 
+                    className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
+                    onClick={() => selectProject(project)}
+                  >
+                    <button
+                      className={`${styles.expandToggle} ${isExpanded ? styles.expanded : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleProjectExpanded(project.id)
+                      }}
+                    >
+                      ▶
+                    </button>
+                    <span className={styles.projectTitle}>{project.title}</span>
+                    {project.localPort && (
+                      <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
+                        {isRunning ? '🟢' : '🔴'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className={styles.projectDropdown}>
+                      {project.localPort && (
+                        <>
+                          <button
+                            className={styles.dropdownItem}
+                            onClick={() => window.open(`http://localhost:${project.localPort}`, '_blank')}
+                            disabled={!isRunning}
+                          >
+                            🔗 Open in new tab
+                          </button>
+                          <button
+                            className={styles.dropdownItem}
+                            onClick={() => {
+                              const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id} && ${project.buildCommand || 'npm run dev'}`
+                              navigator.clipboard.writeText(command)
+                              alert(`Start command copied!`)
+                            }}
+                            disabled={isRunning}
+                          >
+                            ▶️ Start server
+                          </button>
+                          <button
+                            className={styles.dropdownItem}
+                            onClick={() => alert(`To kill ${project.title}, close its terminal window`)}
+                            disabled={!isRunning}
+                          >
+                            ⏹️ Kill server
+                          </button>
+                        </>
+                      )}
+                      <button
+                        className={styles.dropdownItem}
+                        onClick={() => {
+                          setSidebarState('expanded')
+                          selectProject(project)
+                        }}
+                      >
+                        📓 View journal
+                      </button>
+                      {project.repository && (
+                        <button
+                          className={styles.dropdownItem}
+                          onClick={() => window.open(project.repository, '_blank')}
+                        >
+                          🐙 View on GitHub
+                        </button>
+                      )}
+                      <div className={styles.dropdownTags}>
+                        {project.tags.map(tag => (
+                          <span key={tag} className={styles.tag}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
           
-          {/* Quick Stats */}
-          <div className={styles.section}>
-            <h4>Quick Stats</h4>
-            <div className={styles.stats}>
-              <p>Total: {projects.length}</p>
-              <p>Running: {Array.from(projectStatuses.values()).filter(Boolean).length}</p>
-            </div>
-          </div>
-        </div>
-        )}
-        
-        {/* Project Controls - Visible in normal and expanded states */}
-        {(sidebarState === 'normal' || sidebarState === 'expanded') && (
-        <div className={styles.normalContent}>
-          <h3 className={styles.title}>📁 Project Controls</h3>
-          
-          {/* Quick Actions */}
+          {/* Quick Actions Footer */}
           <div className={styles.quickActions}>
             <button 
-              className={styles.startAllBtn}
+              className={styles.actionBtn}
               onClick={() => {
                 const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1'
                 navigator.clipboard.writeText(command)
                 alert('Start all command copied!')
               }}
-              title="Copy command to start all projects"
+              title="Start all projects"
             >
-              🚀 Start All
+              🚀 All
             </button>
             <button 
-              className={styles.killAllBtn}
+              className={styles.actionBtn}
               onClick={() => {
                 const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\kill-all-servers.ps1'
                 navigator.clipboard.writeText(command)
                 alert('Kill all command copied!')
               }}
-              title="Copy command to kill all projects"
+              title="Kill all projects"
             >
-              🛑 Kill All
+              🛑 Kill
             </button>
-          </div>
-          
-          {/* Project List with Controls */}
-          <div className={styles.section}>
-            <h4>Projects</h4>
-            <div className={styles.projectList}>
-              {projects.map(project => {
-                const isRunning = projectStatuses.get(project.id) || false
-                return (
-                  <div 
-                    key={project.id} 
-                    className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
-                    onClick={() => selectProject(project)}
-                  >
-                    <div className={styles.projectHeader}>
-                      <span className={styles.projectTitle}>{project.title}</span>
-                      {project.localPort && (
-                        <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
-                          {isRunning ? '🟢' : '🔴'}
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.projectControls}>
-                      {project.localPort && (
-                        <>
-                          <button
-                            className={styles.controlBtn}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id} && ${project.buildCommand || 'npm run dev'}`
-                              navigator.clipboard.writeText(command)
-                              alert(`Start command for ${project.title} copied!`)
-                            }}
-                            disabled={isRunning}
-                            title="Start this project"
-                          >
-                            ▶️
-                          </button>
-                          <button
-                            className={styles.controlBtn}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              alert(`To kill ${project.title}, close its terminal window or use Task Manager`)
-                            }}
-                            disabled={!isRunning}
-                            title="Kill this project"
-                          >
-                            ⏹️
-                          </button>
-                          <a
-                            href={`http://localhost:${project.localPort}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.controlBtn}
-                            onClick={(e) => e.stopPropagation()}
-                            title="Open in new tab"
-                          >
-                            🔗
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <button
+              className={styles.actionBtn}
+              onClick={() => setActiveFilter('all')}
+              title="Clear filters"
+            >
+              🔄 Clear
+            </button>
           </div>
         </div>
         )}

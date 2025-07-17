@@ -42,10 +42,8 @@
 }
 
 /* Position arrows at panel edges */
-.expandSearch { right: -24px; }
-.collapseSearch { left: 48px; border-radius: 6px 0 0 6px; }
-.expandNormal { right: -24px; }
-.collapseNormal { left: 48px; border-radius: 6px 0 0 6px; }
+.expandProjects { right: -24px; }
+.collapseProjects { left: 48px; border-radius: 6px 0 0 6px; }
 .expandJournal { right: -24px; }
 .collapseJournal { left: 368px; border-radius: 6px 0 0 6px; }
 
@@ -122,13 +120,10 @@
   margin: 10px 0;
 }
 
-/* Normal State - Project Controls */
-.normalContent {
+/* Projects Panel */
+.projectsPanel {
   width: 320px;
-  padding: 20px;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background: rgba(15, 15, 15, 0.95);
@@ -138,58 +133,48 @@
   animation: slideIn 0.3s ease-out;
 }
 
-/* Quick Actions - Start All Button */
+/* Quick Actions Footer */
 .quickActions {
-  margin-bottom: 20px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  padding: 15px;
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
 }
 
-.startAllBtn,
-.killAllBtn {
+.actionBtn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 8px 12px;
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   border-radius: 6px;
   color: #00ff88;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
-.startAllBtn:hover,
-.killAllBtn:hover {
+.actionBtn:hover {
   background: rgba(0, 255, 136, 0.2);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
-}
-
-.killAllBtn {
-  background: rgba(255, 0, 0, 0.1);
-  border-color: rgba(255, 0, 0, 0.3);
-  color: #ff4444;
-}
-
-.killAllBtn:hover {
-  background: rgba(255, 0, 0, 0.2);
-  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
 }
 
 .title {
   color: #00ff88;
-  font-size: 20px;
-  font-weight: 300;
-  margin: 0 0 30px 0;
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0;
+  padding: 20px;
   text-transform: uppercase;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
   text-align: center;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
 }
 
 .section {
@@ -198,10 +183,6 @@
   border-bottom: 1px solid rgba(0, 255, 136, 0.1);
 }
 
-.searchContent .section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-}
 
 .section:last-child {
   border-bottom: none;
@@ -216,10 +197,6 @@
   letter-spacing: 1px;
 }
 
-.searchContent .section h4 {
-  font-size: 12px;
-  margin: 0 0 10px 0;
-}
 
 /* Filter Tags */
 .filterTags {
@@ -593,27 +570,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Search State Styles - More Compact */
-.searchContent {
-  width: 150px;
-  padding: 15px;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: rgba(15, 15, 15, 0.95);
-  border-right: 1px solid rgba(0, 255, 136, 0.2);
-  position: relative;
-  z-index: 2;
-  animation: slideIn 0.3s ease-out;
-}
-
-.compactTitle {
-  color: #00ff88;
-  font-size: 24px;
-  text-align: center;
-  margin: 0 0 15px 0;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.8));
-}
+/* Removed search state - now integrated into projects panel */
 
 @keyframes slideIn {
   from {
@@ -630,14 +587,18 @@
   margin-bottom: 20px;
 }
 
+.searchSection {
+  padding: 0 15px 15px;
+}
+
 .searchInput {
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 12px;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(0, 255, 136, 0.3);
   border-radius: 6px;
   color: #00ff88;
-  font-size: 12px;
+  font-size: 13px;
   outline: none;
   transition: all 0.2s;
 }
@@ -653,16 +614,23 @@
 
 /* Project List Styles */
 .projectList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.projectContainer {
+  margin-bottom: 8px;
 }
 
 .projectItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
   background: rgba(0, 255, 136, 0.05);
   border: 1px solid rgba(0, 255, 136, 0.2);
   border-radius: 6px;
-  padding: 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -678,14 +646,27 @@
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
-.projectHeader {
+.expandToggle {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #00ff88;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  justify-content: center;
+}
+
+.expandToggle.expanded {
+  transform: rotate(90deg);
 }
 
 .projectTitle {
+  flex: 1;
   color: #00ff88;
   font-size: 13px;
   font-weight: 500;
@@ -695,9 +676,75 @@
   font-size: 10px;
 }
 
-.projectControls {
+.projectDropdown {
+  margin-left: 30px;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  border-radius: 6px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownItem {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 4px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 4px;
+  color: #00ff88;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.dropdownItem:hover:not(:disabled) {
+  background: rgba(0, 255, 136, 0.15);
+  transform: translateX(4px);
+}
+
+.dropdownItem:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dropdownItem:last-child {
+  margin-bottom: 0;
+}
+
+.dropdownTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 255, 136, 0.1);
+}
+
+.tag {
+  padding: 2px 6px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 10px;
+  color: rgba(0, 255, 136, 0.8);
+  font-size: 10px;
+  text-transform: uppercase;
 }
 
 .controlBtn {

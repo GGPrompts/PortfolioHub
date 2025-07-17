@@ -44,6 +44,13 @@ export default function App() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+  
+  // Watch for portfolio home navigation
+  useEffect(() => {
+    if (!selectedProject) {
+      setShowGrid(true)
+    }
+  }, [selectedProject])
 
   const handleProjectClick = async (project: any) => {
     selectProject(project)
@@ -85,7 +92,6 @@ export default function App() {
   // Define widths for sidebar states (matching PortfolioSidebar)
   const sidebarWidths = {
     collapsed: 48,
-    search: 48 + 150,
     normal: 48 + 320,
     expanded: 48 + 320 + 500
   }

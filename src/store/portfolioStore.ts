@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SidebarState = 'collapsed' | 'search' | 'normal' | 'expanded'
+export type SidebarState = 'collapsed' | 'normal' | 'expanded'
 export type ProjectDisplayType = 'iframe' | 'external' | 'embed'
 
 export interface Project {
@@ -32,12 +32,14 @@ interface PortfolioStore {
   selectedProject: Project | null
   activeFilter: string
   isProjectLoading: boolean
+  expandedProjects: Set<string>
   
   // Actions
   setProjects: (projects: Project[]) => void
   selectProject: (project: Project | null) => void
   setActiveFilter: (filter: string) => void
   setProjectLoading: (loading: boolean) => void
+  toggleProjectExpanded: (projectId: string) => void
   
   // Filtered projects getter
   getFilteredProjects: () => Project[]
@@ -50,8 +52,7 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
   toggleSidebar: () => {
     const current = get().sidebarState
     const nextState = 
-      current === 'collapsed' ? 'search' :
-      current === 'search' ? 'normal' :
+      current === 'collapsed' ? 'normal' :
       current === 'normal' ? 'expanded' :
       'collapsed'
     set({ sidebarState: nextState })
@@ -62,12 +63,22 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
   selectedProject: null,
   activeFilter: 'all',
   isProjectLoading: false,
+  expandedProjects: new Set(),
   
   // Actions
   setProjects: (projects) => set({ projects }),
   selectProject: (project) => set({ selectedProject: project }),
   setActiveFilter: (filter) => set({ activeFilter: filter }),
   setProjectLoading: (loading) => set({ isProjectLoading: loading }),
+  toggleProjectExpanded: (projectId) => set((state) => {
+    const expanded = new Set(state.expandedProjects)
+    if (expanded.has(projectId)) {
+      expanded.delete(projectId)
+    } else {
+      expanded.add(projectId)
+    }
+    return { expandedProjects: expanded }
+  }),
   
   // Filtered projects
   getFilteredProjects: () => {

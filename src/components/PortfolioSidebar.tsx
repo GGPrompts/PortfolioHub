@@ -33,8 +33,9 @@ export default function PortfolioSidebar() {
   const springProps = useSpring({
     width: widths[sidebarState],
     config: {
-      tension: 260,
-      friction: 24,
+      tension: 200,
+      friction: 26,
+      clamp: false
     }
   })
   

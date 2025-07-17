@@ -321,6 +321,38 @@
   box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
 }
 
+.actionButtons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.actionButtons .primaryBtn {
+  margin-top: 0;
+}
+
+.secondaryBtn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 2px solid #00ff88;
+  color: #00ff88;
+  padding: 15px 30px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.secondaryBtn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3);
+}
+
 .runningStatus {
   text-align: center;
   color: #00ff88;

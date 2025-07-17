@@ -130,7 +130,6 @@
   border-right: 1px solid rgba(0, 255, 136, 0.2);
   position: relative;
   z-index: 2;
-  animation: slideIn 0.3s ease-out;
 }
 
 /* Quick Actions Footer */
@@ -315,7 +314,6 @@
   background: rgba(10, 10, 10, 0.98);
   border-right: 1px solid rgba(0, 255, 136, 0.3);
   z-index: 1;
-  animation: slideIn 0.3s ease-out;
 }
 
 /* Holographic effect */

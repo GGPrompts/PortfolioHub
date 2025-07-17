@@ -197,9 +197,25 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                     </div>
                   </div>
 
-                  <button className={styles.primaryBtn} onClick={openExternal}>
-                    {isRunning ? '🟢 Open Project ↗' : '🔴 Project Not Running'}
-                  </button>
+                  <div className={styles.actionButtons}>
+                    <button className={styles.primaryBtn} onClick={openExternal}>
+                      {isRunning ? '🟢 Open Project ↗' : '🔴 Project Not Running'}
+                    </button>
+                    {!isRunning && (
+                      <button 
+                        className={styles.secondaryBtn}
+                        onClick={() => {
+                          const command = `cd ${getProjectPath(project.id)} && ${project.buildCommand || 'npm run dev'}`
+                          navigator.clipboard.writeText(command).then(() => {
+                            alert('Start command copied to clipboard!')
+                          })
+                        }}
+                        title="Copy start command to clipboard"
+                      >
+                        📋 Copy Start Command
+                      </button>
+                    )}
+                  </div>
                   {isRunning && actualPort && (
                     <p className={styles.runningStatus}>
                       ✅ Project is running on port {actualPort}

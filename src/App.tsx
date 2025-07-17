@@ -48,24 +48,8 @@ export default function App() {
   
   // Core project display logic
   const showProject = useCallback(async (project: any) => {
-    // For iframe/embed projects, always show inline
-    if (project.displayType === 'iframe' || project.displayType === 'embed') {
-      setShowGrid(false)
-      return
-    }
-    
-    // For external projects, check if they're running before showing inline
-    if (project.displayType === 'external' && project.localPort) {
-      const { getProjectPort } = await import('./utils/portManager')
-      const port = await getProjectPort(project)
-      if (port) {
-        setShowGrid(false)
-        return
-      }
-    }
-    
-    // Otherwise show in modal
-    setIsViewerOpen(true)
+    // Always show projects inline, never in modal
+    setShowGrid(false)
   }, [])
 
   // Watch for portfolio home navigation and project selection from sidebar

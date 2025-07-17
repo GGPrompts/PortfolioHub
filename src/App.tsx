@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { usePortfolioStore } from './store/portfolioStore'
 import PortfolioSidebar from './components/PortfolioSidebar'
 import ProjectGrid from './components/ProjectGrid'
@@ -13,6 +13,7 @@ export default function App() {
   const [showGrid, setShowGrid] = useState(true)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [lastSelectedProjectId, setLastSelectedProjectId] = useState<string | null>(null)
 
   // Load projects from manifest
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function App() {
   }, [])
   
   // Core project display logic
-  const showProject = async (project: any) => {
+  const showProject = useCallback(async (project: any) => {
     // For iframe/embed projects, always show inline
     if (project.displayType === 'iframe' || project.displayType === 'embed') {
       setShowGrid(false)
@@ -65,17 +66,19 @@ export default function App() {
     
     // Otherwise show in modal
     setIsViewerOpen(true)
-  }
+  }, [])
 
   // Watch for portfolio home navigation and project selection from sidebar
   useEffect(() => {
     if (!selectedProject) {
       setShowGrid(true)
-    } else {
-      // Handle project selection from sidebar
+      setLastSelectedProjectId(null)
+    } else if (selectedProject.id !== lastSelectedProjectId) {
+      // Only show project if it's actually a different project
+      setLastSelectedProjectId(selectedProject.id)
       showProject(selectedProject)
     }
-  }, [selectedProject])
+  }, [selectedProject, showProject, lastSelectedProjectId])
 
   const handleProjectClick = async (project: any) => {
     selectProject(project)

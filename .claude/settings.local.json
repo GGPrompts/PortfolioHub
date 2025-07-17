@@ -5,7 +5,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(xcopy:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(git push:*)",
+      "Bash(npm start)"
     ],
     "deny": []
   }

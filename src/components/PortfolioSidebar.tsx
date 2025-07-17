@@ -221,9 +221,11 @@ export default function PortfolioSidebar() {
                   >
                     <div className={styles.projectHeader}>
                       <span className={styles.projectTitle}>{project.title}</span>
-                      <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
-                        {isRunning ? '🟢' : '🔴'}
-                      </span>
+                      {project.localPort && (
+                        <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
+                          {isRunning ? '🟢' : '🔴'}
+                        </span>
+                      )}
                     </div>
                     <div className={styles.projectControls}>
                       {project.localPort && (

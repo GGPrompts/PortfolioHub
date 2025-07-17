@@ -10,7 +10,7 @@ export interface PortStatus {
 // Default port assignments
 export const DEFAULT_PORTS = {
   'portfolio': 3000,
-  '3d-matrix-cards': null, // iframe, no port needed
+  '3d-matrix-cards': 3005,
   'matrix-cards': 3002,
   'sleak-card': 3003,
   'ggprompts-main': 9323,

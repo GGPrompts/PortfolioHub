@@ -174,6 +174,15 @@ $projects = @{
         }
         Command = "npm run dev"
     }
+    "3D Matrix Cards" = @{
+        Path = "$rootPath\projects\3d-matrix-cards"
+        Port = 3005
+        EnvVars = @{
+            PORT = "3005"
+            BROWSER = "none"
+        }
+        Command = "npm start"
+    }
     "Matrix Cards" = @{
         Path = "$rootPath\projects\matrix-cards"
         Port = 3002
@@ -246,6 +255,7 @@ Write-Host "🎯 Portfolio Development Environment Management Complete!" -Foregr
 Write-Host ""
 Write-Host "Access your projects:" -ForegroundColor Cyan
 Write-Host "  📊 Portfolio:              http://localhost:3000" -ForegroundColor White
+Write-Host "  🎴 3D Matrix Cards:        http://localhost:3005" -ForegroundColor White
 Write-Host "  🗂️ 3D File System:         http://localhost:3004" -ForegroundColor White
 Write-Host "  🎴 Matrix Cards:           http://localhost:3002" -ForegroundColor White
 Write-Host "  💎 Sleak Card:             http://localhost:3003" -ForegroundColor White

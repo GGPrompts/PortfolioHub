@@ -48,6 +48,7 @@ function Stop-ProcessOnPort {
 $ports = @{
     3000 = "Portfolio"
     3001 = "GGPrompts Style Guide"
+    3005 = "3D Matrix Cards"
     3002 = "Matrix Cards"
     3003 = "Sleak Card"
     9323 = "GGPrompts"

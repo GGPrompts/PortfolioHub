@@ -203,7 +203,6 @@ export default function PortfolioSidebar() {
                 <div key={project.id} className={styles.projectContainer}>
                   <div 
                     className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
-                    onClick={() => selectProject(project)}
                   >
                     <button
                       className={`${styles.expandToggle} ${isExpanded ? styles.expanded : ''}`}
@@ -214,7 +213,14 @@ export default function PortfolioSidebar() {
                     >
                       ▶
                     </button>
-                    <span className={styles.projectTitle}>{project.title}</span>
+                    <span 
+                      className={styles.projectTitle}
+                      onClick={() => {
+                        selectProject(project)
+                      }}
+                    >
+                      {project.title}
+                    </span>
                     {project.localPort && (
                       <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
                         {isRunning ? '🟢' : '🔴'}

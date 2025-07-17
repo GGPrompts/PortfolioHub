@@ -45,16 +45,8 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   
-  // Watch for portfolio home navigation
-  useEffect(() => {
-    if (!selectedProject) {
-      setShowGrid(true)
-    }
-  }, [selectedProject])
-
-  const handleProjectClick = async (project: any) => {
-    selectProject(project)
-    
+  // Core project display logic
+  const showProject = async (project: any) => {
     // For iframe/embed projects, always show inline
     if (project.displayType === 'iframe' || project.displayType === 'embed') {
       setShowGrid(false)
@@ -73,6 +65,20 @@ export default function App() {
     
     // Otherwise show in modal
     setIsViewerOpen(true)
+  }
+
+  // Watch for portfolio home navigation and project selection from sidebar
+  useEffect(() => {
+    if (!selectedProject) {
+      setShowGrid(true)
+    } else {
+      // Handle project selection from sidebar
+      showProject(selectedProject)
+    }
+  }, [selectedProject])
+
+  const handleProjectClick = async (project: any) => {
+    selectProject(project)
   }
 
   const handleCloseViewer = () => {

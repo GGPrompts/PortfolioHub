@@ -5,14 +5,24 @@
 ## 🎯 Quick Reference (Because who reads docs?)
 
 ### Start Everything
-```bash
+```powershell
 .\scripts\start-all-enhanced.ps1
 ```
 Then go to http://localhost:3000
 
 ### Kill Everything
-```bash
+```powershell
 .\scripts\kill-all-servers.ps1
+```
+
+### 💡 PowerShell Command Reference
+**Windows users**: Use `;` instead of `&&` for command chaining:
+```powershell
+# ✅ PowerShell (Windows)
+cd projects/ggprompts; git add .; git commit -m "updates"; git push; cd ../..
+
+# ❌ Bash (Linux/Mac) - Won't work in PowerShell
+cd projects/ggprompts && git add . && git commit -m "updates" && git push && cd ../..
 ```
 
 ### That's it. You're probably good now. 
@@ -106,8 +116,8 @@ Now just type `gg` to jump to GGPrompts, `port` to go back to portfolio, etc.
 #### "I made changes to multiple projects"
 ```bash
 # Quick and dirty update all
-cd projects/ggprompts && git add . && git commit -m "updates" && git push && cd ../..
-cd projects/matrix-cards && git add . && git commit -m "updates" && git push && cd ../..
+cd projects/ggprompts; git add .; git commit -m "updates"; git push; cd ../..
+cd projects/matrix-cards; git add .; git commit -m "updates"; git push; cd ../..
 # etc...
 ```
 

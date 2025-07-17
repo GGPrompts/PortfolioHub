@@ -205,7 +205,7 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                       <button 
                         className={styles.secondaryBtn}
                         onClick={() => {
-                          const command = `cd ${getProjectPath(project.id)} && ${project.buildCommand || 'npm run dev'}`
+                          const command = `cd ${getProjectPath(project.id)}; ${project.buildCommand || 'npm run dev'}`
                           navigator.clipboard.writeText(command).then(() => {
                             alert('Start command copied to clipboard!')
                           })

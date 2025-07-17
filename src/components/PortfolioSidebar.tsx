@@ -33,9 +33,19 @@ export default function PortfolioSidebar() {
   const springProps = useSpring({
     width: widths[sidebarState],
     config: {
-      tension: 200,
-      friction: 26,
-      clamp: false
+      tension: 280,
+      friction: 32,
+      clamp: true
+    }
+  })
+
+  // Journal panel animation
+  const journalSpring = useSpring({
+    opacity: sidebarState === 'expanded' ? 1 : 0,
+    transform: sidebarState === 'expanded' ? 'translateX(0px)' : 'translateX(-20px)',
+    config: {
+      tension: 280,
+      friction: 32
     }
   })
   
@@ -158,7 +168,7 @@ export default function PortfolioSidebar() {
             className={styles.icon} 
             title="Start All Projects"
             onClick={() => {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1'
+              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
               navigator.clipboard.writeText(command)
               alert('Start command copied to clipboard!')
             }}
@@ -169,7 +179,7 @@ export default function PortfolioSidebar() {
             className={styles.icon} 
             title="Kill All Projects"
             onClick={() => {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\kill-all-servers.ps1'
+              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
               navigator.clipboard.writeText(command)
               alert('Kill command copied to clipboard!')
             }}
@@ -243,7 +253,7 @@ export default function PortfolioSidebar() {
                           <button
                             className={styles.dropdownItem}
                             onClick={() => {
-                              const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id} && ${project.buildCommand || 'npm run dev'}`
+                              const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
                               navigator.clipboard.writeText(command)
                               alert(`Start command copied!`)
                             }}
@@ -294,7 +304,7 @@ export default function PortfolioSidebar() {
             <button 
               className={styles.actionBtn}
               onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1'
+                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
                 navigator.clipboard.writeText(command)
                 alert('Start all command copied!')
               }}
@@ -305,7 +315,7 @@ export default function PortfolioSidebar() {
             <button 
               className={styles.actionBtn}
               onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\kill-all-servers.ps1'
+                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
                 navigator.clipboard.writeText(command)
                 alert('Kill all command copied!')
               }}
@@ -324,9 +334,11 @@ export default function PortfolioSidebar() {
         </div>
         )}
         
-        {/* Dev Journal - Visible in expanded state */}
-        {sidebarState === 'expanded' && (
-        <div className={styles.expandedContent}>
+        {/* Dev Journal - Always rendered, animated visibility */}
+        <animated.div 
+          className={styles.expandedContent}
+          style={journalSpring}
+        >
           <div className={styles.expandedHeader}>
             <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
             {selectedProject?.devJournal && (
@@ -367,8 +379,7 @@ export default function PortfolioSidebar() {
               <p className={styles.hint}>💡 Tip: Journals are markdown files you can edit directly!</p>
             </div>
           )}
-        </div>
-      )}
+        </animated.div>
       </div>
     </animated.div>
   )

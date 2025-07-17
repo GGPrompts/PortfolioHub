@@ -18,6 +18,7 @@ export interface Project {
   tags: string[]
   tech: string[]
   status: 'active' | 'archived' | 'experimental'
+  devJournal?: string
 }
 
 interface PortfolioStore {

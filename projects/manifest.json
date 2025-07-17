@@ -10,6 +10,7 @@
       "tags": ["3D", "Animation", "Interactive", "WebGL"],
       "tech": ["Three.js", "JavaScript", "CSS"],
       "status": "active",
+      "devJournal": "projects/dev-journals/3d-matrix-cards.md",
       "features": [
         "Multiple 3D layouts (Grid, Sphere, Helix, Table)",
         "Matrix rain background effects",
@@ -29,6 +30,7 @@
       "tags": ["React", "Cards", "UI Components", "Cyberpunk"],
       "tech": ["React", "CSS Modules", "Three.js (planned)"],
       "status": "active",
+      "devJournal": "projects/dev-journals/matrix-cards.md",
       "features": [
         "Matrix & Neon Glass card styles",
         "3D flip animations",
@@ -48,6 +50,7 @@
       "tags": ["React", "Cards", "UI Components", "Animations"],
       "tech": ["React 19", "CSS Modules", "Water Effects"],
       "status": "active",
+      "devJournal": "projects/dev-journals/sleak-card.md",
       "features": [
         "7 color variants + glow effects",
         "Dark/Light theme support",
@@ -68,6 +71,7 @@
       "tags": ["React", "Full-Stack", "Real-time", "Database"],
       "tech": ["React", "Vite", "Supabase", "PostgreSQL", "TanStack Query"],
       "status": "active",
+      "devJournal": "projects/dev-journals/ggprompts-main.md",
       "features": [
         "Real-time collaboration",
         "Template-based prompt system",
@@ -88,6 +92,7 @@
       "tags": ["Design System", "Documentation", "React", "Components"],
       "tech": ["React", "Vite", "CSS Modules", "TypeScript"],
       "status": "active",
+      "devJournal": "projects/dev-journals/ggprompts-style-guide.md",
       "features": [
         "Component library with live examples",
         "CSS architecture documentation",

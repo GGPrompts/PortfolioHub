@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSpring, animated } from '@react-spring/web'
 import { usePortfolioStore } from '../store/portfolioStore'
 import styles from './PortfolioSidebar.module.css'
@@ -12,6 +12,9 @@ export default function PortfolioSidebar() {
     activeFilter,
     setActiveFilter
   } = usePortfolioStore()
+  
+  const [journalContent, setJournalContent] = useState<string>('')
+  const [isLoadingJournal, setIsLoadingJournal] = useState(false)
   
   // Define widths for each state
   const widths = {
@@ -31,6 +34,24 @@ export default function PortfolioSidebar() {
   
   // Get unique tags for filtering
   const allTags = Array.from(new Set(projects.flatMap(p => p.tags)))
+  
+  // Load dev journal when in expanded view and project selected
+  useEffect(() => {
+    if (sidebarState === 'expanded' && selectedProject?.devJournal) {
+      setIsLoadingJournal(true)
+      fetch(selectedProject.devJournal)
+        .then(res => res.text())
+        .then(content => {
+          setJournalContent(content)
+          setIsLoadingJournal(false)
+        })
+        .catch(err => {
+          console.error('Failed to load dev journal:', err)
+          setJournalContent('# Dev Journal\n\nFailed to load journal content.')
+          setIsLoadingJournal(false)
+        })
+    }
+  }, [sidebarState, selectedProject])
   
   return (
     <animated.div 
@@ -192,71 +213,47 @@ export default function PortfolioSidebar() {
         </div>
       )}
       
-      {/* Expanded State - Detailed View */}
+      {/* Expanded State - Dev Journal View */}
       {sidebarState === 'expanded' && (
         <div className={styles.expandedContent}>
           <div className={styles.expandedHeader}>
-            <h3>Project Details - {selectedProject?.title || 'Select a Project'}</h3>
+            <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
+            {selectedProject?.devJournal && (
+              <button 
+                className={styles.editJournalBtn}
+                onClick={() => {
+                  // Open journal file in default editor
+                  const journalPath = selectedProject.devJournal?.replace(/\//g, '\\')
+                  navigator.clipboard.writeText(`code ${journalPath}`).then(() => {
+                    alert('Command copied! Paste in terminal to edit journal.')
+                  })
+                }}
+                title="Copy edit command"
+              >
+                ✏️ Edit
+              </button>
+            )}
           </div>
           
           {selectedProject ? (
             <div className={styles.expandedBody}>
-              <div className={styles.detailsGrid}>
-                <div className={styles.detailSection}>
-                  <h4>Overview</h4>
-                  <p>{selectedProject.description}</p>
-                  <div className={styles.metaInfo}>
-                    <span>Type: {selectedProject.displayType}</span>
-                    <span>Status: {selectedProject.status}</span>
-                  </div>
+              {isLoadingJournal ? (
+                <div className={styles.loadingState}>
+                  <div className={styles.spinner}></div>
+                  <p>Loading journal...</p>
                 </div>
-                
-                <div className={styles.detailSection}>
-                  <h4>Technologies</h4>
-                  <div className={styles.techGrid}>
-                    {selectedProject.tech.map(tech => (
-                      <div key={tech} className={styles.techCard}>
-                        {tech}
-                      </div>
-                    ))}
-                  </div>
+              ) : (
+                <div className={styles.journalContent}>
+                  <pre className={styles.journalMarkdown}>
+                    {journalContent || '# Dev Journal\n\nNo journal entries yet.\n\nStart documenting your journey!'}
+                  </pre>
                 </div>
-                
-                <div className={styles.detailSection}>
-                  <h4>Quick Actions</h4>
-                  <div className={styles.quickActions}>
-                    <button className={styles.actionButton}>
-                      Open Project
-                    </button>
-                    {selectedProject.repository && (
-                      <button className={styles.actionButton}>
-                        View Source
-                      </button>
-                    )}
-                    {selectedProject.buildCommand && (
-                      <button className={styles.actionButton}>
-                        Run Build
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                {selectedProject.displayType === 'external' && selectedProject.localPort && (
-                  <div className={styles.detailSection}>
-                    <h4>Development</h4>
-                    <p className={styles.codeSnippet}>
-                      Local URL: http://localhost:{selectedProject.localPort}
-                    </p>
-                    <p className={styles.codeSnippet}>
-                      Build: {selectedProject.buildCommand}
-                    </p>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <p>Select a project from the gallery to view its details</p>
+              <p>Select a project to view its development journal</p>
+              <p className={styles.hint}>💡 Tip: Journals are markdown files you can edit directly!</p>
             </div>
           )}
         </div>

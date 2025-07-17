@@ -14,10 +14,40 @@
   position: relative;
 }
 
-/* Remove old toggle buttons - no longer needed */
-.toggleButtons {
-  display: none;
+/* Arrow Buttons */
+.arrowButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 0 6px 6px 0;
+  color: #00ff88;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0.6;
 }
+
+.arrowButton:hover {
+  opacity: 1;
+  background: rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+/* Position arrows at panel edges */
+.expandSearch { right: -24px; }
+.collapseSearch { left: 48px; border-radius: 6px 0 0 6px; }
+.expandNormal { right: -24px; }
+.collapseNormal { left: 48px; border-radius: 6px 0 0 6px; }
+.expandJournal { right: -24px; }
+.collapseJournal { left: 368px; border-radius: 6px 0 0 6px; }
 
 .toggleButton {
   width: 40px;
@@ -168,6 +198,11 @@
   border-bottom: 1px solid rgba(0, 255, 136, 0.1);
 }
 
+.searchContent .section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+}
+
 .section:last-child {
   border-bottom: none;
 }
@@ -181,6 +216,11 @@
   letter-spacing: 1px;
 }
 
+.searchContent .section h4 {
+  font-size: 12px;
+  margin: 0 0 10px 0;
+}
+
 /* Filter Tags */
 .filterTags {
   display: flex;
@@ -192,11 +232,12 @@
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: rgba(0, 255, 136, 0.8);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 15px;
+  font-size: 11px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .filterTag:hover {
@@ -552,10 +593,10 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Search State Styles */
+/* Search State Styles - More Compact */
 .searchContent {
-  width: 200px;
-  padding: 20px;
+  width: 150px;
+  padding: 15px;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
@@ -564,6 +605,14 @@
   position: relative;
   z-index: 2;
   animation: slideIn 0.3s ease-out;
+}
+
+.compactTitle {
+  color: #00ff88;
+  font-size: 24px;
+  text-align: center;
+  margin: 0 0 15px 0;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.8));
 }
 
 @keyframes slideIn {
@@ -583,12 +632,12 @@
 
 .searchInput {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(0, 255, 136, 0.3);
   border-radius: 6px;
   color: #00ff88;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
   transition: all 0.2s;
 }

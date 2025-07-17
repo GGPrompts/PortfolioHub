@@ -85,7 +85,7 @@ export default function App() {
   // Define widths for sidebar states (matching PortfolioSidebar)
   const sidebarWidths = {
     collapsed: 48,
-    search: 48 + 200,
+    search: 48 + 150,
     normal: 48 + 320,
     expanded: 48 + 320 + 500
   }

@@ -22,7 +22,7 @@ export default function PortfolioSidebar() {
   // Define widths for each state - now cumulative
   const widths = {
     collapsed: 48,     // Icon bar only
-    search: 48 + 200,  // Icon bar + search panel
+    search: 48 + 150,  // Icon bar + narrow search panel
     normal: 48 + 320,  // Icon bar + project controls
     expanded: 48 + 320 + 500  // Icon bar + controls + journal
   }
@@ -80,27 +80,82 @@ export default function PortfolioSidebar() {
       style={{ width: springProps.width }}
     >
       <div className={styles.sidebarContainer}>
+        {/* Toggle Arrows - positioned on each panel edge */}
+        {sidebarState === 'collapsed' && (
+          <button 
+            className={`${styles.arrowButton} ${styles.expandSearch}`}
+            onClick={() => setSidebarState('search')}
+            title="Show search panel"
+          >
+            ▶
+          </button>
+        )}
+        {sidebarState === 'search' && (
+          <>
+            <button 
+              className={`${styles.arrowButton} ${styles.collapseSearch}`}
+              onClick={() => setSidebarState('collapsed')}
+              title="Hide search panel"
+            >
+              ◀
+            </button>
+            <button 
+              className={`${styles.arrowButton} ${styles.expandNormal}`}
+              onClick={() => setSidebarState('normal')}
+              title="Show project controls"
+            >
+              ▶
+            </button>
+          </>
+        )}
+        {sidebarState === 'normal' && (
+          <>
+            <button 
+              className={`${styles.arrowButton} ${styles.collapseNormal}`}
+              onClick={() => setSidebarState('search')}
+              title="Hide project controls"
+            >
+              ◀
+            </button>
+            <button 
+              className={`${styles.arrowButton} ${styles.expandJournal}`}
+              onClick={() => setSidebarState('expanded')}
+              title="Show dev journal"
+            >
+              ▶
+            </button>
+          </>
+        )}
+        {sidebarState === 'expanded' && (
+          <button 
+            className={`${styles.arrowButton} ${styles.collapseJournal}`}
+            onClick={() => setSidebarState('normal')}
+            title="Hide dev journal"
+          >
+            ◀
+          </button>
+        )}
       
         {/* Icon Bar - Always Visible */}
         <div className={styles.iconBar}>
           <div 
             className={`${styles.icon} ${sidebarState === 'normal' || sidebarState === 'expanded' ? styles.active : ''}`}
             title="Projects"
-            onClick={() => setSidebarState(sidebarState === 'normal' ? 'collapsed' : 'normal')}
+            onClick={() => setSidebarState('normal')}
           >
             📁
           </div>
           <div 
             className={`${styles.icon} ${sidebarState === 'search' ? styles.active : ''}`}
             title="Filter/Search"
-            onClick={() => setSidebarState(sidebarState === 'search' ? 'collapsed' : 'search')}
+            onClick={() => setSidebarState('search')}
           >
             🔍
           </div>
           <div 
             className={`${styles.icon} ${sidebarState === 'expanded' ? styles.active : ''}`}
             title="Dev Journals"
-            onClick={() => setSidebarState(sidebarState === 'expanded' ? 'normal' : 'expanded')}
+            onClick={() => setSidebarState('expanded')}
           >
             📓
           </div>
@@ -132,7 +187,7 @@ export default function PortfolioSidebar() {
         {/* Search Panel - Visible in search state */}
         {sidebarState === 'search' && (
         <div className={styles.searchContent}>
-          <h3 className={styles.title}>🔍 Search & Filter</h3>
+          <h3 className={styles.compactTitle}>🔍</h3>
           
           {/* Search Input */}
           <div className={styles.searchSection}>

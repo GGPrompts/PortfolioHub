@@ -4,8 +4,8 @@
 git init
 
 # Add projects as submodules
-git submodule add https://github.com/yourusername/3d-matrix-cards.git projects/3d-matrix-cards
-git submodule add https://github.com/yourusername/particle-sim.git projects/particle-sim
+git submodule add https://github.com/GGPrompts/3d-matrix-cards.git projects/3d-matrix-cards
+git submodule add https://github.com/GGPrompts/particle-sim.git projects/particle-sim
 # Add more projects...
 
 # Update all submodules

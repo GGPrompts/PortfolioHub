@@ -13,7 +13,9 @@
       "Bash(PORT=3002 npm start)",
       "Bash(set PORT=3002)",
       "Bash($env:PORT=3002)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(mv:*)",
+      "Bash(move:*)"
     ],
     "deny": []
   }

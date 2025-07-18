@@ -6,7 +6,7 @@ Get your portfolio running in under 5 minutes!
 
 ```bash
 # Clone and enter the portfolio
-git clone https://github.com/yourusername/portfolio-showcase.git
+git clone https://github.com/GGPrompts/portfolio-showcase.git
 cd portfolio-showcase
 
 # Initialize git (if not cloned from GitHub)
@@ -17,7 +17,7 @@ git init
 
 ```bash
 # Example: Adding your 3D Matrix Cards project
-git submodule add https://github.com/yourusername/3d-matrix-cards.git projects/3d-matrix-cards
+git submodule add https://github.com/GGPrompts/3d-matrix-cards.git projects/3d-matrix-cards
 ```
 
 ## 3️⃣ Update Manifest
@@ -44,7 +44,7 @@ Open `index.html` in your browser!
 ```bash
 git add .
 git commit -m "Add 3d-matrix-cards project"
-git remote add origin https://github.com/yourusername/my-portfolio.git
+git remote add origin https://github.com/GGPrompts/my-portfolio.git
 git push -u origin main
 ```
 

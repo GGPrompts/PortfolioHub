@@ -179,12 +179,11 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   }, [projects])
   
   // Helper functions for DEV NOTES system
-  const handleSaveToToSort = () => {
+  const handleSaveToToSort = async () => {
     if (!currentNote.trim()) return
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const fileName = `note-${timestamp}.md`
-    const filePath = `D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\${fileName}`
     
     const targetProject = projects.find(p => p.id === selectedNoteProject)
     
@@ -209,41 +208,132 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     // Add footer
     content += `---\n*Note saved to to-sort folder for later organization*\n`
     
-    let promptText = `Please create a note file at ${filePath} with this content:\n\n${content}`
-    
-    // If there's a project selected, add project-specific context to the prompt
-    if (targetProject) {
-      promptText += `\n\nNote: This note is related to the "${targetProject.title}" project located at D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${targetProject.path || targetProject.id}. When organizing this note, you can move it to the project's dev journal or use it to update the project's CLAUDE.md file.`
+    try {
+      // Try to save the file directly using File System Access API
+      if ('showSaveFilePicker' in window) {
+        try {
+          const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: fileName,
+            types: [{
+              description: 'Markdown files',
+              accept: { 'text/markdown': ['.md'] }
+            }]
+          })
+          
+          const writable = await fileHandle.createWritable()
+          await writable.write(content)
+          await writable.close()
+          
+          // Add the note to local state
+          const newNote = {
+            id: `note-${Date.now()}`,
+            title: currentNote.split('\n')[0].slice(0, 50) + (currentNote.length > 50 ? '...' : ''),
+            date: new Date().toLocaleDateString(),
+            preview: currentNote.slice(0, 150) + (currentNote.length > 150 ? '...' : ''),
+            content: content,
+            project: targetProject ? targetProject.id : 'General',
+            saved: true,
+            filePath: fileHandle.name
+          }
+          
+          setToSortNotes(prev => [newNote, ...prev])
+          
+          alert(`Note saved successfully as ${fileHandle.name}!`)
+          setCurrentNote('')
+          setClaudeInstructions('')
+          setSelectedNoteProject('')
+          setIsEditingNote(false)
+          setShowNotesList(true)
+          
+        } catch (fileError) {
+          if (fileError.name === 'AbortError') {
+            // User cancelled file save dialog
+            return
+          }
+          throw fileError
+        }
+      } else {
+        // Fallback: Download the file
+        const blob = new Blob([content], { type: 'text/markdown' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = fileName
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        
+        // Add the note to local state
+        const newNote = {
+          id: `note-${Date.now()}`,
+          title: currentNote.split('\n')[0].slice(0, 50) + (currentNote.length > 50 ? '...' : ''),
+          date: new Date().toLocaleDateString(),
+          preview: currentNote.slice(0, 150) + (currentNote.length > 150 ? '...' : ''),
+          content: content,
+          project: targetProject ? targetProject.id : 'General',
+          saved: true,
+          filePath: fileName
+        }
+        
+        setToSortNotes(prev => [newNote, ...prev])
+        
+        alert(`Note downloaded as ${fileName}! Move it to your to-sort folder: D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\`)
+        setCurrentNote('')
+        setClaudeInstructions('')
+        setSelectedNoteProject('')
+        setIsEditingNote(false)
+        setShowNotesList(true)
+      }
+      
+    } catch (error) {
+      console.error('Error saving note:', error)
+      alert('Failed to save file. Please try again.')
     }
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(promptText).then(() => {
-      alert('Note saved! Claude prompt copied to clipboard.')
-      setCurrentNote('')
-      setClaudeInstructions('')
-      setSelectedNoteProject('')
-      setIsEditingNote(false)
-    }).catch(err => {
-      console.error('Failed to copy to clipboard:', err)
-      alert('Note content ready, but clipboard copy failed.')
-    })
   }
 
   const handleOrganizeNotes = () => {
-    const promptText = `Please help me organize all the notes in the to-sort folder at D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\
-
-Review each note and:
-1. Identify the project or topic it relates to
-2. Extract any Claude instructions (marked with ###)
-3. Organize notes by project or topic
-4. Move relevant notes to appropriate project dev journals
-5. Create topic-based folders for general notes
-6. Update any CLAUDE.md files with relevant instructions
-
-Please provide a plan for organizing these notes and then execute it.`
+    const savedNotes = toSortNotes.filter(note => note.saved)
+    const unsavedNotes = toSortNotes.filter(note => !note.saved)
+    
+    let promptText = `Please help me organize my notes:\n\n`
+    
+    // Include saved notes (in file system)
+    if (savedNotes.length > 0) {
+      promptText += `## SAVED NOTES (check file system)\n`
+      promptText += `Check the to-sort folder at D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\ for these saved files:\n`
+      savedNotes.forEach(note => {
+        promptText += `- ${note.filePath} (${note.project}): ${note.preview}\n`
+      })
+      promptText += `\n`
+    }
+    
+    // Include unsaved notes (in memory)
+    if (unsavedNotes.length > 0) {
+      promptText += `## UNSAVED NOTES (create files)\n`
+      promptText += `Create files for these notes and add them to the to-sort folder:\n\n`
+      unsavedNotes.forEach(note => {
+        const fileName = `note-${note.id.replace('note-', '')}.md`
+        promptText += `**File:** ${fileName}\n`
+        promptText += `**Content:**\n\`\`\`markdown\n${note.content}\n\`\`\`\n\n`
+      })
+    }
+    
+    promptText += `## ORGANIZATION TASKS\n`
+    promptText += `Please:\n`
+    promptText += `1. Create any missing files for unsaved notes\n`
+    promptText += `2. Review all notes and identify their project/topic\n`
+    promptText += `3. Extract Claude instructions (marked with ###)\n`
+    promptText += `4. Move notes to appropriate project dev journals\n`
+    promptText += `5. Create topic-based folders for general notes\n`
+    promptText += `6. Update CLAUDE.md files with relevant instructions\n\n`
+    promptText += `Provide a plan and execute the organization.`
     
     navigator.clipboard.writeText(promptText).then(() => {
-      alert('Organization prompt copied to clipboard! Paste it in Claude to organize all unsorted notes.')
+      const totalNotes = toSortNotes.length
+      const savedCount = savedNotes.length
+      const unsavedCount = unsavedNotes.length
+      alert(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
     }).catch(err => {
       console.error('Failed to copy to clipboard:', err)
       alert('Organization prompt ready, but clipboard copy failed.')
@@ -308,7 +398,9 @@ Please provide a plan for organizing these notes and then execute it.`
         date: new Date().toLocaleDateString(),
         preview: 'Fixed header height issues between portfolio and project pages...',
         content: `# Header Consistency Fix\n\n### Fix header height issues between portfolio and project pages\n\nThe headers need to be unified for better UX.`,
-        project: 'General'
+        project: 'General',
+        saved: true,
+        filePath: 'note-2025-01-18T23-00-00-000Z.md'
       },
       {
         id: 'note-2', 
@@ -316,7 +408,8 @@ Please provide a plan for organizing these notes and then execute it.`
         date: new Date(Date.now() - 86400000).toLocaleDateString(),
         preview: 'Add new card type for code snippets with syntax highlighting...',
         content: `# Matrix Cards Enhancement\n\n### Add new card type for code snippets\n\nThis would be great for showcasing code examples and technical documentation.`,
-        project: 'matrix-cards'
+        project: 'matrix-cards',
+        saved: false
       },
       {
         id: 'note-3',
@@ -324,7 +417,8 @@ Please provide a plan for organizing these notes and then execute it.`
         date: new Date(Date.now() - 172800000).toLocaleDateString(), 
         preview: 'Show notes in TO-SORT folder instead of edit interface by default...',
         content: `# DEV NOTES Improvement\n\n### Show notes in TO-SORT folder by default\n\nMake notes more accessible and give better visibility into captured content.`,
-        project: 'General'
+        project: 'General',
+        saved: false
       }
     ]
     setToSortNotes(mockNotes)
@@ -636,7 +730,7 @@ Please provide a plan for organizing these notes and then execute it.`
                           className={styles.dropdownItem}
                           onClick={() => window.open(project.repository, '_blank')}
                         >
-                          🐙 View on GitHub
+                          <SvgIcon name="github" size={16} /> View on GitHub
                         </button>
                       )}
                       <div className={styles.dropdownTags}>
@@ -747,7 +841,7 @@ Please provide a plan for organizing these notes and then execute it.`
                               className={styles.dropdownItem}
                               onClick={() => window.open(project.repository, '_blank')}
                             >
-                              🐙 View on GitHub
+                              <SvgIcon name="github" size={16} /> View on GitHub
                             </button>
                           )}
                           <div className={styles.dropdownTags}>
@@ -968,10 +1062,16 @@ Please provide a plan for organizing these notes and then execute it.`
                             className={styles.noteItemTitle}
                             onClick={() => handleEditToSortNote(note)}
                           >
-                            {note.title}
+                            {note.saved ? '💾' : '⚠️'} {note.title}
                           </span>
                           <div className={styles.noteItemActions}>
                             <span className={styles.noteItemDate}>{note.date}</span>
+                            <span 
+                              className={styles.saveStatus}
+                              title={note.saved ? 'Saved to file' : 'In memory only - will be lost on refresh'}
+                            >
+                              {note.saved ? '✅' : '🟡'}
+                            </span>
                             <button
                               className={styles.deleteNoteBtn}
                               onClick={(e) => {

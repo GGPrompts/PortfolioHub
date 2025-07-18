@@ -6,6 +6,7 @@ import ThreeProjectPreview from './components/ThreeProjectPreview'
 import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import GitUpdateButton from './components/GitUpdateButton'
+import SvgIcon from './components/SvgIcon'
 import { getRunningProjects, getProjectPort } from './utils/portManager'
 import './App.css'
 
@@ -22,6 +23,7 @@ export default function App() {
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
   const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
   const [sidebarWidth, setSidebarWidth] = useState(0)
+  const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('mobile')
 
   // Load projects from manifest
   useEffect(() => {
@@ -185,6 +187,14 @@ export default function App() {
                     variant="secondary"
                   />
                   <button 
+                    className={`view-toggle-btn ${globalViewMode === 'desktop' ? 'active' : ''}`}
+                    onClick={() => setGlobalViewMode(globalViewMode === 'mobile' ? 'desktop' : 'mobile')}
+                    title={globalViewMode === 'mobile' ? 'Switch to desktop view' : 'Switch to mobile view'}
+                  >
+                    <SvgIcon name={globalViewMode === 'mobile' ? 'expand' : 'smartphone'} size={16} />
+                    {globalViewMode === 'mobile' ? ' Desktop View' : ' Mobile View'}
+                  </button>
+                  <button 
                     className={`view-toggle-btn ${is3DView ? 'active' : ''}`}
                     onClick={() => setIs3DView(!is3DView)}
                     title={is3DView ? 'Switch to grid view' : 'Switch to 3D view'}
@@ -209,7 +219,7 @@ export default function App() {
                 onProjectClick={handleProjectClick}
               />
             ) : (
-              <ProjectGrid onProjectClick={handleProjectClick} />
+              <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} />
             )}
           </>
         ) : selectedProject ? (

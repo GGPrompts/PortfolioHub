@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
 import GitUpdateButton from './GitUpdateButton'
+import SvgIcon from './SvgIcon'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -8,20 +9,26 @@ interface LiveProjectPreviewProps {
   isRunning: boolean
   port: number | null
   onProjectClick: (project: Project) => void
+  globalViewMode?: 'mobile' | 'desktop'
 }
 
 export default function LiveProjectPreview({ 
   project, 
   isRunning, 
   port, 
-  onProjectClick 
+  onProjectClick,
+  globalViewMode 
 }: LiveProjectPreviewProps) {
   const [showLivePreview, setShowLivePreview] = useState(false)
   const [previewLoaded, setPreviewLoaded] = useState(false)
   const [imageLoadStatus, setImageLoadStatus] = useState<boolean | undefined>(undefined)
+  const [localViewMode, setLocalViewMode] = useState<'mobile' | 'desktop'>('mobile')
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  
+  // Use global view mode if provided, otherwise use local view mode
+  const viewMode = globalViewMode || localViewMode
 
-  const previewUrl = port ? `http://localhost:${port}` : null
+  const previewUrl = port ? `http://localhost:${port}${viewMode === 'desktop' ? '?viewport=desktop&orientation=landscape' : ''}` : null
 
   // Auto-enable live preview when project starts running
   useEffect(() => {
@@ -58,18 +65,25 @@ export default function LiveProjectPreview({
     setShowLivePreview(!showLivePreview)
   }
 
+  const toggleViewMode = () => {
+    // Only allow local toggle if no global view mode is set
+    if (!globalViewMode) {
+      setLocalViewMode(localViewMode === 'mobile' ? 'desktop' : 'mobile')
+    }
+  }
+
   return (
     <div className={`${styles.projectCard} ${isRunning ? styles.running : ''}`}>
       <div className={styles.previewContainer}>
         {showLivePreview && previewUrl ? (
-          <div className={styles.livePreviewWrapper}>
+          <div className={`${styles.livePreviewWrapper} ${styles[viewMode]}`}>
             <iframe
               ref={iframeRef}
               src={previewUrl}
               className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
               onLoad={handleIframeLoad}
               onError={handleIframeError}
-              sandbox="allow-same-origin allow-scripts"
+              sandbox="allow-same-origin allow-scripts allow-pointer-lock"
               title={`${project.title} Preview`}
             />
             {!previewLoaded && (
@@ -112,6 +126,15 @@ export default function LiveProjectPreview({
         <div className={styles.previewControls}>
           {isRunning && previewUrl && (
             <div className={styles.controlButtons}>
+              {!globalViewMode && (
+                <button
+                  onClick={toggleViewMode}
+                  className={styles.viewModeToggle}
+                  title={viewMode === 'mobile' ? 'Switch to desktop view' : 'Switch to mobile view'}
+                >
+                  <SvgIcon name={viewMode === 'mobile' ? 'monitor' : 'smartphone'} size={12} />
+                </button>
+              )}
               <button
                 onClick={togglePreview}
                 className={styles.previewToggle}

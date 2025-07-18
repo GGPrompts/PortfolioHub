@@ -113,6 +113,20 @@ npm run dev
 ## Recent Updates (2025-07-18)
 
 ### Latest Features (Current Session)
+- **Mobile/Desktop View Toggle System**: Complete viewport switching for portfolio previews:
+  - Global header toggle with expand/smartphone SVG icons from GGPrompts design system
+  - Mobile view: Full-height phone-proportioned preview (500px height) for mobile-first showcase
+  - Desktop view: Mini 1920x1080 landscape viewport scaled to 28% for true desktop preview
+  - Automatic grid adjustments (mobile: 420px cards, desktop: 620px cards with landscape containers)
+  - Individual card toggles hidden when global view mode is active for consistent UX
+- **Vertical Monitor Override Solutions**: Fixed orientation issues for vertical monitor setups:
+  - URL parameters (`?viewport=desktop&orientation=landscape`) to force desktop rendering
+  - CSS orientation overrides with `writing-mode: horizontal-tb` and explicit dimensions
+  - Media query overrides with `!important` rules to prevent portrait mode interference
+  - Container constraints to maintain 16:9 landscape ratio regardless of system orientation
+- **Pointer Lock Fix**: Resolved iframe security restrictions for 3D file system FPS mode:
+  - Added `allow-pointer-lock` to iframe sandbox permissions
+  - Enabled proper FPS mode functionality within portfolio iframe viewer
 - **Advanced 3D File System Upgrade**: Replaced basic implementation with terminal-interface version:
   - Expandable terminal sidebar with 3-state design (48px → 256px → 816px)
   - Working 3D card flipping using SleekCard3DMesh implementation

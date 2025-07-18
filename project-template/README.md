@@ -44,7 +44,7 @@ See `CLAUDE.md` for detailed development instructions and Claude Code integratio
 ## 🔗 Portfolio Integration
 
 This project is designed to work seamlessly with the Claude Development Portfolio:
-- Live preview in portfolio grid and 3D views
+- Live preview in portfolio grid view
 - Automatic port management
 - Git update integration
 - Development journal tracking

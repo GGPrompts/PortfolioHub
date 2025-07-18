@@ -37,8 +37,10 @@ claude-dev-portfolio/
 │   ├── ggprompts-style-guide/  # Design system documentation
 │   └── 3d-file-system/         # 3D file system explorer
 ├── scripts/                    # PowerShell automation scripts
-│   ├── start-all-improved.ps1  # Enhanced project launcher (no auto-browser)
-│   └── create-project.ps1      # Create new project from template
+│   ├── start-all-enhanced.ps1  # Most robust launcher with comprehensive server detection
+│   ├── start-all-tabbed.ps1    # Windows Terminal tabbed version (recommended)
+│   ├── create-project.ps1      # Automated project creation with full integration
+│   └── kill-all-servers.ps1    # Server management and cleanup
 └── docs/                       # Documentation
 ```
 
@@ -50,12 +52,67 @@ npm install
 # Start portfolio hub (runs on port 5173)
 npm run dev
 
-# Start all projects automatically (no browser auto-launch)
-.\scripts\start-all-improved.ps1
+# Start all projects in tabbed Windows Terminal (recommended)
+.\scripts\start-all-tabbed.ps1
+
+# Alternative: Start all projects in separate windows
+.\scripts\start-all-enhanced.ps1
 
 # Create new project
 .\scripts\create-project.ps1 -ProjectName "my-new-project" -Description "Project description"
 ```
+
+## PowerShell Automation Scripts
+
+### Current Active Scripts
+
+**Project Startup:**
+- `start-all-tabbed.ps1` - **Recommended**: Start all projects in Windows Terminal tabs
+- `start-all-enhanced.ps1` - Robust launcher with comprehensive server detection
+
+**Project Management:**
+- `create-project.ps1` - Automated project creation with full integration
+- `kill-all-servers.ps1` - Stop all running development servers
+
+**Utility Scripts:**
+- `check-ports.ps1` - Check which ports are in use
+- `update-all.ps1` - Update all project repositories
+
+### Script Options
+
+**start-all-tabbed.ps1 / start-all-enhanced.ps1:**
+```powershell
+# Start all projects
+.\scripts\start-all-tabbed.ps1
+
+# Start only portfolio
+.\scripts\start-all-tabbed.ps1 -OnlyPortfolio
+
+# Start all except portfolio
+.\scripts\start-all-tabbed.ps1 -NoPortfolio
+
+# Force restart all (stop existing first)
+.\scripts\start-all-tabbed.ps1 -Force
+
+# Show detailed output
+.\scripts\start-all-tabbed.ps1 -Verbose
+```
+
+**create-project.ps1:**
+```powershell
+# Create with automatic port assignment
+.\scripts\create-project.ps1 -ProjectName "my-project" -Description "Project description"
+
+# Create with specific port
+.\scripts\create-project.ps1 -ProjectName "my-project" -Port 3015 -Description "Custom port project"
+```
+
+### Archived Scripts
+
+Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
+- `start-all-improved.ps1` - Had emoji rendering issues in PowerShell
+- `start-all-*.ps1` - Various intermediate versions
+- `launch-and-open.ps1` - Basic launcher without server detection
 
 ## User Interface
 
@@ -113,12 +170,30 @@ npm run dev
 ## Recent Updates (2025-07-18)
 
 ### Latest Features (Current Session)
+- **Header Layout Consistency**: Fixed header height and positioning issues:
+  - Unified header styles between portfolio and project pages using same CSS classes
+  - Proper green border line positioning at bottom of header
+  - Consistent 80px header height with proper content spacing
+  - Removed absolute positioning conflicts and padding issues
+  - Content now starts properly below header with 40px spacing
+- **Project Navigation Improvements**: Enhanced "View Project" functionality:
+  - "View Project" button now opens projects within portfolio viewer instead of new tab
+  - Dedicated "Open in New Tab" (↗️) button remains for external viewing
+  - Better user experience with consistent navigation patterns
+- **DEV NOTES Enhancement**: Smart note type system for better organization:
+  - **Note Type Dropdown**: 8 predefined note types with context-specific instructions:
+    - General Note, Add to CLAUDE.md, Add to Commands, Bug Fix
+    - Visual/UI Adjustment, Feature Request, Research Topic, Code Refactor
+  - **Dynamic Instructions**: Auto-populated Claude instructions based on selected note type
+  - **Vertical Header Layout**: Project and Type dropdowns stacked vertically to prevent width issues
+  - **Smart Field Sizing**: Optimized text area heights (50px instructions, 200px content) with auto-expand
+  - **Modal Size Optimization**: Increased modal height to 700px for better content display
 - **Professional Matrix Card Notes System**: Complete redesign of DEV NOTES with Matrix Card aesthetics:
   - Professional 3D flip card interface with cyberpunk green/cyan theme
   - Separate fields for Claude instructions (### marked) and note content
   - Project dropdown selection with automatic folder path integration
   - Enhanced placeholder text with bright teal color and comprehensive instructions
-  - Letter-sized proportions (600px height) for better writing experience
+  - Letter-sized proportions (700px height) for better writing experience
   - Flip animation to preview formatted markdown output
   - Default to new note interface for immediate productivity
 - **Universal Note Capture System**: Streamlined workflow for quick idea capture:
@@ -202,16 +277,17 @@ npm run dev
 ## Project Management
 
 ### Creating New Projects
-```bash
+```powershell
 # Create a new project with automatic setup
 .\scripts\create-project.ps1 -ProjectName "my-awesome-project" -Description "Description here"
 
 # The script will:
 # - Create project directory from template
+# - Automatically update manifest.json and portManager.ts
 # - Assign available port automatically (from fallback range)
 # - Initialize git repository
 # - Create development journal
-# - Provide manifest.json entry to copy
+# - Integrate with DEV NOTES system
 ```
 
 ### Port Assignment for New Projects
@@ -270,7 +346,6 @@ Each project card displays:
 ### Component Architecture
 ```
 src/components/
-├── ThreeProjectPreview.tsx     # 3D scene with Three.js
 ├── LiveProjectPreview.tsx      # Monitor-style project cards
 ├── PortfolioSidebar.tsx        # Navigation and journal panel
 ├── GitUpdateButton.tsx         # Git integration component
@@ -288,7 +363,7 @@ src/components/
 
 ### Common Issues
 1. **Port Conflicts**: Use `netstat -ano | findstr :PORT` to check port usage
-2. **3D Performance**: Reduce project count or disable 3D view on older hardware
+2. **Grid Performance**: Reduce project count or optimize grid layout on older hardware
 3. **PowerShell Execution**: Set execution policy with `Set-ExecutionPolicy RemoteSigned`
 4. **Git Commands**: Ensure git is installed and accessible from command line
 

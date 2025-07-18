@@ -6,6 +6,7 @@
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
+  max-width: 100%;
 }
 
 .projectCard:hover {
@@ -33,9 +34,9 @@
 /* Preview Container - Phone-like tall styling */
 .previewContainer {
   position: relative;
-  width: calc(100% - 8px);
+  width: 100%;
   height: 500px;
-  margin: 4px;
+  margin: 0;
   background: rgba(5, 5, 5, 0.95);
   overflow: hidden;
   border-radius: 6px;
@@ -50,8 +51,7 @@
 .previewContainer:has(.desktop) {
   height: 320px;
   width: 100%;
-  max-width: 580px;
-  margin: 4px auto;
+  margin: 0;
   background: rgba(10, 10, 10, 0.98);
   border-radius: 8px;
   border: 2px solid rgba(60, 60, 60, 0.8);
@@ -97,35 +97,18 @@
 }
 
 .livePreviewWrapper.desktop .livePreview {
-  width: 1920px;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   border-radius: 6px;
   border: 2px solid rgba(60, 60, 60, 0.8);
-  transform: scale(0.29);
+  transform: scale(1);
   transform-origin: center;
   background: #000;
   box-shadow: 
     0 4px 16px rgba(0, 0, 0, 0.6),
     inset 0 1px 3px rgba(255, 255, 255, 0.1);
-  /* Force landscape orientation and override portrait detection */
-  writing-mode: horizontal-tb;
-  orientation: landscape;
-  /* Override any portrait mode CSS */
-  max-width: 1920px;
-  max-height: 1080px;
-  min-width: 1920px;
-  min-height: 1080px;
 }
 
-/* Force landscape media queries to override portrait detection */
-@media screen and (orientation: portrait) {
-  .livePreviewWrapper.desktop .livePreview {
-    /* Force landscape even when system detects portrait */
-    width: 1920px !important;
-    height: 1080px !important;
-    transform: scale(0.29) !important;
-  }
-}
 
 .livePreview {
   width: 100%;
@@ -204,8 +187,8 @@
 
 /* Status Bar - Between monitor and description */
 .statusBar {
-  width: calc(100% - 8px);
-  margin: 0 4px;
+  width: 100%;
+  margin: 0;
   background: rgba(20, 20, 20, 0.95);
   border: 1px solid rgba(60, 60, 60, 0.4);
   border-radius: 4px;
@@ -295,7 +278,7 @@
   padding: 18px;
   background: rgba(15, 15, 15, 0.90);
   border-radius: 0 0 8px 8px;
-  margin: 8px 4px 4px 4px;
+  margin: 8px 0 0 0;
   border-top: 1px solid rgba(60, 60, 60, 0.3);
   position: relative;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -372,6 +355,8 @@
 @media (max-width: 768px) {
   .previewContainer {
     height: 400px;
+    overflow: hidden;
+    max-width: 100%;
   }
   
   .projectMeta {

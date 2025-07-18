@@ -579,7 +579,7 @@ Please provide a plan for organizing these notes and then execute it.`
             <button 
               className={styles.actionBtn}
               onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
+                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
                 navigator.clipboard.writeText(command)
                 alert('Start all command copied!')
               }}

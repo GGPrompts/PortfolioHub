@@ -138,8 +138,11 @@ To add an existing project to the portfolio:
 ## 🚀 Automation Scripts
 
 ### Start All Projects
-```bash
-# Copy command to clipboard and run in PowerShell
+```powershell
+# Recommended: Start all projects in Windows Terminal tabs
+.\scripts\start-all-tabbed.ps1
+
+# Alternative: Start all projects in separate windows
 .\scripts\start-all-enhanced.ps1
 ```
 
@@ -216,8 +219,8 @@ Once a project is added (via script or manually), it's automatically integrated 
 # Create new project
 .\scripts\create-project.ps1 -ProjectName "new-idea" -Description "Quick prototype"
 
-# Start all projects
-.\scripts\start-all-improved.ps1
+# Start all projects in tabs (recommended)
+.\scripts\start-all-tabbed.ps1
 
 # Kill all servers
 .\scripts\kill-all-servers.ps1

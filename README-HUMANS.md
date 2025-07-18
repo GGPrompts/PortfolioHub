@@ -6,9 +6,9 @@
 
 ### Start Everything
 ```powershell
-.\scripts\start-all-enhanced.ps1
+.\scripts\start-all-tabbed.ps1
 ```
-Then go to http://localhost:3000
+Then go to http://localhost:5173
 
 ### Kill Everything
 ```powershell
@@ -237,4 +237,4 @@ Remember: When in doubt, kill all servers and start fresh. It's the developer wa
 
 ---
 
-*P.S. - If you're reading this months later and forgot everything, just run `.\scripts\start-all-enhanced.ps1` and click buttons until something works.*
+*P.S. - If you're reading this months later and forgot everything, just run `.\scripts\start-all-tabbed.ps1` and click buttons until something works.*

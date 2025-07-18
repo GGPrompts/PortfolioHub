@@ -12,7 +12,7 @@
 .card {
   position: relative;
   width: 100%;
-  height: 600px; /* Increased from 500px to 600px for letter-like proportions */
+  height: 700px; /* Increased from 600px to 700px for more space */
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
   cursor: pointer;
@@ -56,8 +56,8 @@
   border-bottom: 1px solid rgba(0, 255, 136, 0.2);
   background: linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 255, 0.1) 100%);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   /* Ensure header corners follow card's rounded corners */
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
@@ -76,9 +76,15 @@
 
 .cardContext {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   font-size: 0.85rem;
+}
+
+.contextRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .contextLabel {
@@ -181,7 +187,8 @@
 }
 
 .instructionsInput {
-  min-height: 60px;
+  height: 50px; /* Reduced since placeholder text fits */
+  min-height: 50px;
   border-color: rgba(0, 255, 255, 0.3);
   overflow-y: hidden; /* Hide scrollbar, let it auto-expand */
 }
@@ -192,7 +199,8 @@
 }
 
 .noteInput {
-  min-height: 240px; /* Increased from 160px to 240px for better letter proportions */
+  height: 200px; /* Increased for more placeholder text space */
+  min-height: 200px;
   overflow-y: hidden; /* Hide scrollbar, let it auto-expand */
 }
 

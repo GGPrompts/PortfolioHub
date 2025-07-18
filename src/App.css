@@ -10,12 +10,15 @@ body {
   background: #0a0a0a;
   color: #ffffff;
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* App Container */
 .app {
   min-height: 100vh;
   display: flex;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Main Content Area */
@@ -24,9 +27,8 @@ body {
   min-height: 100vh;
   background: radial-gradient(ellipse at top, #141414 0%, #0a0a0a 100%);
   /* margin-left is now handled dynamically in App.tsx */
-  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   min-width: 0; /* Allow content to shrink below its intrinsic width */
-  padding-top: 20px; /* Add spacing from top */
 }
 
 /* Sidebar Backdrop for overlay mode */
@@ -49,9 +51,11 @@ body {
   }
 }
 
-/* Portfolio Header */
+/* Unified Header - used for both portfolio and project pages */
 .portfolio-header {
-  padding: 30px 40px;
+  padding: 20px 40px;
+  background: rgba(10, 10, 10, 0.9);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
   position: relative;
   overflow: visible;
   min-height: 80px;
@@ -377,12 +381,16 @@ body {
   flex-direction: column;
 }
 
+/* Project header now uses the same class as portfolio header */
 .project-header {
   padding: 20px 40px;
   background: rgba(10, 10, 10, 0.9);
   border-bottom: 1px solid rgba(0, 255, 136, 0.2);
   position: relative;
   overflow: visible;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
 }
 
 .project-header-content {
@@ -416,7 +424,7 @@ body {
 /* Responsive project header */
 @media (max-width: 768px) {
   .project-header {
-    padding: 15px 20px;
+    padding: 20px 15px;
   }
   
   .project-header-content {
@@ -436,7 +444,7 @@ body {
 
 @media (max-width: 640px) {
   .project-header {
-    padding: 12px 16px;
+    padding: 20px 20px;
   }
   
   .project-info h2 {
@@ -504,6 +512,6 @@ body {
   }
   
   .main-content {
-    overflow-x: visible; /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
   }
 }

@@ -81,7 +81,7 @@ Add entry to `../manifest.json`:
 1. **Open in Claude**: `claude code` from your project directory
 2. **Context Loading**: Claude will read this CLAUDE.md for project context
 3. **Development**: Use Claude to implement features, fix bugs, refactor
-4. **Portfolio Testing**: Test in portfolio 3D/grid views and live preview
+4. **Portfolio Testing**: Test in portfolio grid view and live preview
 
 ### Git Workflow
 ```bash
@@ -100,8 +100,8 @@ git pull origin main
 # Start this project (from portfolio root)
 cd projects/YOUR-PROJECT-NAME && npm run dev
 
-# Add to startup script
-# Edit scripts/start-all-enhanced.ps1
+# Add to startup script (automatically done by create-project.ps1)
+# Projects are automatically integrated with start-all-tabbed.ps1 and start-all-enhanced.ps1
 
 # Test portfolio integration
 cd .. && npm run dev
@@ -182,7 +182,7 @@ npm install -D @types/library-name
 ### Debugging
 - Use browser DevTools for React debugging
 - Check portfolio console for integration issues
-- Test in both 3D and grid portfolio views
+- Test in portfolio grid view with different view modes
 - Verify live preview iframe functionality
 
 ## 📝 Documentation

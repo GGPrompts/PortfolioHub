@@ -29,14 +29,75 @@ const NoteCard: React.FC<NoteCardProps> = ({
   projects = []
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
+  const [noteType, setNoteType] = useState('general')
   const instructionsRef = useRef<HTMLTextAreaElement>(null)
   const noteRef = useRef<HTMLTextAreaElement>(null)
 
+  // Note type templates
+  const noteTypes = {
+    general: {
+      label: 'General Note',
+      instructions: 'Optional: Instructions for Claude when organizing this note...'
+    },
+    claude_md: {
+      label: 'Add to CLAUDE.md',
+      instructions: 'Add this information to the project CLAUDE.md file with proper formatting'
+    },
+    commands: {
+      label: 'Add to Commands',
+      instructions: 'Add this as a command or script to the .claude/Commands directory'
+    },
+    bug_fix: {
+      label: 'Bug Fix',
+      instructions: 'This is a bug report. Help implement the fix described in the note'
+    },
+    visual_adjustment: {
+      label: 'Visual/UI Adjustment',
+      instructions: 'This is a visual or UI improvement. Help implement the styling changes'
+    },
+    feature_request: {
+      label: 'Feature Request',
+      instructions: 'This is a new feature request. Help plan and implement the feature'
+    },
+    research: {
+      label: 'Research Topic',
+      instructions: 'Research this topic and provide implementation suggestions'
+    },
+    refactor: {
+      label: 'Code Refactor',
+      instructions: 'Help refactor the code described in this note for better structure'
+    }
+  }
+
   // Auto-resize textarea function
   const handleTextareaResize = (textarea: HTMLTextAreaElement) => {
+    const minHeight = textarea === instructionsRef.current ? 50 : 200
+    
+    // Reset height to allow shrinking
     textarea.style.height = 'auto'
-    textarea.style.height = Math.max(textarea.scrollHeight, 60) + 'px'
+    
+    // Use scrollHeight but cap it at a reasonable maximum
+    const maxHeight = textarea === instructionsRef.current ? 200 : 400
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
+    textarea.style.height = newHeight + 'px'
   }
+
+  // Initial resize on mount to set proper heights
+  useEffect(() => {
+    // Small delay to ensure DOM is fully rendered
+    setTimeout(() => {
+      if (instructionsRef.current) {
+        // Set initial height to accommodate placeholder text
+        instructionsRef.current.style.height = '50px'
+        handleTextareaResize(instructionsRef.current)
+      }
+      if (noteRef.current) {
+        // Set initial height to accommodate placeholder text
+        noteRef.current.style.height = '200px'
+        handleTextareaResize(noteRef.current)
+      }
+    }, 50)
+  }, []) // Run once on mount
 
   // Auto-resize on content change
   useEffect(() => {
@@ -63,6 +124,17 @@ const NoteCard: React.FC<NoteCardProps> = ({
     handleTextareaResize(e.target)
   }
 
+  // Handle note type change
+  const handleNoteTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newType = e.target.value
+    setNoteType(newType)
+    // Update instructions based on selected type
+    const typeConfig = noteTypes[newType as keyof typeof noteTypes]
+    if (typeConfig) {
+      onClaudeInstructionsChange(typeConfig.instructions)
+    }
+  }
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped)
   }
@@ -75,19 +147,35 @@ const NoteCard: React.FC<NoteCardProps> = ({
           <div className={styles.cardHeader}>
             <h3 className={styles.cardTitle}>QUICK NOTE</h3>
             <div className={styles.cardContext}>
-              <span className={styles.contextLabel}>Project:</span>
-              <select
-                className={styles.projectSelect}
-                value={selectedProject}
-                onChange={(e) => onProjectChange(e.target.value)}
-              >
-                <option value="">General (No Project)</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
+              <div className={styles.contextRow}>
+                <span className={styles.contextLabel}>Project:</span>
+                <select
+                  className={styles.projectSelect}
+                  value={selectedProject}
+                  onChange={(e) => onProjectChange(e.target.value)}
+                >
+                  <option value="">General (No Project)</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.contextRow}>
+                <span className={styles.contextLabel}>Type:</span>
+                <select
+                  className={styles.projectSelect}
+                  value={noteType}
+                  onChange={handleNoteTypeChange}
+                >
+                  {Object.entries(noteTypes).map(([key, type]) => (
+                    <option key={key} value={key}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -100,7 +188,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
                   className={styles.instructionsInput}
                   value={claudeInstructions}
                   onChange={handleInstructionsChange}
-                  placeholder="Optional: Instructions for Claude when organizing this note..."
+                  placeholder={noteTypes[noteType as keyof typeof noteTypes]?.instructions || "Optional: Instructions for Claude when organizing this note..."}
                   rows={2}
                 />
               </label>

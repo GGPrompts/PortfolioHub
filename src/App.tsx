@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { usePortfolioStore } from './store/portfolioStore'
 import PortfolioSidebar from './components/PortfolioSidebar'
 import ProjectGrid from './components/ProjectGrid'
-import ThreeProjectPreview from './components/ThreeProjectPreview'
 import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import GitUpdateButton from './components/GitUpdateButton'
@@ -15,7 +14,6 @@ export default function App() {
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [showGrid, setShowGrid] = useState(true)
-  const [is3DView, setIs3DView] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [isNarrowScreen, setIsNarrowScreen] = useState(window.innerWidth <= 1400)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -70,7 +68,7 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isDropdownOpen])
 
-  // Check running status for 3D view
+  // Check running status for projects
   useEffect(() => {
     const checkRunningStatus = async () => {
       const running = await getRunningProjects()
@@ -116,17 +114,9 @@ export default function App() {
   }, [selectedProject, showProject, lastSelectedProjectId])
 
   const handleProjectClick = async (project: any) => {
-    // Check if project is running
-    const isRunning = runningStatus[project.id]
-    if (isRunning && projectPorts[project.id]) {
-      // Open running project in new tab
-      const url = `http://localhost:${projectPorts[project.id]}`
-      window.open(url, '_blank')
-    } else {
-      // Show project info or start prompt
-      selectProject(project)
-      setShowGrid(false)
-    }
+    // Always open project within the portfolio
+    selectProject(project)
+    setShowGrid(false)
   }
 
   const handleCloseViewer = () => {
@@ -229,15 +219,6 @@ export default function App() {
                           {globalViewMode === 'mobile' ? 'Desktop View' : 'Mobile View'}
                         </button>
                         <button 
-                          className={`dropdown-item ${is3DView ? 'active' : ''}`}
-                          onClick={() => {
-                            setIs3DView(!is3DView)
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          {is3DView ? '📋 Grid View' : '🌐 3D View'}
-                        </button>
-                        <button 
                           className="dropdown-item"
                           onClick={() => {
                             setIsDashboardOpen(true)
@@ -252,16 +233,7 @@ export default function App() {
                 </div>
               </div>
             </header>
-            {is3DView ? (
-              <ThreeProjectPreview 
-                projects={projects}
-                runningStatus={runningStatus}
-                projectPorts={projectPorts}
-                onProjectClick={handleProjectClick}
-              />
-            ) : (
-              <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} />
-            )}
+            <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} />
           </>
         ) : selectedProject ? (
           <div className="project-view-container">

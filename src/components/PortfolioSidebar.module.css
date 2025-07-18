@@ -168,6 +168,39 @@
   gap: 8px;
   padding: 15px;
   border-top: 1px solid rgba(0, 255, 136, 0.2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Button Groups */
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.groupLabel {
+  font-size: 10px;
+  color: rgba(0, 255, 136, 0.8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.buttonGroup .actionBtn {
+  min-width: 60px;
+  font-size: 11px;
+}
+
+/* Kill group label and icons get red styling */
+.killGroup .groupLabel {
+  color: #ff4444 !important;
+}
+
+.killGroup .actionBtn svg {
+  color: #ff4444 !important;
 }
 
 .actionBtn {
@@ -410,6 +443,7 @@
 .expandedBody {
   flex: 1;
   overflow-y: auto;
+  overflow-x: visible; /* Allow horizontal overflow for hover effects */
   padding: 50px 30px 30px; /* Increased top padding from 30px to 50px */
   position: relative;
   z-index: 2;
@@ -661,11 +695,262 @@
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
+/* Selection Controls */
+.selectionControls {
+  padding: 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.selectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.selectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #00ff88;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.selectionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.selectAllBtn, .deselectAllBtn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.selectAllBtn:hover, .deselectAllBtn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.scriptButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.launchBtn, .killBtn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.launchBtn:hover, .killBtn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.launchBtn:disabled, .killBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.killBtn {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+}
+
+.killBtn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
+/* Project Checkbox */
+.projectCheckbox {
+  margin: 0 8px 0 4px;
+  cursor: pointer;
+  accent-color: #00ff88;
+}
+
+/* Notes List Styles */
+.notesListContainer {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.notesListHeader {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.notesListTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #00ff88;
+  margin: 0 0 8px 0;
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.notesListSubtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.noteItem {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.noteItem:hover {
+  border-color: rgba(0, 255, 136, 0.4);
+  background: rgba(0, 255, 136, 0.05);
+  /* Removed translateY to prevent card cutoff */
+}
+
+.noteItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.noteItemTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.noteItemTitle:hover {
+  color: #00ff88;
+}
+
+.noteItemActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noteItemDate {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.deleteNoteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  color: #ff4444; /* Make trash can icon red */
+}
+
+.deleteNoteBtn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+  color: #ff6666; /* Brighter red on hover */
+}
+
+.noteItemPreview {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.noteItemPreview:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.noteItemProject {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.noteProjectTag {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  height: 200px;
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyStateText {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.emptyStateSubtext {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
 /* Project List Styles */
 .projectList {
   flex: 1;
   overflow-y: auto;
   padding: 15px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Status Section Headers */
@@ -684,6 +969,12 @@
 
 .statusSectionHeader:first-child {
   margin-top: 0;
+}
+
+/* Push offline projects to the bottom with more spacing */
+.offlineSection {
+  margin-top: auto; /* Push offline section to bottom */
+  margin-bottom: 20px; /* Add space before controls */
 }
 
 .statusIndicator {
@@ -959,6 +1250,116 @@
   box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
 }
 
+/* Professional To-Sort Card */
+.toSortCard {
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.9) 100%);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 136, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  overflow: hidden; /* Keep content contained */
+  margin: 20px 20px 40px 20px; /* Add extra bottom margin to prevent clipping */
+  max-width: 600px;
+  height: 80vh; /* Use 80% of viewport height */
+  min-height: 600px; /* Ensure minimum height */
+  max-height: 800px; /* Cap maximum height */
+  display: flex;
+  flex-direction: column;
+}
+
+.toSortHeader {
+  padding: 20px 24px;
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 255, 0.1) 100%);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.toSortTitle {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00ff88;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 8px 0;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.toSortMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toSortCount {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.toSortContent {
+  padding: 24px 24px 12px 24px; /* Restored top padding, minimal bottom padding */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.toSortDescription {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.toSortDescription p {
+  margin: 0;
+}
+
+/* Organize Button Container */
+.organizeButtonContainer {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0; /* Restored margin to prevent card cutoff */
+}
+
+/* Notes List within To-Sort Card */
+.toSortCard .notesList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 8px; /* Space for scrollbar */
+  min-height: 400px; /* Ensure notes list takes up significant space */
+}
+
+/* Scrollbar styling for notes list */
+.toSortCard .notesList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.toSortCard .notesList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.toSortCard .notesList::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.toSortCard .notesList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 136, 0.5);
+}
+
 /* Organize Notes Button */
 .organizeBtn {
   background: rgba(0, 255, 255, 0.1);
@@ -1057,7 +1458,7 @@
 .noteItem:hover {
   background: rgba(0, 255, 136, 0.1);
   border-color: rgba(0, 255, 136, 0.4);
-  transform: translateY(-1px);
+  /* Removed translateY to prevent card cutoff */
 }
 
 .noteItemHeader {
@@ -1068,9 +1469,10 @@
 }
 
 .noteItemTitle {
-  font-size: 12px;
-  color: #00ff88;
+  font-size: 14px;
+  color: #ffffff;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .noteItemDate {

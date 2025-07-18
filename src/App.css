@@ -69,6 +69,8 @@ body {
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 5; /* Ensure all header content is above the background animation */
 }
 
 .header-text {
@@ -120,6 +122,15 @@ body {
   position: relative;
   z-index: 1;
 }
+
+/* Header Title Row */
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
 
 .status-btn, .back-btn, .external-btn, .refresh-btn, .view-toggle-btn {
   background: rgba(0, 255, 136, 0.1);
@@ -223,6 +234,29 @@ body {
 
 .refresh-icon-btn:hover svg {
   animation: spin 0.5s ease-in-out;
+}
+
+/* Eye toggle button - same styling as refresh but without spin animation */
+.eye-toggle-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-toggle-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
 }
 
 /* Header Dropdown */
@@ -419,6 +453,7 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-left: 20px; /* Add spacing from project info text */
 }
 
 /* Responsive project header */
@@ -435,6 +470,7 @@ body {
   
   .project-actions {
     align-self: flex-end;
+    margin-left: 0; /* Remove left margin on mobile */
   }
   
   .project-info h2 {

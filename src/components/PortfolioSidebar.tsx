@@ -42,6 +42,13 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [selectedNoteProject, setSelectedNoteProject] = useState<string>('')
   
+  // Selected projects for launch/kill operations
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set())
+  
+  // Notes display state
+  const [showNotesList, setShowNotesList] = useState(true)
+  const [toSortNotes, setToSortNotes] = useState<any[]>([])
+  
   // Tab-based state management - Array to maintain order
   const [activeTabs, setActiveTabs] = useState<string[]>([])
   
@@ -289,6 +296,152 @@ Please provide a plan for organizing these notes and then execute it.`
     setIsSelectingNote(false)
     setIsEditingNote(false)
   }
+
+  // Load notes from TO-SORT folder (simulated)
+  const loadToSortNotes = () => {
+    // In a real implementation, this would fetch from the actual to-sort folder
+    // For now, we'll simulate some notes to demonstrate the UI
+    const mockNotes = [
+      {
+        id: 'note-1',
+        title: 'Header consistency fix',
+        date: new Date().toLocaleDateString(),
+        preview: 'Fixed header height issues between portfolio and project pages...',
+        content: `# Header Consistency Fix\n\n### Fix header height issues between portfolio and project pages\n\nThe headers need to be unified for better UX.`,
+        project: 'General'
+      },
+      {
+        id: 'note-2', 
+        title: 'Matrix Cards enhancement',
+        date: new Date(Date.now() - 86400000).toLocaleDateString(),
+        preview: 'Add new card type for code snippets with syntax highlighting...',
+        content: `# Matrix Cards Enhancement\n\n### Add new card type for code snippets\n\nThis would be great for showcasing code examples and technical documentation.`,
+        project: 'matrix-cards'
+      },
+      {
+        id: 'note-3',
+        title: 'DEV NOTES improvement',
+        date: new Date(Date.now() - 172800000).toLocaleDateString(), 
+        preview: 'Show notes in TO-SORT folder instead of edit interface by default...',
+        content: `# DEV NOTES Improvement\n\n### Show notes in TO-SORT folder by default\n\nMake notes more accessible and give better visibility into captured content.`,
+        project: 'General'
+      }
+    ]
+    setToSortNotes(mockNotes)
+  }
+
+  // Load notes when DEV NOTES tab is opened
+  useEffect(() => {
+    if (activeTabs.includes('journals')) {
+      loadToSortNotes()
+    }
+  }, [activeTabs])
+
+  const handleCreateNewNote = () => {
+    setShowNotesList(false)
+    setIsEditingNote(true)
+    setCurrentNote('')
+    setClaudeInstructions('')
+    setSelectedNoteProject('')
+  }
+
+  const handleBackToNotesList = () => {
+    setShowNotesList(true)
+    setIsEditingNote(false)
+    setIsSelectingNote(false)
+    setCurrentNote('')
+    setClaudeInstructions('')
+  }
+
+  const handleEditToSortNote = (note: any) => {
+    setCurrentNote(note.content)
+    setClaudeInstructions('')
+    setSelectedNoteProject(note.project)
+    setShowNotesList(false)
+    setIsEditingNote(true)
+  }
+
+  const handleDeleteNote = (noteId: string, noteTitle: string) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete the note "${noteTitle}"?\n\nThis action cannot be undone.`)
+    if (confirmDelete) {
+      setToSortNotes(prev => prev.filter(note => note.id !== noteId))
+      // In a real implementation, this would also delete the file from the filesystem
+      console.log(`Note "${noteTitle}" deleted from TO-SORT folder`)
+    }
+  }
+
+  // Project selection management
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId)
+      } else {
+        newSet.add(projectId)
+      }
+      return newSet
+    })
+  }
+
+  const selectAllProjects = () => {
+    setSelectedProjects(new Set(projects.map(p => p.id)))
+  }
+
+  const deselectAllProjects = () => {
+    setSelectedProjects(new Set())
+  }
+
+  const generateLaunchScript = (selectedProjectIds: string[]) => {
+    if (selectedProjectIds.length === 0) return ''
+    
+    const selectedProjectsList = projects.filter(p => selectedProjectIds.includes(p.id))
+    
+    let script = `# Launch Selected Projects\n# Generated on ${new Date().toLocaleString()}\n\n`
+    script += `# Portfolio\nStart-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd 'D:\\ClaudeWindows\\claude-dev-portfolio'; npm run dev" -WindowStyle Normal\n\n`
+    
+    selectedProjectsList.forEach(project => {
+      script += `# ${project.title}\n`
+      script += `Start-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd 'D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}'; npm run dev" -WindowStyle Normal\n\n`
+    })
+    
+    return script
+  }
+
+  const generateKillScript = (selectedProjectIds: string[]) => {
+    if (selectedProjectIds.length === 0) return ''
+    
+    const selectedProjectsList = projects.filter(p => selectedProjectIds.includes(p.id))
+    const ports = [5173] // Portfolio port
+    
+    selectedProjectsList.forEach(project => {
+      if (project.localPort) {
+        ports.push(project.localPort)
+      }
+    })
+    
+    let script = `# Kill Selected Projects\n# Generated on ${new Date().toLocaleString()}\n\n`
+    script += `$ports = @(${ports.join(', ')})\n\n`
+    script += `foreach ($port in $ports) {\n`
+    script += `    Write-Host "Checking port $port..."\n`
+    script += `    $process = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1\n`
+    script += `    if ($process) {\n`
+    script += `        $processId = (Get-Process -Id $process.OwningProcess -ErrorAction SilentlyContinue).Id\n`
+    script += `        if ($processId) {\n`
+    script += `            Write-Host "Killing process $processId on port $port"\n`
+    script += `            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue\n`
+    script += `        }\n`
+    script += `    }\n`
+    script += `}\n\n`
+    script += `Write-Host "Done killing selected project servers."\n`
+    
+    return script
+  }
+
+  const copyScriptToClipboard = (script: string, type: 'launch' | 'kill') => {
+    navigator.clipboard.writeText(script).then(() => {
+      console.log(`${type} script copied to clipboard`)
+    })
+  }
   
   
   return (
@@ -343,6 +496,29 @@ Please provide a plan for organizing these notes and then execute it.`
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Selection Controls */}
+          <div className={styles.selectionControls}>
+            <div className={styles.selectionHeader}>
+              <span className={styles.selectionTitle}>Launch Selection ({selectedProjects.size})</span>
+              <div className={styles.selectionButtons}>
+                <button 
+                  className={styles.selectAllBtn}
+                  onClick={selectAllProjects}
+                  title="Select all projects"
+                >
+                  All
+                </button>
+                <button 
+                  className={styles.deselectAllBtn}
+                  onClick={deselectAllProjects}
+                  title="Deselect all projects"
+                >
+                  None
+                </button>
+              </div>
+            </div>
+          </div>
           
           {/* Project List with Collapsible Dropdowns - Separated by Status */}
           <div className={styles.projectList}>
@@ -371,6 +547,16 @@ Please provide a plan for organizing these notes and then execute it.`
                         >
                           ▶
                         </button>
+                        <input
+                          type="checkbox"
+                          className={styles.projectCheckbox}
+                          checked={selectedProjects.has(project.id)}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            toggleProjectSelection(project.id)
+                          }}
+                          title="Select for launch/kill operations"
+                        />
                         <span 
                           className={styles.projectTitle}
                           onClick={() => {
@@ -417,15 +603,6 @@ Please provide a plan for organizing these notes and then execute it.`
                           </button>
                         </>
                       )}
-                      <button
-                        className={styles.dropdownItem}
-                        onClick={() => {
-                          setSidebarState('expanded')
-                          selectProject(project)
-                        }}
-                      >
-                        📓 View journal
-                      </button>
                       <div style={{ padding: '4px' }}>
                         <GitUpdateButton 
                           type="project" 
@@ -459,7 +636,7 @@ Please provide a plan for organizing these notes and then execute it.`
             {/* Offline Projects Section */}
             {filteredProjects.some(p => !(projectStatuses.get(p.id) || false)) && (
               <>
-                <div className={styles.statusSectionHeader}>
+                <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`}>
                   <span className={styles.statusIndicator}>🔴</span>
                   <span className={styles.statusLabel}>OFFLINE</span>
                 </div>
@@ -481,6 +658,16 @@ Please provide a plan for organizing these notes and then execute it.`
                         >
                           ▶
                         </button>
+                        <input
+                          type="checkbox"
+                          className={styles.projectCheckbox}
+                          checked={selectedProjects.has(project.id)}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            toggleProjectSelection(project.id)
+                          }}
+                          title="Select for launch/kill operations"
+                        />
                         <span 
                           className={styles.projectTitle}
                           onClick={() => {
@@ -527,15 +714,6 @@ Please provide a plan for organizing these notes and then execute it.`
                               </button>
                             </>
                           )}
-                          <button
-                            className={styles.dropdownItem}
-                            onClick={() => {
-                              setSidebarState('expanded')
-                              selectProject(project)
-                            }}
-                          >
-                            📓 View journal
-                          </button>
                           <div style={{ padding: '4px' }}>
                             <GitUpdateButton 
                               type="project" 
@@ -576,28 +754,58 @@ Please provide a plan for organizing these notes and then execute it.`
             >
               <SvgIcon name="settings" size={16} /> Dashboard
             </button>
-            <button 
-              className={styles.actionBtn}
-              onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
-                navigator.clipboard.writeText(command)
-                alert('Start all command copied!')
-              }}
-              title="Start all projects"
-            >
-              <SvgIcon name="play" size={16} /> All
-            </button>
-            <button 
-              className={styles.actionBtn}
-              onClick={() => {
-                const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-                navigator.clipboard.writeText(command)
-                alert('Kill all command copied!')
-              }}
-              title="Kill all projects"
-            >
-              <SvgIcon name="stop" size={16} /> Kill
-            </button>
+            
+            {/* Run Commands Group */}
+            <div className={styles.buttonGroup}>
+              <span className={styles.groupLabel}>Run</span>
+              <button 
+                className={styles.actionBtn}
+                onClick={() => {
+                  const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
+                  navigator.clipboard.writeText(command)
+                  alert('Start all command copied!')
+                }}
+                title="Copy command to start all projects"
+              >
+                <SvgIcon name="play" size={16} /> All
+              </button>
+              <button 
+                className={styles.actionBtn}
+                onClick={() => {
+                  copyScriptToClipboard(generateLaunchScript(Array.from(selectedProjects)), 'launch')
+                }}
+                disabled={selectedProjects.size === 0}
+                title="Copy command to start selected projects"
+              >
+                <SvgIcon name="play" size={16} /> Selected ({selectedProjects.size})
+              </button>
+            </div>
+            
+            {/* Kill Commands Group */}
+            <div className={`${styles.buttonGroup} ${styles.killGroup}`}>
+              <span className={styles.groupLabel}>Kill</span>
+              <button 
+                className={styles.actionBtn}
+                onClick={() => {
+                  const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
+                  navigator.clipboard.writeText(command)
+                  alert('Kill all command copied!')
+                }}
+                title="Copy command to kill all projects"
+              >
+                <SvgIcon name="stop" size={16} /> All
+              </button>
+              <button 
+                className={styles.actionBtn}
+                onClick={() => {
+                  copyScriptToClipboard(generateKillScript(Array.from(selectedProjects)), 'kill')
+                }}
+                disabled={selectedProjects.size === 0}
+                title="Copy command to kill selected projects"
+              >
+                <SvgIcon name="stop" size={16} /> Selected ({selectedProjects.size})
+              </button>
+            </div>
             <button
               className={styles.actionBtn}
               onClick={() => {
@@ -626,22 +834,25 @@ Please provide a plan for organizing these notes and then execute it.`
             
             <div className={styles.noteControls}>
               <div className={styles.quickNoteActions}>
-                <button 
-                  className={styles.organizeBtn}
-                  onClick={handleOrganizeNotes}
-                  title="Generate Claude prompt to organize all unsorted notes"
-                >
-                  🗂️ Organize Notes
-                </button>
               </div>
               <div className={styles.quickNoteActions}>
-                <button 
-                  className={styles.editToggleBtn}
-                  onClick={handleEditExistingNote}
-                  title="Edit existing unsorted note"
-                >
-                  ✏️ Edit Note
-                </button>
+                {showNotesList ? (
+                  <button 
+                    className={styles.editToggleBtn}
+                    onClick={handleCreateNewNote}
+                    title="Create new note"
+                  >
+                    ➕ New Note
+                  </button>
+                ) : (
+                  <button 
+                    className={styles.editToggleBtn}
+                    onClick={handleBackToNotesList}
+                    title="Back to notes list"
+                  >
+                    ← Back to Notes
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -696,17 +907,92 @@ Please provide a plan for organizing these notes and then execute it.`
                   ))}
                 </div>
               </div>
+            ) : showNotesList ? (
+              // Default to showing notes list
+              <div className={styles.toSortCard}>
+                <div className={styles.toSortHeader}>
+                  <h3 className={styles.toSortTitle}>📁 TO-SORT FOLDER</h3>
+                  <div className={styles.toSortMeta}>
+                    <span className={styles.toSortCount}>{toSortNotes.length} notes</span>
+                  </div>
+                </div>
+                
+                <div className={styles.toSortContent}>
+                  <div className={styles.toSortDescription}>
+                    <p>Notes are saved here for quick capture. Use the organize button to generate a Claude prompt for sorting them into project folders.</p>
+                  </div>
+                  
+                  <div className={styles.organizeButtonContainer}>
+                    <button 
+                      className={styles.organizeBtn}
+                      onClick={handleOrganizeNotes}
+                      title="Generate Claude prompt to organize all unsorted notes"
+                    >
+                      🗂️ Copy Organize Prompt
+                    </button>
+                  </div>
+                <div className={styles.notesList}>
+                  {toSortNotes.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <div className={styles.emptyStateIcon}>📝</div>
+                      <p className={styles.emptyStateText}>No notes in TO-SORT folder</p>
+                      <p className={styles.emptyStateSubtext}>Click "New Note" to create your first note</p>
+                    </div>
+                  ) : (
+                    toSortNotes.map((note) => (
+                      <div 
+                        key={note.id}
+                        className={styles.noteItem}
+                      >
+                        <div className={styles.noteItemHeader}>
+                          <span 
+                            className={styles.noteItemTitle}
+                            onClick={() => handleEditToSortNote(note)}
+                          >
+                            {note.title}
+                          </span>
+                          <div className={styles.noteItemActions}>
+                            <span className={styles.noteItemDate}>{note.date}</span>
+                            <button
+                              className={styles.deleteNoteBtn}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteNote(note.id, note.title)
+                              }}
+                              title="Delete this note"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                        <div 
+                          className={styles.noteItemPreview}
+                          onClick={() => handleEditToSortNote(note)}
+                        >
+                          {note.preview}
+                        </div>
+                        <div className={styles.noteItemProject}>
+                          <span className={styles.noteProjectTag}>
+                            {note.project === 'General' ? '🌐 General' : `📁 ${note.project}`}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                </div>
+              </div>
             ) : (
-              // Default to new note interface instead of preview
+              // Note editing interface
               <NoteCard
                 claudeInstructions={claudeInstructions}
                 noteContent={currentNote}
-                onSave={handleSaveToToSort}
-                onCancel={() => {
-                  setCurrentNote('')
-                  setClaudeInstructions('')
-                  setSelectedNoteProject('')
+                onSave={() => {
+                  handleSaveToToSort()
+                  handleBackToNotesList()
+                  loadToSortNotes() // Refresh the list
                 }}
+                onCancel={handleBackToNotesList}
                 onClaudeInstructionsChange={setClaudeInstructions}
                 onNoteContentChange={setCurrentNote}
                 isEditing={true}

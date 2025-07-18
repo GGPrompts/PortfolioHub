@@ -12,7 +12,7 @@
 .projectCard:hover {
   border-color: rgba(0, 255, 136, 0.6);
   box-shadow: 0 4px 20px rgba(0, 255, 136, 0.2);
-  transform: translateY(-2px);
+  /* Removed translateY to prevent card top clipping */
 }
 
 .projectCard.running {

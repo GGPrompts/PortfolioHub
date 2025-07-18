@@ -6,6 +6,7 @@ import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import GitUpdateButton from './components/GitUpdateButton'
 import SvgIcon from './components/SvgIcon'
+import ThreeDEye from './components/ThreeDEye'
 import { getRunningProjects, getProjectPort } from './utils/portManager'
 import './App.css'
 
@@ -23,6 +24,7 @@ export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(0)
   const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('mobile')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
 
   // Load projects from manifest
   useEffect(() => {
@@ -180,10 +182,17 @@ export default function App() {
             <header className="portfolio-header">
               <div className="header-content">
                 <div className="header-text">
-                  <h1>My Project Portfolio</h1>
+                  <div className="header-title-row">
+                    <h1>My Project Portfolio</h1>
+                  </div>
                   <p>A collection of creative coding experiments and applications</p>
                 </div>
                 <div className="header-actions">
+                  <ThreeDEye 
+                    isOpen={livePreviewsEnabled}
+                    onClick={() => setLivePreviewsEnabled(!livePreviewsEnabled)}
+                    className="eye-toggle-btn"
+                  />
                   <button 
                     className="refresh-icon-btn"
                     onClick={() => window.location.reload()}
@@ -233,7 +242,7 @@ export default function App() {
                 </div>
               </div>
             </header>
-            <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} />
+            <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
           </>
         ) : selectedProject ? (
           <div className="project-view-container">

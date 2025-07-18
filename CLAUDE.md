@@ -137,11 +137,19 @@ Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
 - **No auto-browser opening** - Clean startup without surprise windows
 - **Live status indicators** - Green dots for running, red for stopped
 - **Click to open** - Running projects open in new tabs when clicked
-- **Online/Offline Separation** - Projects automatically grouped by status:
+- **Auto-sorted project layout** - Projects automatically sorted by status:
   - 🟢 **ONLINE** section shows all running projects at the top
-  - 🔴 **OFFLINE** section shows stopped projects below
+  - 🔴 **OFFLINE** section shows stopped projects at the bottom (above controls)
   - Sections only appear when they contain projects
   - Real-time updates as project status changes
+- **Streamlined controls** - Clean selection system with enhanced bottom actions:
+  - **Launch Selection** header with All/None buttons for easy project selection
+  - **Enhanced bottom controls** with visual command grouping:
+    - **Dashboard** - Opens comprehensive project status management
+    - **Run** group - "All" and "Selected (count)" buttons for starting projects
+    - **Kill** group - "All" and "Selected (count)" buttons for stopping projects
+  - **Visual hierarchy** - Kill commands have red labels and icons for destructive action indication
+  - **Dynamic selection counts** - Selected buttons show real-time project count
 
 ### DEV NOTES System
 - **Multi-purpose note taking** integrated into the sidebar
@@ -170,6 +178,21 @@ Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
 ## Recent Updates (2025-07-18)
 
 ### Latest Features (Current Session)
+- **Streamlined Project Interface**: Major redesign of Projects panel for better workflow:
+  - **Auto-sorted layout** - Online projects at top, offline projects at bottom above controls
+  - **Enhanced bottom controls** with visual command grouping (Dashboard | Run | Kill)
+  - **Dynamic selection counts** - "Selected (3)" buttons show real-time project count
+  - **Removed clutter** - Eliminated middle Launch Selection script buttons for cleaner interface
+  - **Visual hierarchy** - Red styling for Kill commands (headers, icons) and delete buttons
+  - **Consistent theming** - Destructive actions clearly marked with red indicators
+- **Fixed Card Clipping Issues**: Resolved hover animation problems throughout the interface:
+  - **Removed problematic transforms** - Eliminated translateY effects causing card top cutoff
+  - **Improved hover feedback** - Enhanced shadows and borders without clipping
+  - **System-wide fixes** - Applied to sidebar, main content, and note cards
+- **Eye Toggle Enhancement**: Improved live preview controls:
+  - **Consistent styling** - Eye toggle matches refresh button without inheriting animations
+  - **Proper SVG handling** - Fixed Vite parsing issues with proper file extensions
+  - **Better placement** - Positioned next to refresh button for logical grouping
 - **Header Layout Consistency**: Fixed header height and positioning issues:
   - Unified header styles between portfolio and project pages using same CSS classes
   - Proper green border line positioning at bottom of header
@@ -202,6 +225,7 @@ Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
   - One-click organization prompt generation for batch processing
   - Smart metadata including project paths, timestamps, and Claude instructions
   - Clipboard integration with context-aware Claude prompts
+  - **Red delete icons** for clear destructive action indication in to-sort folder
 - **Enhanced Header System**: Compact, professional header design:
   - Square refresh icon button with hover animations
   - Dropdown menu for grouped actions (consistent across main and project headers)

@@ -497,6 +497,25 @@ Please provide a plan for organizing these notes and then execute it.`
             />
           </div>
 
+          {/* Status Header */}
+          <div className={styles.statusHeader}>
+            <div className={styles.statusInfo}>
+              <span className={styles.statusText}>
+                {Object.values(projectStatuses).filter(Boolean).length} / {projects.length} projects running
+              </span>
+              <span className={styles.lastUpdated}>
+                Last updated: {new Date().toLocaleTimeString()}
+              </span>
+            </div>
+            <button 
+              className={styles.refreshBtn}
+              onClick={() => window.location.reload()}
+              title="Refresh project status"
+            >
+              🔄
+            </button>
+          </div>
+
           {/* Selection Controls */}
           <div className={styles.selectionControls}>
             <div className={styles.selectionHeader}>

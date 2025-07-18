@@ -20,6 +20,135 @@
 
 ## 📋 Immediate Next Steps
 
+### 🔥 URGENT: Dual-Sidebar Implementation
+
+#### **Dual-Sidebar System with Flip Capability**
+**Goal**: Transform single-sidebar interface into dual-sidebar system separating dev controls from project-specific information.
+
+**Target Layout**:
+```
+Default: [Dev Controls] [Main Content] [Project Sidebar]
+Flipped: [Project Sidebar] [Main Content] [Dev Controls]
+```
+
+**Implementation Steps**:
+
+##### Phase 1: Infrastructure (2-3 days)
+- [ ] **Create Right Sidebar Component**
+  - Create `ProjectSidebar.tsx` component
+  - Create `ProjectSidebar.module.css` for styling
+  - Add to main App.tsx layout with proper width management
+
+- [ ] **Update App Layout System**
+  - Modify `App.tsx` to support dual sidebars
+  - Add `sidebarLayout` state: `'normal' | 'flipped'`
+  - Implement responsive behavior for dual sidebars
+  - Add flip toggle button to header
+
+- [ ] **Flip Animation System**
+  - Add smooth flip animation between layouts
+  - Implement sidebar slide transitions
+  - Add loading states for context switching
+
+##### Phase 2: Journal Migration (2-3 days)
+- [ ] **Extract Journal from Left Sidebar**
+  - Move DEV NOTES journal functionality to right sidebar
+  - Create project-aware journal system
+  - Maintain existing note-taking functionality
+
+- [ ] **Project-Aware Journal**
+  - Show journal entries for currently selected project
+  - Add project filtering to journal display
+  - Implement project-specific note creation
+  - Add project switcher in right sidebar
+
+##### Phase 3: Project-Specific Features (3-4 days)
+- [ ] **Quick Links Section**
+  - Add expandable "Quick Links" section
+  - Include project repository links
+  - Add demo/live site links
+  - Include documentation links
+
+- [ ] **Cheat Sheet Section**
+  - Create project-specific command cheat sheet
+  - Include common commands for each project
+  - Add copy-to-clipboard functionality
+  - Include development URLs and ports
+
+- [ ] **Project Context Integration**
+  - Make right sidebar update based on selected project
+  - Include project-specific metadata display
+  - Add project-specific quick actions
+
+##### Phase 4: Polish & Responsive (2-3 days)
+- [ ] **Responsive Behavior**
+  - Hide/collapse sidebars on mobile appropriately
+  - Add sidebar toggle buttons for mobile
+  - Implement overlay mode for narrow screens
+
+- [ ] **User Preferences**
+  - Save sidebar layout preference to localStorage
+  - Remember last used configuration
+  - Add settings to control sidebar behavior
+
+**Technical Implementation**:
+```typescript
+// State Management
+interface DualSidebarState {
+  leftSidebarOpen: boolean
+  rightSidebarOpen: boolean
+  sidebarLayout: 'normal' | 'flipped'
+  selectedProject: Project | null
+  leftSidebarWidth: number
+  rightSidebarWidth: number
+}
+
+// Component Structure
+src/components/
+├── DevSidebar.tsx (renamed from PortfolioSidebar)
+├── ProjectSidebar.tsx (new)
+├── ProjectJournal.tsx (new)
+├── ProjectQuickLinks.tsx (new)
+└── ProjectCheatSheet.tsx (new)
+```
+
+**Data Structures**:
+```typescript
+interface ProjectJournalEntry {
+  id: string
+  projectId: string
+  title: string
+  content: string
+  date: Date
+  tags: string[]
+}
+
+interface ProjectQuickLinks {
+  projectId: string
+  links: {
+    repository?: string
+    demo?: string
+    docs?: string
+    figma?: string
+    custom: { name: string; url: string }[]
+  }
+}
+
+interface ProjectCheatSheet {
+  projectId: string
+  commands: { name: string; command: string; description: string }[]
+  urls: { name: string; url: string; description: string }[]
+  notes: string[]
+}
+```
+
+**Success Metrics**:
+- [ ] Clean separation between dev tools and project information
+- [ ] Smooth flip animation (60fps)
+- [ ] Project context switching works instantly
+- [ ] Responsive design on all screen sizes
+- [ ] All existing functionality preserved
+
 ### High Priority Features
 
 #### 1. **Enhanced Project Integration** 🔧

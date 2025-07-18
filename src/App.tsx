@@ -200,11 +200,30 @@ export default function App() {
                   >
                     <SvgIcon name="refresh" size={16} />
                   </button>
+                  {/* View Mode Toggle Buttons */}
+                  <div className="view-mode-toggle">
+                    <button 
+                      className={`view-toggle-btn ${globalViewMode === 'mobile' ? 'active' : ''}`}
+                      onClick={() => setGlobalViewMode('mobile')}
+                      title="Mobile View"
+                    >
+                      <SvgIcon name="smartphone" size={16} />
+                    </button>
+                    <button 
+                      className={`view-toggle-btn ${globalViewMode === 'desktop' ? 'active' : ''}`}
+                      onClick={() => setGlobalViewMode('desktop')}
+                      title="Desktop View"
+                    >
+                      <SvgIcon name="monitor" size={16} />
+                    </button>
+                  </div>
+                  
+                  {/* Git Update Button */}
                   <div className="header-dropdown">
                     <button 
                       className="dropdown-toggle"
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      title="More options"
+                      title="Git operations"
                     >
                       <SvgIcon name="moreHorizontal" size={16} />
                     </button>
@@ -217,25 +236,6 @@ export default function App() {
                             variant="secondary"
                           />
                         </div>
-                        <button 
-                          className={`dropdown-item ${globalViewMode === 'desktop' ? 'active' : ''}`}
-                          onClick={() => {
-                            setGlobalViewMode(globalViewMode === 'mobile' ? 'desktop' : 'mobile')
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          <SvgIcon name={globalViewMode === 'mobile' ? 'expand' : 'smartphone'} size={14} />
-                          {globalViewMode === 'mobile' ? 'Desktop View' : 'Mobile View'}
-                        </button>
-                        <button 
-                          className="dropdown-item"
-                          onClick={() => {
-                            setIsDashboardOpen(true)
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          📊 Status Dashboard
-                        </button>
                       </div>
                     )}
                   </div>

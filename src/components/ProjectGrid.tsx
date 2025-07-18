@@ -7,9 +7,10 @@ import styles from './ProjectGrid.module.css'
 interface ProjectGridProps {
   onProjectClick: (project: Project) => void
   globalViewMode?: 'mobile' | 'desktop'
+  livePreviewsEnabled?: boolean
 }
 
-export default function ProjectGrid({ onProjectClick, globalViewMode = 'mobile' }: ProjectGridProps) {
+export default function ProjectGrid({ onProjectClick, globalViewMode = 'mobile', livePreviewsEnabled = true }: ProjectGridProps) {
   const { projects, activeFilter, getFilteredProjects } = usePortfolioStore()
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
   const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
@@ -68,6 +69,7 @@ export default function ProjectGrid({ onProjectClick, globalViewMode = 'mobile' 
               port={projectPorts[project.id]}
               onProjectClick={onProjectClick}
               globalViewMode={globalViewMode}
+              livePreviewsEnabled={livePreviewsEnabled}
             />
           ))}
         </div>

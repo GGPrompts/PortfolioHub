@@ -323,20 +323,6 @@ Perfect for capturing ideas across all your projects!"
           </div>
         </div>
       </div>
-
-      {/* Organize Notes Card */}
-      <div className={styles.organizeCard}>
-        <div className={styles.organizeHeader}>
-          <h4 className={styles.organizeTitle}>📁 TO-SORT FOLDER</h4>
-        </div>
-        <div className={styles.organizeContent}>
-          <p className={styles.organizeText}>
-            Notes are saved to a to-sort folder for quick capture. 
-            Use the organize button to generate a Claude prompt 
-            that will sort all notes into appropriate project folders.
-          </p>
-        </div>
-      </div>
     </div>
   )
 }

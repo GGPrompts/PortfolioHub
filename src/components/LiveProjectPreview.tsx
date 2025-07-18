@@ -10,6 +10,7 @@ interface LiveProjectPreviewProps {
   port: number | null
   onProjectClick: (project: Project) => void
   globalViewMode?: 'mobile' | 'desktop'
+  livePreviewsEnabled?: boolean
 }
 
 export default function LiveProjectPreview({ 
@@ -17,7 +18,8 @@ export default function LiveProjectPreview({
   isRunning, 
   port, 
   onProjectClick,
-  globalViewMode 
+  globalViewMode,
+  livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
   const [showLivePreview, setShowLivePreview] = useState(false)
   const [previewLoaded, setPreviewLoaded] = useState(false)
@@ -30,19 +32,19 @@ export default function LiveProjectPreview({
 
   const previewUrl = port ? `http://localhost:${port}${viewMode === 'desktop' ? '?viewport=desktop&orientation=landscape' : ''}` : null
 
-  // Auto-enable live preview when project starts running
+  // Auto-enable live preview when project starts running and global previews are enabled
   useEffect(() => {
-    if (isRunning && port && !showLivePreview) {
+    if (isRunning && port && !showLivePreview && livePreviewsEnabled) {
       // Small delay to let the server fully start
       setTimeout(() => {
         setShowLivePreview(true)
       }, 2000)
     }
-    if (!isRunning) {
+    if (!isRunning || !livePreviewsEnabled) {
       setShowLivePreview(false)
       setPreviewLoaded(false)
     }
-  }, [isRunning, port])
+  }, [isRunning, port, livePreviewsEnabled])
 
   const handleIframeLoad = () => {
     setPreviewLoaded(true)
@@ -62,7 +64,10 @@ export default function LiveProjectPreview({
   }
 
   const togglePreview = () => {
-    setShowLivePreview(!showLivePreview)
+    // Only allow toggling if global previews are enabled
+    if (livePreviewsEnabled) {
+      setShowLivePreview(!showLivePreview)
+    }
   }
 
   const toggleViewMode = () => {
@@ -75,7 +80,7 @@ export default function LiveProjectPreview({
   return (
     <div className={`${styles.projectCard} ${isRunning ? styles.running : ''}`}>
       <div className={styles.previewContainer}>
-        {showLivePreview && previewUrl ? (
+        {showLivePreview && previewUrl && livePreviewsEnabled ? (
           <div className={`${styles.livePreviewWrapper} ${styles[viewMode]}`}>
             <iframe
               ref={iframeRef}

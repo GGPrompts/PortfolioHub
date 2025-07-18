@@ -146,7 +146,12 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
             ) : (
               <div className={styles.externalInfo}>
                 <div className={styles.externalContent}>
-                  <h3>External Project</h3>
+                  <div className={styles.externalHeader}>
+                    <h3>External Project</h3>
+                    <button className={styles.closeBtn} onClick={onClose} title="Close and return to portfolio">
+                      ✕
+                    </button>
+                  </div>
                   <p>{project.description}</p>
                   
                   <div className={styles.externalDetails}>
@@ -168,11 +173,13 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                       </div>
                     )}
                     
-                    {actualPort && (
+                    {project.localPort && (
                       <div className={styles.detail}>
-                        <strong>Local Development:</strong>
-                        <code>http://localhost:{actualPort}</code>
-                        {actualPort !== project.localPort && (
+                        <strong>Port:</strong>
+                        <code>
+                          {actualPort ? `http://localhost:${actualPort}` : `Default: ${project.localPort}`}
+                        </code>
+                        {actualPort && actualPort !== project.localPort && (
                           <span className={styles.portNote}>
                             (running on port {actualPort}, default: {project.localPort})
                           </span>

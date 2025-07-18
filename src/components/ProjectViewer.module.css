@@ -208,12 +208,44 @@
   text-align: center;
 }
 
-.externalContent h3 {
+/* External Header with close button */
+.externalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.externalHeader h3 {
   color: #00ff88;
   font-size: 28px;
   font-weight: 300;
-  margin: 0 0 20px 0;
+  margin: 0;
   text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+}
+
+.externalHeader .closeBtn {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.externalHeader .closeBtn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
 }
 
 .externalContent p {

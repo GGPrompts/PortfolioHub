@@ -259,6 +259,49 @@ body {
   box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
 }
 
+/* View Mode Toggle Buttons */
+.view-mode-toggle {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.view-toggle-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.view-toggle-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.view-toggle-btn.active {
+  background: rgba(0, 255, 136, 0.3);
+  border-color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+  transform: translateY(-1px);
+}
+
+.view-toggle-btn.active:hover {
+  background: rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+}
+
 /* Header Dropdown */
 .header-dropdown {
   position: relative;

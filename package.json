@@ -1,6 +1,7 @@
 {
-  "name": "portfolio-showcase",
+  "name": "claude-dev-portfolio",
   "version": "1.0.0",
+  "description": "Professional development portfolio with Matrix Card notes system, real-time project status, and comprehensive project management",
   "private": true,
   "scripts": {
     "dev": "vite",

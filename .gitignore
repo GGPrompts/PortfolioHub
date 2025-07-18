@@ -38,3 +38,8 @@ desktop.ini
 !projects/manifest.json
 !projects/.gitkeep
 !projects/dev-journals/
+
+# Notes system - exclude user notes from version control
+notes/to-sort/
+notes/organized/
+notes/archive/

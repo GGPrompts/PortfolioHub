@@ -4,6 +4,7 @@ import { usePortfolioStore } from '../store/portfolioStore'
 import { checkPort } from '../utils/portManager'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
+import NoteCard from './NoteCard'
 import styles from './PortfolioSidebar.module.css'
 
 interface PortfolioSidebarProps {
@@ -34,8 +35,12 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   
   // Dev Notes state
   const [currentNote, setCurrentNote] = useState<string>('')
-  const [noteType, setNoteType] = useState<'note' | 'prompt' | 'command'>('note')
+  const [claudeInstructions, setClaudeInstructions] = useState<string>('')
   const [isEditingNote, setIsEditingNote] = useState(false)
+  const [isSelectingNote, setIsSelectingNote] = useState(false)
+  const [existingNotes, setExistingNotes] = useState<any[]>([])
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
+  const [selectedNoteProject, setSelectedNoteProject] = useState<string>('')
   
   // Tab-based state management - Array to maintain order
   const [activeTabs, setActiveTabs] = useState<string[]>([])
@@ -167,84 +172,124 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   }, [projects])
   
   // Helper functions for DEV NOTES system
-  const getNoteTypePlaceholder = () => {
-    switch (noteType) {
-      case 'note':
-        return 'Write your development note here...\n\nThis could be:\n- Feature ideas\n- Bug observations\n- Architecture thoughts\n- Learning notes'
-      case 'prompt':
-        return 'Write a Claude prompt template here...\n\nExample:\n"Help me implement [FEATURE] in [PROJECT]. I need to:\n1. [TASK 1]\n2. [TASK 2]\n\nCurrent context: [CONTEXT]"'
-      case 'command':
-        return 'Write commands or code snippets here...\n\nExamples:\n- npm run dev\n- git commit -m "message"\n- Bash/PowerShell scripts\n- Useful code patterns'
-      default:
-        return 'Start writing...'
-    }
-  }
-  
-  const handleSaveToDestination = (destination: string) => {
+  const handleSaveToToSort = () => {
     if (!currentNote.trim()) return
     
-    const timestamp = new Date().toISOString().split('T')[0]
-    const typePrefix = noteType === 'note' ? '##' : noteType === 'prompt' ? '## Claude Prompt' : '## Command'
-    const formattedNote = `${typePrefix} - ${timestamp}\n\n${currentNote.trim()}\n\n---\n\n`
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const fileName = `note-${timestamp}.md`
+    const filePath = `D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\${fileName}`
     
-    let filePath = ''
-    let promptText = ''
+    const targetProject = projects.find(p => p.id === selectedNoteProject)
     
-    switch (destination) {
-      case 'journal':
-        if (selectedProject?.devJournal) {
-          filePath = selectedProject.devJournal.replace(/\//g, '\\\\')
-          promptText = `Please add this ${noteType} to the dev journal at ${filePath}:\n\n${formattedNote}`
-        } else {
-          alert('No dev journal found for this project')
-          return
-        }
-        break
-      case 'claude-md':
-        filePath = selectedProject ? 
-          `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\CLAUDE.md` :
-          'D:\\\\ClaudeWindows\\\\CLAUDE.md'
-        promptText = `Please add this ${noteType} to CLAUDE.md at ${filePath}:\n\n${formattedNote}`
-        break
-      case 'readme':
-        if (selectedProject) {
-          filePath = `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\README.md`
-          promptText = `Please add this ${noteType} to the README.md at ${filePath}:\n\n${formattedNote}`
-        } else {
-          alert('Please select a project first')
-          return
-        }
-        break
-      case 'notes-file':
-        filePath = selectedProject ?
-          `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\NOTES.md` :
-          'D:\\\\ClaudeWindows\\\\NOTES.md'
-        promptText = `Please add this ${noteType} to the notes file at ${filePath} (create if it doesn't exist):\n\n${formattedNote}`
-        break
+    let content = `# Quick Note - ${new Date().toLocaleDateString()}\n\n`
+    
+    // Add Claude instructions if provided
+    if (claudeInstructions.trim()) {
+      content += `### Claude Instructions\n${claudeInstructions.trim()}\n\n`
     }
+    
+    // Add context metadata
+    content += `**Project:** ${targetProject ? targetProject.title : 'General (No Project)'}\n`
+    if (targetProject) {
+      const projectPath = targetProject.path || targetProject.id
+      content += `**Project Path:** D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${projectPath}\n`
+    }
+    content += `**Timestamp:** ${new Date().toISOString()}\n\n`
+    
+    // Add main note content
+    content += `## Note\n\n${currentNote.trim()}\n\n`
+    
+    // Add footer
+    content += `---\n*Note saved to to-sort folder for later organization*\n`
+    
+    let promptText = `Please create a note file at ${filePath} with this content:\n\n${content}`
+    
+    // If there's a project selected, add project-specific context to the prompt
+    if (targetProject) {
+      promptText += `\n\nNote: This note is related to the "${targetProject.title}" project located at D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${targetProject.path || targetProject.id}. When organizing this note, you can move it to the project's dev journal or use it to update the project's CLAUDE.md file.`
+    }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(promptText).then(() => {
+      alert('Note saved! Claude prompt copied to clipboard.')
+      setCurrentNote('')
+      setClaudeInstructions('')
+      setSelectedNoteProject('')
+      setIsEditingNote(false)
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      alert('Note content ready, but clipboard copy failed.')
+    })
+  }
+
+  const handleOrganizeNotes = () => {
+    const promptText = `Please help me organize all the notes in the to-sort folder at D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\
+
+Review each note and:
+1. Identify the project or topic it relates to
+2. Extract any Claude instructions (marked with ###)
+3. Organize notes by project or topic
+4. Move relevant notes to appropriate project dev journals
+5. Create topic-based folders for general notes
+6. Update any CLAUDE.md files with relevant instructions
+
+Please provide a plan for organizing these notes and then execute it.`
     
     navigator.clipboard.writeText(promptText).then(() => {
-      alert(`Claude prompt copied! Paste it to add your ${noteType} to ${destination}.`)
-      setCurrentNote('')
-      setIsEditingNote(false)
+      alert('Organization prompt copied to clipboard! Paste it in Claude to organize all unsorted notes.')
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      alert('Organization prompt ready, but clipboard copy failed.')
     })
+  }
+
+  const handleNewNote = () => {
+    setCurrentNote('')
+    setClaudeInstructions('')
+    setSelectedNoteId(null)
+    setSelectedNoteProject(selectedProject?.id || '')
+    setIsEditingNote(true)
+    setIsSelectingNote(false)
+  }
+
+  const handleEditExistingNote = () => {
+    setIsSelectingNote(true)
+    setIsEditingNote(false)
+    // In a real implementation, this would fetch existing notes
+    // For now, we'll simulate some notes
+    setExistingNotes([
+      {
+        id: '1',
+        title: 'Feature idea for Matrix Cards',
+        date: '2025-01-18',
+        preview: 'Add a new card type that displays code snippets with syntax highlighting...',
+        content: 'Add a new card type that displays code snippets with syntax highlighting. This would be great for showcasing code examples.',
+        claudeInstructions: 'Help me implement this in the Matrix Cards project'
+      },
+      {
+        id: '2',
+        title: 'Portfolio improvement ideas',
+        date: '2025-01-17',
+        preview: 'The sidebar could use better responsive behavior on mobile devices...',
+        content: 'The sidebar could use better responsive behavior on mobile devices. Maybe add a hamburger menu?',
+        claudeInstructions: ''
+      }
+    ])
+  }
+
+  const handleSelectNote = (note: any) => {
+    setCurrentNote(note.content)
+    setClaudeInstructions(note.claudeInstructions)
+    setSelectedNoteId(note.id)
+    setIsEditingNote(true)
+    setIsSelectingNote(false)
+  }
+
+  const handleCancelNoteSelection = () => {
+    setIsSelectingNote(false)
+    setIsEditingNote(false)
   }
   
-  const handleCopyClaudePrompt = () => {
-    if (!currentNote.trim()) return
-    
-    const promptPrefix = noteType === 'prompt' ? 'Use this prompt template:' : 
-                        noteType === 'command' ? 'Execute or help with this command:' :
-                        'Help me with this development note:'
-    
-    const claudePrompt = `${promptPrefix}\n\n${currentNote.trim()}\n\n${selectedProject ? `Context: Working on ${selectedProject.title} project` : 'Context: General development work'}`
-    
-    navigator.clipboard.writeText(claudePrompt).then(() => {
-      alert(`Claude prompt copied to clipboard!`)
-      setCurrentNote('')
-      setIsEditingNote(false)
-    })
-  }
   
   return (
     <animated.div 
@@ -580,121 +625,96 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             </div>
             
             <div className={styles.noteControls}>
-              <div className={styles.noteTypeSelector}>
+              <div className={styles.quickNoteActions}>
                 <button 
-                  className={`${styles.typeBtn} ${noteType === 'note' ? styles.active : ''}`}
-                  onClick={() => setNoteType('note')}
-                  title="General development note"
+                  className={styles.organizeBtn}
+                  onClick={handleOrganizeNotes}
+                  title="Generate Claude prompt to organize all unsorted notes"
                 >
-                  📝 Note
-                </button>
-                <button 
-                  className={`${styles.typeBtn} ${noteType === 'prompt' ? styles.active : ''}`}
-                  onClick={() => setNoteType('prompt')}
-                  title="Claude prompt template"
-                >
-                  🤖 Prompt
-                </button>
-                <button 
-                  className={`${styles.typeBtn} ${noteType === 'command' ? styles.active : ''}`}
-                  onClick={() => setNoteType('command')}
-                  title="Command or code snippet"
-                >
-                  ⌨️ Command
+                  🗂️ Organize Notes
                 </button>
               </div>
-              <button 
-                className={styles.editToggleBtn}
-                onClick={() => setIsEditingNote(!isEditingNote)}
-                title={isEditingNote ? 'View mode' : 'Edit mode'}
-              >
-                {isEditingNote ? '👁️ View' : '✏️ Edit'}
-              </button>
+              <div className={styles.quickNoteActions}>
+                <button 
+                  className={styles.editToggleBtn}
+                  onClick={handleEditExistingNote}
+                  title="Edit existing unsorted note"
+                >
+                  ✏️ Edit Note
+                </button>
+              </div>
             </div>
           </div>
           
           <div className={styles.expandedBody}>
             {isEditingNote ? (
-              <div className={styles.noteEditor}>
-                <textarea 
-                  className={styles.noteTextarea}
-                  value={currentNote}
-                  onChange={(e) => setCurrentNote(e.target.value)}
-                  placeholder={getNoteTypePlaceholder()}
-                  autoFocus
-                />
-                
-                {currentNote.trim() && (
-                  <div className={styles.outputActions}>
-                    <h4 className={styles.outputTitle}>Save Note To:</h4>
-                    <div className={styles.outputButtons}>
-                      <button 
-                        className={styles.outputBtn}
-                        onClick={() => handleSaveToDestination('journal')}
-                        title="Add to project dev journal"
-                      >
-                        📓 Dev Journal
-                      </button>
-                      <button 
-                        className={styles.outputBtn}
-                        onClick={() => handleSaveToDestination('claude-md')}
-                        title="Add to CLAUDE.md instructions"
-                      >
-                        🤖 CLAUDE.md
-                      </button>
-                      <button 
-                        className={styles.outputBtn}
-                        onClick={() => handleSaveToDestination('readme')}
-                        title="Add to project README"
-                      >
-                        📋 README
-                      </button>
-                      <button 
-                        className={styles.outputBtn}
-                        onClick={() => handleSaveToDestination('notes-file')}
-                        title="Save to dedicated notes file"
-                      >
-                        🗂️ Notes File
-                      </button>
-                      <button 
-                        className={styles.outputBtn}
-                        onClick={() => handleCopyClaudePrompt()}
-                        title="Copy as Claude prompt with destination instructions"
-                      >
-                        📋 Copy Claude Prompt
-                      </button>
+              <NoteCard
+                claudeInstructions={claudeInstructions}
+                noteContent={currentNote}
+                onSave={handleSaveToToSort}
+                onCancel={() => {
+                  setCurrentNote('')
+                  setClaudeInstructions('')
+                  setSelectedNoteProject('')
+                  setIsEditingNote(false)
+                }}
+                onClaudeInstructionsChange={setClaudeInstructions}
+                onNoteContentChange={setCurrentNote}
+                isEditing={isEditingNote}
+                context={selectedProject ? selectedProject.title : 'General'}
+                selectedProject={selectedNoteProject}
+                onProjectChange={setSelectedNoteProject}
+                projects={projects}
+              />
+            ) : isSelectingNote ? (
+              <div className={styles.noteSelectionContainer}>
+                <div className={styles.noteSelectionHeader}>
+                  <h4 className={styles.noteSelectionTitle}>Select Note to Edit</h4>
+                  <button 
+                    className={styles.editToggleBtn}
+                    onClick={handleCancelNoteSelection}
+                    title="Cancel note selection"
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
+                <div className={styles.notesList}>
+                  {existingNotes.map((note) => (
+                    <div 
+                      key={note.id}
+                      className={styles.noteItem}
+                      onClick={() => handleSelectNote(note)}
+                    >
+                      <div className={styles.noteItemHeader}>
+                        <span className={styles.noteItemTitle}>{note.title}</span>
+                        <span className={styles.noteItemDate}>{note.date}</span>
+                      </div>
+                      <div className={styles.noteItemPreview}>
+                        {note.preview}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className={styles.notesPreview}>
-                {selectedProject && isLoadingJournal ? (
-                  <div className={styles.loadingState}>
-                    <div className={styles.spinner}></div>
-                    <p>Loading journal...</p>
-                  </div>
-                ) : selectedProject ? (
-                  <div className={styles.journalContent}>
-                    <pre className={styles.journalMarkdown}>
-                      {journalContent || '# Dev Journal\n\nNo journal entries yet.\n\nStart documenting your journey!'}
-                    </pre>
-                  </div>
-                ) : (
-                  <div className={styles.emptyState}>
-                    <div className={styles.noteTypeExplanation}>
-                      <h4>📝 Quick Notes</h4>
-                      <p>Write notes, prompts, or commands and save them to the right place:</p>
-                      <ul>
-                        <li><strong>📝 Note:</strong> General development thoughts and observations</li>
-                        <li><strong>🤖 Prompt:</strong> Claude prompt templates for future use</li>
-                        <li><strong>⌨️ Command:</strong> Useful commands, scripts, or code snippets</li>
-                      </ul>
-                      <p className={styles.hint}>💡 Click Edit to start writing. Your note can be saved to journals, CLAUDE.md, or copied as a Claude prompt!</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              // Default to new note interface instead of preview
+              <NoteCard
+                claudeInstructions={claudeInstructions}
+                noteContent={currentNote}
+                onSave={handleSaveToToSort}
+                onCancel={() => {
+                  setCurrentNote('')
+                  setClaudeInstructions('')
+                  setSelectedNoteProject('')
+                }}
+                onClaudeInstructionsChange={setClaudeInstructions}
+                onNoteContentChange={setCurrentNote}
+                isEditing={true}
+                context={selectedProject ? selectedProject.title : 'General'}
+                selectedProject={selectedNoteProject}
+                onProjectChange={setSelectedNoteProject}
+                projects={projects}
+              />
             )}
           </div>
         </animated.div>

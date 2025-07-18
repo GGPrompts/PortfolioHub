@@ -113,37 +113,37 @@ npm run dev
 ## Recent Updates (2025-07-18)
 
 ### Latest Features (Current Session)
-- **Mobile/Desktop View Toggle System**: Complete viewport switching for portfolio previews:
-  - Global header toggle with expand/smartphone SVG icons from GGPrompts design system
-  - Mobile view: Full-height phone-proportioned preview (500px height) for mobile-first showcase
-  - Desktop view: Mini 1920x1080 landscape viewport scaled to 28% for true desktop preview
-  - Automatic grid adjustments (mobile: 420px cards, desktop: 620px cards with landscape containers)
-  - Individual card toggles hidden when global view mode is active for consistent UX
-- **Vertical Monitor Override Solutions**: Fixed orientation issues for vertical monitor setups:
-  - URL parameters (`?viewport=desktop&orientation=landscape`) to force desktop rendering
-  - CSS orientation overrides with `writing-mode: horizontal-tb` and explicit dimensions
-  - Media query overrides with `!important` rules to prevent portrait mode interference
-  - Container constraints to maintain 16:9 landscape ratio regardless of system orientation
-- **Pointer Lock Fix**: Resolved iframe security restrictions for 3D file system FPS mode:
-  - Added `allow-pointer-lock` to iframe sandbox permissions
-  - Enabled proper FPS mode functionality within portfolio iframe viewer
-- **Advanced 3D File System Upgrade**: Replaced basic implementation with terminal-interface version:
-  - Expandable terminal sidebar with 3-state design (48px → 256px → 816px)
-  - Working 3D card flipping using SleekCard3DMesh implementation
-  - Fixed text culling, Z-fighting, and badge flickering issues
-  - Holographic UI with glassmorphism effects and smooth animations
-  - FPS mode with pointer lock, crosshair targeting, and keyboard shortcuts
-  - File preview system with metadata display and editor integration
-- **Port Conflict Resolution**: Fixed portfolio incorrectly detecting projects as running
-  - Portfolio moved to dedicated port 5173 (isolated from project ports)
-  - Improved port detection accuracy with false positive prevention
-  - Enhanced project status monitoring for reliable online/offline indicators
-- **DEV NOTES System**: Transformed journal panel into versatile note-taking system with:
-  - Three note types (Note, Prompt, Command) with context-specific templates
-  - Flexible output destinations (Journal, CLAUDE.md, README, Notes File)
-  - Clipboard integration for instant Claude prompt generation with file paths
-  - Context-aware prompts automatically including project information
-  - Smart workflow examples and comprehensive documentation
+- **Professional Matrix Card Notes System**: Complete redesign of DEV NOTES with Matrix Card aesthetics:
+  - Professional 3D flip card interface with cyberpunk green/cyan theme
+  - Separate fields for Claude instructions (### marked) and note content
+  - Project dropdown selection with automatic folder path integration
+  - Enhanced placeholder text with bright teal color and comprehensive instructions
+  - Letter-sized proportions (600px height) for better writing experience
+  - Flip animation to preview formatted markdown output
+  - Default to new note interface for immediate productivity
+- **Universal Note Capture System**: Streamlined workflow for quick idea capture:
+  - Notes automatically saved to to-sort folder for later organization
+  - Project-specific context with exact folder paths provided to Claude
+  - One-click organization prompt generation for batch processing
+  - Smart metadata including project paths, timestamps, and Claude instructions
+  - Clipboard integration with context-aware Claude prompts
+- **Enhanced Header System**: Compact, professional header design:
+  - Square refresh icon button with hover animations
+  - Dropdown menu for grouped actions (consistent across main and project headers)
+  - Proper spacing fixes to prevent content overlap with header borders
+  - Cyan "Organize Notes" button with distinct styling
+  - Responsive behavior for all screen sizes
+- **Terminal Integration Documentation**: Added comprehensive guide:
+  - Complete xterm.js + node-pty architecture documentation
+  - Electron and web app implementation examples  
+  - Crystal app analysis and integration possibilities
+  - Security considerations and performance optimization
+  - Created `docs/terminal-integration-guide.md` for reference
+  - Ready for future integration of terminal functionality into portfolio
+- **Project Management Improvements**: 
+  - Cleaned up project titles (removed "Terminal Interface" from 3D File System)
+  - Fixed port assignments and improved status detection
+  - Enhanced PowerShell scripts with proper portfolio port (5173)
 
 ### Previous Major Updates
 - **Notebook-Style Sidebar**: Complete redesign with professional tabs that stick to panel edges
@@ -159,39 +159,45 @@ npm run dev
 
 ## Development Workflow
 
-### DEV NOTES System Workflow
-1. Click ✏️ **Edit** button in DEV NOTES panel
-2. Select note type (**📝 Note** | **🤖 Prompt** | **⌨️ Command**)
-3. Write content using provided templates and examples
-4. Choose output destination:
-   - **📓 Dev Journal**: Add to project's dev journal file
-   - **🤖 CLAUDE.md**: Add to project or root CLAUDE.md instructions
-   - **📋 README**: Add to project README.md
-   - **🗂️ Notes File**: Save to dedicated NOTES.md file
-   - **📋 Copy Claude Prompt**: Generate instant Claude prompt with context
-5. One-click copying generates perfect Claude prompts with file paths and instructions
+### Matrix Card Notes System Workflow
+1. **Default Interface**: DEV NOTES panel opens directly to Matrix Card note editor
+2. **Project Selection**: Choose project from dropdown or leave as "General"
+3. **Claude Instructions**: Add optional instructions for AI organization (marked with ###)
+4. **Note Content**: Write your thoughts in the large letter-sized content area
+5. **Preview**: Flip the card to see formatted markdown output with metadata
+6. **Save**: Notes automatically saved to to-sort folder with project context
+7. **Organization**: Use "Organize Notes" button to generate Claude prompts for batch sorting
 
-### Example DEV NOTES Workflows
+### Note Organization System
+- **To-Sort Folder**: `D:\ClaudeWindows\claude-dev-portfolio\notes\to-sort\`
+- **Automatic Metadata**: Project paths, timestamps, and Claude instructions included
+- **Smart Organization**: Generated prompts include project-specific context and file paths
+- **Flexible Destinations**: Notes can be moved to dev journals, CLAUDE.md, README, or topic folders
 
-**Workflow 1: Saving a Prompt Template**
-1. Open DEV NOTES panel → Click **✏️ Edit**
-2. Select **🤖 Prompt** type
-3. Write: `Help me implement responsive design in [PROJECT]. I need mobile-first CSS with breakpoints for tablet and desktop. Current context: [CONTEXT]`
-4. Click **🤖 CLAUDE.md** button
-5. **Instant clipboard**: `"Please add this prompt to CLAUDE.md at D:\...\projects\project-name\CLAUDE.md: ## Claude Prompt - 2025-07-18 [your formatted content]"`
-6. Paste in Claude Code and your prompt is instantly saved with proper formatting!
+### Example Matrix Card Notes Workflows
 
-**Workflow 2: Quick Command Reference**
-1. Select **⌨️ Command** type
-2. Write: `# Start all projects\ncd D:\\ClaudeWindows\\claude-dev-portfolio\n.\\scripts\\start-all-improved.ps1\n\n# Kill all servers\n.\\scripts\\kill-all-servers.ps1`
-3. Click **🗂️ Notes File** to save to NOTES.md
-4. Future reference: Commands are organized and searchable
+**Workflow 1: Project-Specific Feature Idea**
+1. Open DEV NOTES panel (automatically opens to Matrix Card editor)
+2. Select **Matrix Cards** from project dropdown
+3. Add Claude Instructions: `Help me implement this feature in the Matrix Cards project`
+4. Write Note: `Add a new card type that displays code snippets with syntax highlighting. This would be great for showcasing code examples and technical documentation.`
+5. Preview by flipping the card to see formatted output
+6. Save - automatically includes project path: `D:\ClaudeWindows\claude-dev-portfolio\projects\matrix-cards`
 
-**Workflow 3: Development Notes**
-1. Select **📝 Note** type
-2. Write: `The new sidebar tabs need better visual separation. Consider adding subtle borders between notebook tabs and adjusting the glow effects for active states.`
-3. Click **📓 Dev Journal** to add to current project's journal
-4. Context preserved: Note includes timestamp and project association
+**Workflow 2: General Development Thought**
+1. Keep project dropdown as "General (No Project)"
+2. Add Claude Instructions: `Organize this into the appropriate project or create a new research folder`
+3. Write Note: `Research terminal integration patterns for web applications. Look into xterm.js + node-pty architecture.`
+4. Save to to-sort folder for later organization
+
+**Workflow 3: Batch Organization**
+1. After accumulating several notes, click **🗂️ Organize Notes**
+2. Claude prompt automatically generated with instructions to:
+   - Review all notes in to-sort folder
+   - Extract Claude instructions (marked with ###)
+   - Move notes to appropriate project dev journals
+   - Update CLAUDE.md files with relevant instructions
+   - Create topic-based folders for general notes
 
 ## Project Management
 

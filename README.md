@@ -11,6 +11,7 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
 - **⚡ One-Click Launch** - Start all projects with a single PowerShell script
 - **🔍 Project Filtering** - Filter projects by technology, status, or tags
 - **📊 Dashboard Analytics** - View project status, technologies used, and portfolio statistics
+- **📝 Matrix Card Notes** - Professional note-taking system with 3D flip animations and AI organization
 
 ## 🎯 Perfect For
 
@@ -68,25 +69,65 @@ PortfolioHub/
 └── public/               # Static assets
 ```
 
-## 🛠️ Adding New Projects
+## 🛠️ Adding Projects
 
-1. **Add your project** to the `projects/` directory
+### 🚀 Creating New Projects (Automated)
+
+Use the automated script to create a new project with full integration:
+
+```powershell
+# Create a new project from template
+.\scripts\create-project.ps1 -ProjectName "my-awesome-project" -Description "Description of what it does"
+
+# Optional: Specify a custom port
+.\scripts\create-project.ps1 -ProjectName "my-project" -Port 3015 -Description "Custom port project"
+```
+
+**Features:**
+- ✅ **Automatic Integration** - Updates manifest, port manager, and all necessary files
+- ✅ **Template-based** - Creates React + TypeScript + Vite project structure
+- ✅ **Git Ready** - Initializes repository with proper commit
+- ✅ **DEV NOTES Ready** - Immediately available in project dropdown
+- ✅ **Validation** - Performs 6 integration checks to ensure everything works
+- ✅ **Port Management** - Automatically finds available ports
+- ✅ **Dev Journal** - Creates development journal file
+
+### 📁 Adding Existing Projects (Manual)
+
+To add an existing project to the portfolio:
+
+1. **Move your project** to the `projects/` directory
 2. **Update** `projects/manifest.json`:
    ```json
    {
-     "id": "my-awesome-project",
-     "title": "My Awesome Project",
+     "id": "my-existing-project",
+     "title": "My Existing Project",
      "description": "Description of what it does",
      "displayType": "external",
      "localPort": 3010,
      "buildCommand": "npm run dev",
+     "path": "my-existing-project",
+     "thumbnail": "thumbnails/my-existing-project.png",
+     "tags": ["React", "TypeScript", "Existing"],
      "tech": ["React", "TypeScript", "Vite"],
-     "tags": ["frontend", "web-app"],
-     "status": "active"
+     "status": "active",
+     "devJournal": "projects/dev-journals/my-existing-project.md",
+     "features": [
+       "Existing codebase",
+       "Portfolio integration",
+       "Custom features"
+     ]
    }
    ```
-3. **Add port mapping** in `src/utils/portManager.ts`
-4. **Start your project** and it will appear in the portfolio!
+3. **Add port mapping** in `src/utils/portManager.ts`:
+   ```typescript
+   export const DEFAULT_PORTS = {
+     // ... existing ports
+     'my-existing-project': 3010
+   };
+   ```
+4. **Create dev journal** in `projects/dev-journals/my-existing-project.md`
+5. **Start your project** and it will appear in the portfolio!
 
 ## 🎮 Project Display Types
 
@@ -121,6 +162,66 @@ PortfolioHub/
 | **Collapsed** | 48px | Icon bar only |
 | **Normal** | 256px | Standard sidebar with project info |
 | **Expanded** | 816px | Detailed project view with stats |
+
+## 📝 Matrix Card Notes System
+
+### Overview
+The portfolio includes a professional note-taking system with Matrix Card aesthetics featuring 3D flip animations, project-specific context, and AI-assisted organization.
+
+### Features
+- **🎴 3D Flip Cards** - Professional cyberpunk-themed interface with smooth animations
+- **📋 Universal Capture** - Quickly capture ideas, features, and thoughts
+- **🤖 AI Instructions** - Add context for Claude to organize notes automatically
+- **🗂️ Smart Organization** - Auto-save to to-sort folder for batch processing
+- **📁 Project Context** - Link notes to specific projects with automatic folder paths
+- **🎨 Letter-sized Design** - Optimal proportions for comfortable writing
+
+### Workflow
+1. **Open DEV NOTES** - Click the ✏️ Edit tab in the sidebar
+2. **Select Project** - Choose from dropdown or use "General" for non-project notes
+3. **Add Instructions** - Optional Claude instructions for AI organization
+4. **Write Content** - Use the large content area for your thoughts
+5. **Preview** - Flip the card to see formatted markdown output
+6. **Save** - Automatically saves to `notes/to-sort/` folder
+7. **Organize** - Use "🗂️ Organize Notes" to batch process all saved notes
+
+### Note Organization
+Notes are saved with full context including:
+- Project paths and metadata
+- Timestamps and Claude instructions
+- Smart prompts for AI-assisted organization
+- Flexible destinations (dev journals, CLAUDE.md, README, etc.)
+
+## 🔄 Project Workflow
+
+### Complete Integration Features
+Once a project is added (via script or manually), it's automatically integrated with:
+
+- **📊 Portfolio Grid** - Visual project cards with live previews
+- **📝 DEV NOTES System** - Project available in Matrix Card notes dropdown
+- **🔍 Real-time Status** - Automatic port detection and running status
+- **📁 File Organization** - Development journals and project-specific context
+- **🔧 Smart Port Management** - Conflict detection and automatic assignment
+- **🌐 Live Previews** - Iframe integration with mobile/desktop view toggles
+
+### Development Workflow
+1. **Create/Add Project** - Use automated script or manual setup
+2. **Start Development** - `npm run dev` in project directory
+3. **Take Notes** - Use DEV NOTES panel with project-specific context
+4. **View Progress** - Monitor status in portfolio dashboard
+5. **Organize Ideas** - Notes automatically include project paths for Claude
+
+### Quick Commands
+```powershell
+# Create new project
+.\scripts\create-project.ps1 -ProjectName "new-idea" -Description "Quick prototype"
+
+# Start all projects
+.\scripts\start-all-improved.ps1
+
+# Kill all servers
+.\scripts\kill-all-servers.ps1
+```
 
 ## 🔧 Configuration
 
@@ -225,6 +326,7 @@ Perfect for showcasing:
 - **Issues**: [GitHub Issues](https://github.com/GGPrompts/PortfolioHub/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/GGPrompts/PortfolioHub/discussions)
 - **Documentation**: Check the `/docs` folder for detailed guides
+  - **Terminal Integration**: See `docs/terminal-integration-guide.md` for xterm.js + node-pty implementation
 
 ## 📄 License
 

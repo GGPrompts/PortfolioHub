@@ -134,7 +134,161 @@ $Description
 
 Set-Content $JournalPath -Value $JournalContent
 
-Write-Host "✅ Project '$ProjectTitle' created successfully!" -ForegroundColor Green
+Write-Host "📋 Updating portfolio manifest..." -ForegroundColor Cyan
+
+# Read current manifest
+$ManifestPath = "D:\ClaudeWindows\claude-dev-portfolio\projects\manifest.json"
+try {
+    $Manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+} catch {
+    Write-Host "❌ Failed to read manifest.json: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Check if project already exists in manifest
+$ExistingProject = $Manifest.projects | Where-Object { $_.id -eq $ProjectId }
+if ($ExistingProject) {
+    Write-Host "❌ Project '$ProjectId' already exists in manifest" -ForegroundColor Red
+    exit 1
+}
+
+# Create new project entry
+$NewProject = @{
+    id = $ProjectId
+    title = $ProjectTitle
+    description = $Description
+    displayType = "external"
+    localPort = $Port
+    buildCommand = "npm run dev"
+    path = $ProjectId
+    thumbnail = "thumbnails/$ProjectId.png"
+    tags = @("React", "TypeScript", "New")
+    tech = @("React", "Vite", "TypeScript")
+    status = "active"
+    devJournal = "projects/dev-journals/$ProjectId.md"
+    features = @(
+        "React 18 with TypeScript",
+        "Portfolio integration",
+        "Modern development setup"
+    )
+}
+
+# Add to manifest
+$Manifest.projects += $NewProject
+
+# Save manifest
+try {
+    $Manifest | ConvertTo-Json -Depth 10 | Set-Content $ManifestPath
+    Write-Host "  ✅ Portfolio manifest updated" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Failed to update manifest.json: $_" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "📡 Updating port manager..." -ForegroundColor Cyan
+
+# Update portManager.ts
+$PortManagerPath = "D:\ClaudeWindows\claude-dev-portfolio\src\utils\portManager.ts"
+try {
+    $PortManagerContent = Get-Content $PortManagerPath -Raw
+} catch {
+    Write-Host "❌ Failed to read portManager.ts: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Check if project already exists in portManager
+if ($PortManagerContent -match "'$ProjectId':") {
+    Write-Host "❌ Project '$ProjectId' already exists in portManager" -ForegroundColor Red
+    exit 1
+}
+
+# Find the closing brace of DEFAULT_PORTS and add new entry before it
+$Pattern = '(\s+)(};)(\s+// Fallback ports)'
+$Replacement = "`$1  '$ProjectId': $Port,`n`$1`$2`$3"
+$PortManagerContent = $PortManagerContent -replace $Pattern, $Replacement
+
+# If the above pattern doesn't work, try a more general approach
+if ($PortManagerContent -notmatch "'$ProjectId': $Port") {
+    $Pattern = '(export const DEFAULT_PORTS = \{[^}]*)\s*};'
+    $Replacement = "`$1,`n  '$ProjectId': $Port`n};"
+    $PortManagerContent = $PortManagerContent -replace $Pattern, $Replacement
+}
+
+try {
+    Set-Content $PortManagerPath -Value $PortManagerContent
+    Write-Host "  ✅ Port manager updated" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Failed to update portManager.ts: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Verify the update worked
+$UpdatedContent = Get-Content $PortManagerPath -Raw
+if ($UpdatedContent -match "'$ProjectId': $Port") {
+    Write-Host "  ✅ Port manager integration verified" -ForegroundColor Green
+} else {
+    Write-Host "❌ Port manager update verification failed" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "🔍 Performing final integration checks..." -ForegroundColor Cyan
+
+# Verify project files exist
+$ChecksPassed = 0
+$TotalChecks = 6
+
+if (Test-Path $ProjectDir) {
+    Write-Host "  ✅ Project directory created" -ForegroundColor Green
+    $ChecksPassed++
+} else {
+    Write-Host "  ❌ Project directory missing" -ForegroundColor Red
+}
+
+if (Test-Path $JournalPath) {
+    Write-Host "  ✅ Development journal created" -ForegroundColor Green
+    $ChecksPassed++
+} else {
+    Write-Host "  ❌ Development journal missing" -ForegroundColor Red
+}
+
+if (Test-Path "$ProjectDir\.git") {
+    Write-Host "  ✅ Git repository initialized" -ForegroundColor Green
+    $ChecksPassed++
+} else {
+    Write-Host "  ❌ Git repository not initialized" -ForegroundColor Red
+}
+
+# Verify manifest integration
+$UpdatedManifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+$ManifestProject = $UpdatedManifest.projects | Where-Object { $_.id -eq $ProjectId }
+if ($ManifestProject) {
+    Write-Host "  ✅ Portfolio manifest integration verified" -ForegroundColor Green
+    $ChecksPassed++
+} else {
+    Write-Host "  ❌ Portfolio manifest integration failed" -ForegroundColor Red
+}
+
+# Verify port manager integration (already done above)
+$ChecksPassed++
+
+# Verify package.json has correct port
+$PackageContent = Get-Content "$ProjectDir\package.json" -Raw | ConvertFrom-Json
+if ($PackageContent.scripts.dev -match $Port) {
+    Write-Host "  ✅ Project port configuration verified" -ForegroundColor Green
+    $ChecksPassed++
+} else {
+    Write-Host "  ❌ Project port configuration failed" -ForegroundColor Red
+}
+
+Write-Host ""
+if ($ChecksPassed -eq $TotalChecks) {
+    Write-Host "✅ Project '$ProjectTitle' created successfully!" -ForegroundColor Green
+    Write-Host "🎉 All integration checks passed ($ChecksPassed/$TotalChecks)" -ForegroundColor Green
+} else {
+    Write-Host "⚠️  Project '$ProjectTitle' created with issues!" -ForegroundColor Yellow
+    Write-Host "🔧 Integration checks: $ChecksPassed/$TotalChecks passed" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "📍 Project Location: $ProjectDir" -ForegroundColor Yellow
 Write-Host "🌐 Development Port: $Port" -ForegroundColor Yellow
@@ -143,30 +297,13 @@ Write-Host ""
 Write-Host "🚀 Next Steps:" -ForegroundColor Cyan
 Write-Host "  1. cd $ProjectDir"
 Write-Host "  2. npm run dev"
-Write-Host "  3. Add to portfolio manifest:"
+Write-Host "  3. Refresh portfolio to see new project"
 Write-Host ""
-Write-Host "Add this to projects/manifest.json:" -ForegroundColor Yellow
-Write-Host @"
-{
-  "id": "$ProjectId",
-  "title": "$ProjectTitle", 
-  "description": "$Description",
-  "displayType": "external",
-  "localPort": $Port,
-  "buildCommand": "npm run dev",
-  "path": "$ProjectId",
-  "thumbnail": "thumbnails/$ProjectId.png",
-  "tags": ["React", "TypeScript", "New"],
-  "tech": ["React", "Vite", "TypeScript"],
-  "status": "active",
-  "devJournal": "projects/dev-journals/$ProjectId.md",
-  "features": [
-    "React 18 with TypeScript",
-    "Portfolio integration",
-    "Modern development setup"
-  ]
-}
-"@ -ForegroundColor Gray
-
+Write-Host "✨ New Features Automatically Integrated:" -ForegroundColor Green
+Write-Host "  ✅ Portfolio manifest updated"
+Write-Host "  ✅ Port manager updated"
+Write-Host "  ✅ Project dropdown (DEV NOTES) ready"
+Write-Host "  ✅ Development journal created"
+Write-Host "  ✅ Git repository initialized"
 Write-Host ""
 Write-Host "🎯 Happy coding with Claude!" -ForegroundColor Green

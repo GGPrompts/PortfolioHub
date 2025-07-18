@@ -1,0 +1,467 @@
+/* Professional Matrix Card styling for Notes */
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto; /* Remove top margin since parent now has proper padding */
+}
+
+/* Main Note Card */
+.card {
+  position: relative;
+  width: 100%;
+  height: 600px; /* Increased from 500px to 600px for letter-like proportions */
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+  cursor: pointer;
+  perspective: 1000px;
+  /* Ensure the card itself clips any overflow */
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.cardFront,
+.cardBack {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.9) 100%);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 136, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Ensure all child elements respect the rounded corners */
+  isolation: isolate;
+}
+
+.cardBack {
+  transform: rotateY(180deg);
+}
+
+/* Card Header */
+.cardHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 255, 0.1) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Ensure header corners follow card's rounded corners */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.cardTitle {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00ff88;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.cardContext {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.contextLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.contextValue {
+  color: #00ffff;
+  font-family: 'Courier New', Consolas, monospace;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+.projectSelect {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #00ffff;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.projectSelect:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.projectSelect option {
+  background: rgba(20, 20, 20, 0.95);
+  color: #00ffff;
+  padding: 4px 8px;
+}
+
+/* Card Content */
+.cardContent {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.inputSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.labelText {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9rem;
+  color: #00ff88;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.instructionsInput,
+.noteInput {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+.instructionsInput:focus,
+.noteInput:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.instructionsInput::placeholder,
+.noteInput::placeholder {
+  color: rgba(0, 255, 255, 0.7); /* Brighter teal color instead of dim white */
+  font-style: italic;
+}
+
+.instructionsInput {
+  min-height: 60px;
+  border-color: rgba(0, 255, 255, 0.3);
+  overflow-y: hidden; /* Hide scrollbar, let it auto-expand */
+}
+
+.instructionsInput:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.3);
+}
+
+.noteInput {
+  min-height: 240px; /* Increased from 160px to 240px for better letter proportions */
+  overflow-y: hidden; /* Hide scrollbar, let it auto-expand */
+}
+
+/* Card Actions */
+.cardActions {
+  display: flex;
+  height: 60px;
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 255, 255, 0.05) 100%);
+  /* Ensure footer corners follow card's rounded corners */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.actionBtn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.actionBtn:not(:last-child) {
+  border-right: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.actionBtn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  transform: translateY(-2px);
+}
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.actionBtn:disabled:hover {
+  background: none;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.saveBtn:hover {
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 136, 136, 0.15);
+  color: #ff8888;
+  box-shadow: 0 0 15px rgba(255, 136, 136, 0.3);
+}
+
+.actionIcon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.actionText {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Preview Styles */
+.previewSection {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.previewContent {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+.previewTitle {
+  color: #00ff88;
+  font-size: 1.2rem;
+  margin: 0 0 16px 0;
+  font-weight: 600;
+}
+
+.previewSubtitle {
+  color: #00ffff;
+  font-size: 1rem;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+
+.previewText {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+}
+
+.previewInstructions {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0;
+}
+
+.previewMetadata {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0;
+  font-size: 0.85rem;
+}
+
+.previewMetadata p {
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.previewNote {
+  margin: 16px 0;
+}
+
+.previewFooter {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Organize Card */
+.organizeCard {
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(30, 30, 30, 0.9) 100%);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  /* Ensure all child elements respect the rounded corners */
+  isolation: isolate;
+}
+
+.organizeHeader {
+  padding: 16px 20px;
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.1) 0%, rgba(0, 255, 136, 0.1) 100%);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  /* Ensure header corners follow card's rounded corners */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.organizeTitle {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #00ffff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.organizeContent {
+  padding: 16px 20px;
+}
+
+.organizeText {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cardContainer {
+    padding: 16px;
+  }
+  
+  .card {
+    height: 550px; /* Increased from 450px to maintain proportions on mobile */
+  }
+  
+  .cardHeader {
+    padding: 16px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .cardContent {
+    padding: 20px;
+  }
+  
+  .actionBtn {
+    font-size: 0.8rem;
+  }
+  
+  .actionText {
+    font-size: 0.7rem;
+  }
+  
+  .noteInput {
+    min-height: 200px; /* Slightly smaller on mobile but still taller than before */
+  }
+}
+
+/* Hover Effects */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 0 25px rgba(0, 255, 136, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.card.flipped:hover {
+  transform: rotateY(180deg) translateY(-4px);
+}
+
+/* Scroll Indicators */
+.cardContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cardContent::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.cardContent::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.4);
+  border-radius: 3px;
+}
+
+.cardContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 136, 0.6);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+  }
+}
+
+.card {
+  animation: pulse 3s ease-in-out infinite;
+}

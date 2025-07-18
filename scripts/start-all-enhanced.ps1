@@ -177,7 +177,7 @@ function Show-ServerStatus {
 $projects = @{
     "Portfolio" = @{
         Path = (Resolve-Path $rootPath).Path
-        Port = 3000
+        Port = 5173
         EnvVars = @{
             BROWSER = "none"
             OPEN_BROWSER = "false"
@@ -267,7 +267,7 @@ Write-Host ""
 Write-Host "[COMPLETE] Portfolio Development Environment Management Complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your projects:" -ForegroundColor Cyan
-Write-Host "  Portfolio:              http://localhost:3000" -ForegroundColor White
+Write-Host "  Portfolio:              http://localhost:5173" -ForegroundColor White
 Write-Host "  3D Matrix Cards:        http://localhost:3005" -ForegroundColor White
 Write-Host "  3D File System:         http://localhost:3004" -ForegroundColor White
 Write-Host "  Matrix Cards:           http://localhost:3002" -ForegroundColor White

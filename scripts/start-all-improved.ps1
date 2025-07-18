@@ -56,9 +56,15 @@ $Command $($Args -join ' ')
 $projects = @{
     "Portfolio" = @{
         Path = $rootPath
-        Port = 3000
+        Port = 5173
         Command = "npm"
         Args = @("run", "dev")
+    }
+    "3D Matrix Cards" = @{
+        Path = "$rootPath\projects\3d-matrix-cards"
+        Port = 3005
+        Command = "npm"
+        Args = @("start")
     }
     "Matrix Cards" = @{
         Path = "$rootPath\projects\matrix-cards"
@@ -81,6 +87,12 @@ $projects = @{
     "GGPrompts Style Guide" = @{
         Path = "$rootPath\projects\ggprompts-style-guide"
         Port = 3001
+        Command = "npm"
+        Args = @("run", "dev")
+    }
+    "3D File System" = @{
+        Path = "$rootPath\projects\3d-file-system"
+        Port = 3004
         Command = "npm"
         Args = @("run", "dev")
     }
@@ -110,11 +122,13 @@ Write-Host ""
 Write-Host "🎯 Portfolio Development Environment Started!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your projects:" -ForegroundColor Cyan
-Write-Host "  📊 Portfolio:              http://localhost:3000" -ForegroundColor White
+Write-Host "  📊 Portfolio:              http://localhost:5173" -ForegroundColor White
+Write-Host "  🎬 3D Matrix Cards:        http://localhost:3005" -ForegroundColor White
 Write-Host "  🎴 Matrix Cards:           http://localhost:3002" -ForegroundColor White
 Write-Host "  💎 Sleak Card:             http://localhost:3003" -ForegroundColor White
 Write-Host "  🤖 GGPrompts:              http://localhost:9323" -ForegroundColor White
 Write-Host "  📚 GGPrompts Style Guide:  http://localhost:3001" -ForegroundColor White
+Write-Host "  🗂️ 3D File System:         http://localhost:3004" -ForegroundColor White
 Write-Host ""
 Write-Host "💡 Tips:" -ForegroundColor Yellow
 Write-Host "  - Use Ctrl+C in each terminal to stop individual projects" -ForegroundColor Gray

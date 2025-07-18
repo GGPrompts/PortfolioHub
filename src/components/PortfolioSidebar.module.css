@@ -410,7 +410,7 @@
 .expandedBody {
   flex: 1;
   overflow-y: auto;
-  padding: 30px;
+  padding: 50px 30px 30px; /* Increased top padding from 30px to 50px */
   position: relative;
   z-index: 2;
 }
@@ -957,6 +957,134 @@
   background: rgba(0, 255, 136, 0.2);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+}
+
+/* Organize Notes Button */
+.organizeBtn {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: #00ffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.organizeBtn:hover {
+  background: rgba(0, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 255, 255, 0.3);
+  border-color: rgba(0, 255, 255, 0.5);
+}
+
+/* Quick Note Actions */
+.quickNoteActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* New Note Button for main area */
+.newNoteBtn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.newNoteBtn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+/* Note Selection Interface */
+.noteSelectionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  margin-top: 0; /* Remove margin since parent now has proper padding */
+}
+
+.noteSelectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.noteSelectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ff88;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.noteItem {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.noteItem:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.4);
+  transform: translateY(-1px);
+}
+
+.noteItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.noteItemTitle {
+  font-size: 12px;
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.noteItemDate {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.noteItemPreview {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .noteEditor {

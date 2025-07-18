@@ -7,9 +7,11 @@ export interface PortStatus {
   projectId?: string;
 }
 
-// Default port assignments
+// Portfolio port (excluded from project detection)
+export const PORTFOLIO_PORT = 5173;
+
+// Default port assignments for projects only
 export const DEFAULT_PORTS = {
-  'portfolio': 3000,
   '3d-matrix-cards': 3005,
   'matrix-cards': 3002,
   'sleak-card': 3003,
@@ -18,8 +20,8 @@ export const DEFAULT_PORTS = {
   '3d-file-system': 3004
 };
 
-// Fallback ports if defaults are taken
-const FALLBACK_PORTS = [3004, 3005, 3006, 3007, 3008, 5175, 5176, 5177];
+// Fallback ports if defaults are taken (excluding portfolio port 5173)
+const FALLBACK_PORTS = [3006, 3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177];
 
 // Check if a port is available
 export async function checkPort(port: number): Promise<boolean> {

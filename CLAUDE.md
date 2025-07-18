@@ -47,7 +47,7 @@ claude-dev-portfolio/
 # Install dependencies
 npm install
 
-# Start portfolio hub (runs on port 3000)
+# Start portfolio hub (runs on port 5173)
 npm run dev
 
 # Start all projects automatically (no browser auto-launch)
@@ -164,10 +164,10 @@ Each project card displays:
 ## Architecture Details
 
 ### Port Management
-- **Portfolio**: Runs on port 5173 (Vite dev server)
-- **Projects**: Auto-assigned ports starting from 3000 (3001, 3002, 3003, etc.)
-- **Conflict Detection**: Automatic port assignment prevents conflicts
-- **Range**: Projects use ports 3000-3099 for organized management
+- **Portfolio**: Runs on port 5173 (Vite dev server, excluded from project detection)
+- **Projects**: Assigned specific ports (3001-3005, 9323) to avoid conflicts
+- **Conflict Detection**: Portfolio port excluded from project status detection
+- **Range**: Projects use assigned ports with fallback range 3006-3010, 5174-5177
 
 ### Component Architecture
 ```

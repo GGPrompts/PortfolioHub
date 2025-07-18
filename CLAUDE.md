@@ -108,10 +108,18 @@ npm run dev
 - **sleak-card**: Modern card system with water effects and responsive design
 - **ggprompts**: Main AI prompt platform with advanced features
 - **ggprompts-style-guide**: Design system documentation and component library
+- **3d-file-system**: Advanced file system viewer with terminal interface, expandable sidebar, and working 3D card flipping
 
 ## Recent Updates (2025-07-18)
 
 ### Latest Features (Current Session)
+- **Advanced 3D File System Upgrade**: Replaced basic implementation with terminal-interface version:
+  - Expandable terminal sidebar with 3-state design (48px → 256px → 816px)
+  - Working 3D card flipping using SleekCard3DMesh implementation
+  - Fixed text culling, Z-fighting, and badge flickering issues
+  - Holographic UI with glassmorphism effects and smooth animations
+  - FPS mode with pointer lock, crosshair targeting, and keyboard shortcuts
+  - File preview system with metadata display and editor integration
 - **Port Conflict Resolution**: Fixed portfolio incorrectly detecting projects as running
   - Portfolio moved to dedicated port 5173 (isolated from project ports)
   - Improved port detection accuracy with false positive prevention

@@ -105,24 +105,26 @@
     },
     {
       "id": "3d-file-system",
-      "title": "3D File System Viewer",
-      "description": "Revolutionary 3D file system visualization with interactive cards, dual navigation modes, and immersive room environment. Features FPS and orbital controls.",
+      "title": "3D File System Viewer (Terminal Interface)",
+      "description": "Advanced 3D file system with terminal interface, expandable sidebar, and working card flipping. Features FPS controls, holographic UI, and seamless file management.",
       "displayType": "external",
       "localPort": 3004,
       "buildCommand": "npm run dev",
       "repository": "https://github.com/yourusername/3d-file-system",
       "thumbnail": "thumbnails/3d-file-system.png",
-      "tags": ["3D", "File System", "Interactive", "Next.js"],
-      "tech": ["Next.js 14", "React Three Fiber", "TypeScript", "Three.js", "Tailwind CSS"],
+      "tags": ["3D", "File System", "Terminal", "Interactive", "Next.js"],
+      "tech": ["Next.js 14", "React Three Fiber", "TypeScript", "Three.js", "Zustand", "React Spring"],
       "status": "active",
       "devJournal": "projects/dev-journals/3d-file-system.md",
       "features": [
-        "Interactive 3D file cards with flip animations",
-        "Dual navigation: Orbital & FPS modes",
-        "Real-time file targeting with crosshair",
-        "File importance visualization (critical/important)",
-        "Immersive room environment with neon lighting",
-        "60 FPS performance with 100+ files"
+        "Expandable terminal sidebar (3-state: 48px → 256px → 816px)",
+        "Working 3D card flipping with SleekCard3DMesh implementation",
+        "Holographic UI with glassmorphism effects",
+        "FPS mode with pointer lock and crosshair targeting",
+        "File preview system with metadata display",
+        "Keyboard shortcuts and smooth animations",
+        "Fixed text culling and Z-fighting issues",
+        "Performance optimizations for 100+ files at 60 FPS"
       ]
     }
   ]

@@ -9,9 +9,10 @@ import styles from './PortfolioSidebar.module.css'
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
   onWidthChange?: (width: number) => void
+  layoutStrategy?: 'push' | 'overlay'
 }
 
-export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: PortfolioSidebarProps) {
+export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layoutStrategy = 'push' }: PortfolioSidebarProps) {
   const { 
     sidebarState, 
     setSidebarState, 
@@ -251,6 +252,12 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
       style={{ width: springProps.width }}
     >
       <div className={styles.sidebarContainer}>
+        {/* Responsive mode indicator */}
+        {layoutStrategy === 'overlay' && activeTabs.length > 0 && (
+          <div className={styles.responsiveIndicator} title="Overlay mode - content protected from cutoff">
+            📱
+          </div>
+        )}
         {/* Notebook-style Tabs - Positioned at screen edge */}
         {Object.entries(tabs).map(([tabId, config]) => (
           <div 

@@ -16,6 +16,7 @@ export default function App() {
   const [showGrid, setShowGrid] = useState(true)
   const [is3DView, setIs3DView] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  const [isNarrowScreen, setIsNarrowScreen] = useState(window.innerWidth <= 1400)
   const [refreshKey, setRefreshKey] = useState(0)
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<string | null>(null)
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
@@ -43,10 +44,11 @@ export default function App() {
       .catch(err => console.error('Failed to load projects:', err))
   }, [setProjects])
 
-  // Handle window resize for mobile detection
+  // Handle window resize for responsive detection
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768)
+      setIsNarrowScreen(window.innerWidth <= 1400)
     }
     
     window.addEventListener('resize', handleResize)
@@ -126,15 +128,40 @@ export default function App() {
     setRefreshKey(prev => prev + 1)
   }
 
-  // Use dynamic sidebar width
-  const currentMarginLeft = isMobile ? 0 : sidebarWidth
+  // Smart responsive layout strategy
+  const getLayoutStrategy = () => {
+    if (isMobile) {
+      // Mobile: sidebar overlays content
+      return { marginLeft: 0, contentStrategy: 'overlay' }
+    } else if (isNarrowScreen && sidebarWidth > 320) {
+      // Narrow screens with wide sidebar: overlay mode to prevent content cutoff
+      return { marginLeft: 0, contentStrategy: 'overlay' }
+    } else {
+      // Wide screens: sidebar pushes content
+      return { marginLeft: sidebarWidth, contentStrategy: 'push' }
+    }
+  }
+  
+  const layout = getLayoutStrategy()
+  const currentMarginLeft = layout.marginLeft
 
   return (
     <div className="app">
       <PortfolioSidebar 
         onOpenDashboard={() => setIsDashboardOpen(true)}
         onWidthChange={setSidebarWidth}
+        layoutStrategy={layout.contentStrategy}
       />
+      
+      {/* Backdrop for overlay mode */}
+      {layout.contentStrategy === 'overlay' && sidebarWidth > 0 && (
+        <div 
+          className="sidebar-backdrop"
+          onClick={() => {
+            // Close sidebar when clicking backdrop - you can implement this if needed
+          }}
+        />
+      )}
       
       <main 
         className="main-content"

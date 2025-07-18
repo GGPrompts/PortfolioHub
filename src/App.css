@@ -28,9 +28,12 @@ body {
 
 /* Portfolio Header */
 .portfolio-header {
-  padding: 60px 40px 40px;
+  padding: 30px 40px;
   position: relative;
   overflow: hidden;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
 }
 
 .header-content {
@@ -69,9 +72,9 @@ body {
 }
 
 .portfolio-header h1 {
-  font-size: 48px;
+  font-size: 36px;
   font-weight: 300;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   letter-spacing: 2px;
   background: linear-gradient(135deg, #00ff88, #00ffff);
   -webkit-background-clip: text;

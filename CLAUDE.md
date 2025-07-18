@@ -80,6 +80,11 @@ npm run dev
 - **No auto-browser opening** - Clean startup without surprise windows
 - **Live status indicators** - Green dots for running, red for stopped
 - **Click to open** - Running projects open in new tabs when clicked
+- **Online/Offline Separation** - Projects automatically grouped by status:
+  - 🟢 **ONLINE** section shows all running projects at the top
+  - 🔴 **OFFLINE** section shows stopped projects below
+  - Sections only appear when they contain projects
+  - Real-time updates as project status changes
 
 ## Current Projects
 - **3d-matrix-cards**: Three.js interactive card display with cyberpunk aesthetics
@@ -96,6 +101,9 @@ npm run dev
 - **Smart Port Management**: Automatic port allocation and conflict resolution (ports 3000-3099)
 - **Enhanced UX**: No auto-browser launching, clean startup, perfect tab alignment
 - **Dynamic Width Management**: Main content adjusts properly to sidebar changes
+- **Online/Offline Project Separation**: Projects automatically grouped by running status for cleaner workflow
+- **Consistent Header Heights**: All panel headers (PROJECTS, DEV JOURNAL, My Project Portfolio) aligned with uniform 80px height
+- **Improved Visual Polish**: Fixed search bar spacing, removed unnecessary UI elements, standardized styling
 
 ## Development Workflow
 

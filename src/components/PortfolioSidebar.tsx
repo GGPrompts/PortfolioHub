@@ -41,11 +41,10 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
     // Future tabs can be added here: settings, git, etc.
   }
 
-  // All tabs stay attached to the right edge of the total sidebar width
+  // All tabs stay attached to the right edge of the total sidebar width (simpler approach)
   const getTabPosition = () => {
-    // Calculate total sidebar width and position tabs at the right edge
     const totalWidth = calculateWidth()
-    return totalWidth === 0 ? 0 : totalWidth // Tabs sit exactly at the right edge
+    return totalWidth === 0 ? 0 : totalWidth // All tabs sit at the right edge of the sidebar
   }
   
   // Calculate total width based on active tabs only
@@ -208,40 +207,47 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
             />
           </div>
           
-          {/* Project List with Collapsible Dropdowns */}
+          {/* Project List with Collapsible Dropdowns - Separated by Status */}
           <div className={styles.projectList}>
-            {filteredProjects.map(project => {
-              const isRunning = projectStatuses.get(project.id) || false
-              const isExpanded = expandedProjects.has(project.id)
-              
-              return (
-                <div key={project.id} className={styles.projectContainer}>
-                  <div 
-                    className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
-                  >
-                    <button
-                      className={`${styles.expandToggle} ${isExpanded ? styles.expanded : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleProjectExpanded(project.id)
-                      }}
-                    >
-                      ▶
-                    </button>
-                    <span 
-                      className={styles.projectTitle}
-                      onClick={() => {
-                        selectProject(project)
-                      }}
-                    >
-                      {project.title}
-                    </span>
-                    {project.localPort && (
-                      <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
-                        {isRunning ? '🟢' : '🔴'}
-                      </span>
-                    )}
-                  </div>
+            {/* Online Projects Section */}
+            {filteredProjects.some(p => projectStatuses.get(p.id) || false) && (
+              <>
+                <div className={styles.statusSectionHeader}>
+                  <span className={styles.statusIndicator}>🟢</span>
+                  <span className={styles.statusLabel}>ONLINE</span>
+                </div>
+                {filteredProjects.filter(p => projectStatuses.get(p.id) || false).map(project => {
+                  const isRunning = projectStatuses.get(project.id) || false
+                  const isExpanded = expandedProjects.has(project.id)
+                  
+                  return (
+                    <div key={project.id} className={styles.projectContainer}>
+                      <div 
+                        className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
+                      >
+                        <button
+                          className={`${styles.expandToggle} ${isExpanded ? styles.expanded : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleProjectExpanded(project.id)
+                          }}
+                        >
+                          ▶
+                        </button>
+                        <span 
+                          className={styles.projectTitle}
+                          onClick={() => {
+                            selectProject(project)
+                          }}
+                        >
+                          {project.title}
+                        </span>
+                        {project.localPort && (
+                          <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
+                            {isRunning ? '🟢' : '🔴'}
+                          </span>
+                        )}
+                      </div>
                   
                   {isExpanded && (
                     <div className={styles.projectDropdown}>
@@ -310,6 +316,118 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
                 </div>
               )
             })}
+            </>
+            )}
+
+            {/* Offline Projects Section */}
+            {filteredProjects.some(p => !(projectStatuses.get(p.id) || false)) && (
+              <>
+                <div className={styles.statusSectionHeader}>
+                  <span className={styles.statusIndicator}>🔴</span>
+                  <span className={styles.statusLabel}>OFFLINE</span>
+                </div>
+                {filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).map(project => {
+                  const isRunning = projectStatuses.get(project.id) || false
+                  const isExpanded = expandedProjects.has(project.id)
+                  
+                  return (
+                    <div key={project.id} className={styles.projectContainer}>
+                      <div 
+                        className={`${styles.projectItem} ${selectedProject?.id === project.id ? styles.selected : ''}`}
+                      >
+                        <button
+                          className={`${styles.expandToggle} ${isExpanded ? styles.expanded : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleProjectExpanded(project.id)
+                          }}
+                        >
+                          ▶
+                        </button>
+                        <span 
+                          className={styles.projectTitle}
+                          onClick={() => {
+                            selectProject(project)
+                          }}
+                        >
+                          {project.title}
+                        </span>
+                        {project.localPort && (
+                          <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
+                            {isRunning ? '🟢' : '🔴'}
+                          </span>
+                        )}
+                      </div>
+                  
+                      {isExpanded && (
+                        <div className={styles.projectDropdown}>
+                          {project.localPort && (
+                            <>
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => window.open(`http://localhost:${project.localPort}`, '_blank')}
+                                disabled={!isRunning}
+                              >
+                                🔗 Open in new tab
+                              </button>
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => {
+                                  const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
+                                  navigator.clipboard.writeText(command)
+                                  alert(`Start command copied!`)
+                                }}
+                                disabled={isRunning}
+                              >
+                                ▶️ Start server
+                              </button>
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => alert(`To kill ${project.title}, close its terminal window`)}
+                                disabled={!isRunning}
+                              >
+                                ⏹️ Kill server
+                              </button>
+                            </>
+                          )}
+                          <button
+                            className={styles.dropdownItem}
+                            onClick={() => {
+                              setSidebarState('expanded')
+                              selectProject(project)
+                            }}
+                          >
+                            📓 View journal
+                          </button>
+                          <div style={{ padding: '4px' }}>
+                            <GitUpdateButton 
+                              type="project" 
+                              projectId={project.id}
+                              projectName={project.title}
+                              size="small" 
+                              variant="minimal"
+                            />
+                          </div>
+                          {project.repository && (
+                            <button
+                              className={styles.dropdownItem}
+                              onClick={() => window.open(project.repository, '_blank')}
+                            >
+                              🐙 View on GitHub
+                            </button>
+                          )}
+                          <div className={styles.dropdownTags}>
+                            {project.tags.map(tag => (
+                              <span key={tag} className={styles.tag}>{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </>
+            )}
           </div>
           
           {/* Quick Actions Footer */}
@@ -366,16 +484,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
         >
           <div className={styles.expandedHeader}>
             <div className={styles.journalHeaderTop}>
-              <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
-              
-              {/* Mode Toggle */}
-              <button 
-                className={styles.modeToggle}
-                onClick={() => setJournalMode(journalMode === 'full-width' ? 'with-projects' : 'full-width')}
-                title={journalMode === 'full-width' ? 'Show with projects' : 'Full width view'}
-              >
-                {journalMode === 'full-width' ? '📑' : '📄'}
-              </button>
+              <h3 className={styles.journalTitle}>DEV JOURNAL{selectedProject ? ` - ${selectedProject.title.toUpperCase()}` : ''}</h3>
             </div>
             
             {selectedProject?.devJournal && (
@@ -412,7 +521,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <p>Select a project to view its development journal</p>
               <p className={styles.hint}>💡 Tip: Journals are markdown files you can edit directly!</p>
             </div>
           )}

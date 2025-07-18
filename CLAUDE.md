@@ -66,7 +66,7 @@ npm run dev
 - **Click to toggle** - click active tab to close its panel
 - **SVG icons** for professional appearance:
   - 📄 `fileText` for Projects panel
-  - ✏️ `edit` for Dev Journals panel
+  - ✏️ `edit` for Dev Notes panel
 
 ### Status Dashboard
 - Accessible via **Dashboard** button in Projects panel
@@ -86,6 +86,22 @@ npm run dev
   - Sections only appear when they contain projects
   - Real-time updates as project status changes
 
+### DEV NOTES System
+- **Multi-purpose note taking** integrated into the sidebar
+- **Three note types** for different use cases:
+  - 📝 **Note**: General development thoughts, feature ideas, architecture notes
+  - 🤖 **Prompt**: Claude prompt templates for future use
+  - ⌨️ **Command**: Commands, scripts, and code snippets
+- **Flexible output destinations**:
+  - 📓 **Dev Journal**: Add to project's dev journal file
+  - 🤖 **CLAUDE.md**: Add to project or root CLAUDE.md instructions
+  - 📋 **README**: Add to project README.md
+  - 🗂️ **Notes File**: Save to dedicated NOTES.md file
+  - 📋 **Copy Claude Prompt**: Generate and copy Claude prompt with context
+- **Smart clipboard integration**: All actions copy appropriate Claude prompts
+- **Context-aware**: Automatically includes project context in prompts
+- **Markdown formatting**: Notes are automatically formatted with timestamps
+
 ## Current Projects
 - **3d-matrix-cards**: Three.js interactive card display with cyberpunk aesthetics
 - **matrix-cards**: React cyberpunk card components with dynamic animations
@@ -94,6 +110,11 @@ npm run dev
 - **ggprompts-style-guide**: Design system documentation and component library
 
 ## Recent Updates (2025-07-18)
+- **DEV NOTES System**: Transformed journal panel into versatile note-taking system with:
+  - Three note types (Note, Prompt, Command) with smart templates
+  - Flexible output destinations (Journal, CLAUDE.md, README, Notes File)
+  - Clipboard integration for instant Claude prompt generation
+  - Context-aware prompts with project information
 - **Notebook-Style Sidebar**: Complete redesign with professional tabs that stick to panel edges
 - **Dynamic Panel System**: Order-based panel opening with smooth React Spring animations
 - **Professional SVG Icons**: Replaced emojis with custom icon library from GGPrompts design system
@@ -102,7 +123,7 @@ npm run dev
 - **Enhanced UX**: No auto-browser launching, clean startup, perfect tab alignment
 - **Dynamic Width Management**: Main content adjusts properly to sidebar changes
 - **Online/Offline Project Separation**: Projects automatically grouped by running status for cleaner workflow
-- **Consistent Header Heights**: All panel headers (PROJECTS, DEV JOURNAL, My Project Portfolio) aligned with uniform 80px height
+- **Consistent Header Heights**: All panel headers (PROJECTS, DEV NOTES, My Project Portfolio) aligned with uniform 80px height
 - **Improved Visual Polish**: Fixed search bar spacing, removed unnecessary UI elements, standardized styling
 
 ## Development Workflow

@@ -31,13 +31,18 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
   const [searchQuery, setSearchQuery] = useState('')
   const [journalMode, setJournalMode] = useState<'full-width' | 'with-projects'>('with-projects')
   
+  // Dev Notes state
+  const [currentNote, setCurrentNote] = useState<string>('')
+  const [noteType, setNoteType] = useState<'note' | 'prompt' | 'command'>('note')
+  const [isEditingNote, setIsEditingNote] = useState(false)
+  
   // Tab-based state management - Array to maintain order
   const [activeTabs, setActiveTabs] = useState<string[]>([])
   
   // Define tab configurations
   const tabs = {
     projects: { width: 320, icon: 'fileText', title: 'Projects' },
-    journals: { width: 600, icon: 'edit', title: 'Dev Journals' },
+    journals: { width: 600, icon: 'edit', title: 'Dev Notes' },
     // Future tabs can be added here: settings, git, etc.
   }
 
@@ -159,6 +164,86 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
     const interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
     return () => clearInterval(interval)
   }, [projects])
+  
+  // Helper functions for DEV NOTES system
+  const getNoteTypePlaceholder = () => {
+    switch (noteType) {
+      case 'note':
+        return 'Write your development note here...\n\nThis could be:\n- Feature ideas\n- Bug observations\n- Architecture thoughts\n- Learning notes'
+      case 'prompt':
+        return 'Write a Claude prompt template here...\n\nExample:\n"Help me implement [FEATURE] in [PROJECT]. I need to:\n1. [TASK 1]\n2. [TASK 2]\n\nCurrent context: [CONTEXT]"'
+      case 'command':
+        return 'Write commands or code snippets here...\n\nExamples:\n- npm run dev\n- git commit -m "message"\n- Bash/PowerShell scripts\n- Useful code patterns'
+      default:
+        return 'Start writing...'
+    }
+  }
+  
+  const handleSaveToDestination = (destination: string) => {
+    if (!currentNote.trim()) return
+    
+    const timestamp = new Date().toISOString().split('T')[0]
+    const typePrefix = noteType === 'note' ? '##' : noteType === 'prompt' ? '## Claude Prompt' : '## Command'
+    const formattedNote = `${typePrefix} - ${timestamp}\n\n${currentNote.trim()}\n\n---\n\n`
+    
+    let filePath = ''
+    let promptText = ''
+    
+    switch (destination) {
+      case 'journal':
+        if (selectedProject?.devJournal) {
+          filePath = selectedProject.devJournal.replace(/\//g, '\\\\')
+          promptText = `Please add this ${noteType} to the dev journal at ${filePath}:\n\n${formattedNote}`
+        } else {
+          alert('No dev journal found for this project')
+          return
+        }
+        break
+      case 'claude-md':
+        filePath = selectedProject ? 
+          `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\CLAUDE.md` :
+          'D:\\\\ClaudeWindows\\\\CLAUDE.md'
+        promptText = `Please add this ${noteType} to CLAUDE.md at ${filePath}:\n\n${formattedNote}`
+        break
+      case 'readme':
+        if (selectedProject) {
+          filePath = `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\README.md`
+          promptText = `Please add this ${noteType} to the README.md at ${filePath}:\n\n${formattedNote}`
+        } else {
+          alert('Please select a project first')
+          return
+        }
+        break
+      case 'notes-file':
+        filePath = selectedProject ?
+          `D:\\\\ClaudeWindows\\\\claude-dev-portfolio\\\\projects\\\\${selectedProject.path || selectedProject.id}\\\\NOTES.md` :
+          'D:\\\\ClaudeWindows\\\\NOTES.md'
+        promptText = `Please add this ${noteType} to the notes file at ${filePath} (create if it doesn't exist):\n\n${formattedNote}`
+        break
+    }
+    
+    navigator.clipboard.writeText(promptText).then(() => {
+      alert(`Claude prompt copied! Paste it to add your ${noteType} to ${destination}.`)
+      setCurrentNote('')
+      setIsEditingNote(false)
+    })
+  }
+  
+  const handleCopyClaudePrompt = () => {
+    if (!currentNote.trim()) return
+    
+    const promptPrefix = noteType === 'prompt' ? 'Use this prompt template:' : 
+                        noteType === 'command' ? 'Execute or help with this command:' :
+                        'Help me with this development note:'
+    
+    const claudePrompt = `${promptPrefix}\n\n${currentNote.trim()}\n\n${selectedProject ? `Context: Working on ${selectedProject.title} project` : 'Context: General development work'}`
+    
+    navigator.clipboard.writeText(claudePrompt).then(() => {
+      alert(`Claude prompt copied to clipboard!`)
+      setCurrentNote('')
+      setIsEditingNote(false)
+    })
+  }
   
   return (
     <animated.div 
@@ -484,46 +569,127 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: Por
         >
           <div className={styles.expandedHeader}>
             <div className={styles.journalHeaderTop}>
-              <h3 className={styles.journalTitle}>DEV JOURNAL{selectedProject ? ` - ${selectedProject.title.toUpperCase()}` : ''}</h3>
+              <h3 className={styles.journalTitle}>DEV NOTES{selectedProject ? ` - ${selectedProject.title.toUpperCase()}` : ''}</h3>
             </div>
             
-            {selectedProject?.devJournal && (
+            <div className={styles.noteControls}>
+              <div className={styles.noteTypeSelector}>
+                <button 
+                  className={`${styles.typeBtn} ${noteType === 'note' ? styles.active : ''}`}
+                  onClick={() => setNoteType('note')}
+                  title="General development note"
+                >
+                  📝 Note
+                </button>
+                <button 
+                  className={`${styles.typeBtn} ${noteType === 'prompt' ? styles.active : ''}`}
+                  onClick={() => setNoteType('prompt')}
+                  title="Claude prompt template"
+                >
+                  🤖 Prompt
+                </button>
+                <button 
+                  className={`${styles.typeBtn} ${noteType === 'command' ? styles.active : ''}`}
+                  onClick={() => setNoteType('command')}
+                  title="Command or code snippet"
+                >
+                  ⌨️ Command
+                </button>
+              </div>
               <button 
-                className={styles.editJournalBtn}
-                onClick={() => {
-                  // Open journal file in default editor
-                  const journalPath = selectedProject.devJournal?.replace(/\//g, '\\')
-                  navigator.clipboard.writeText(`code ${journalPath}`).then(() => {
-                    alert('Command copied! Paste in terminal to edit journal.')
-                  })
-                }}
-                title="Copy edit command"
+                className={styles.editToggleBtn}
+                onClick={() => setIsEditingNote(!isEditingNote)}
+                title={isEditingNote ? 'View mode' : 'Edit mode'}
               >
-                ✏️ Edit
+                {isEditingNote ? '👁️ View' : '✏️ Edit'}
               </button>
-            )}
+            </div>
           </div>
           
-          {selectedProject ? (
-            <div className={styles.expandedBody}>
-              {isLoadingJournal ? (
-                <div className={styles.loadingState}>
-                  <div className={styles.spinner}></div>
-                  <p>Loading journal...</p>
-                </div>
-              ) : (
-                <div className={styles.journalContent}>
-                  <pre className={styles.journalMarkdown}>
-                    {journalContent || '# Dev Journal\n\nNo journal entries yet.\n\nStart documenting your journey!'}
-                  </pre>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={styles.emptyState}>
-              <p className={styles.hint}>💡 Tip: Journals are markdown files you can edit directly!</p>
-            </div>
-          )}
+          <div className={styles.expandedBody}>
+            {isEditingNote ? (
+              <div className={styles.noteEditor}>
+                <textarea 
+                  className={styles.noteTextarea}
+                  value={currentNote}
+                  onChange={(e) => setCurrentNote(e.target.value)}
+                  placeholder={getNoteTypePlaceholder()}
+                  autoFocus
+                />
+                
+                {currentNote.trim() && (
+                  <div className={styles.outputActions}>
+                    <h4 className={styles.outputTitle}>Save Note To:</h4>
+                    <div className={styles.outputButtons}>
+                      <button 
+                        className={styles.outputBtn}
+                        onClick={() => handleSaveToDestination('journal')}
+                        title="Add to project dev journal"
+                      >
+                        📓 Dev Journal
+                      </button>
+                      <button 
+                        className={styles.outputBtn}
+                        onClick={() => handleSaveToDestination('claude-md')}
+                        title="Add to CLAUDE.md instructions"
+                      >
+                        🤖 CLAUDE.md
+                      </button>
+                      <button 
+                        className={styles.outputBtn}
+                        onClick={() => handleSaveToDestination('readme')}
+                        title="Add to project README"
+                      >
+                        📋 README
+                      </button>
+                      <button 
+                        className={styles.outputBtn}
+                        onClick={() => handleSaveToDestination('notes-file')}
+                        title="Save to dedicated notes file"
+                      >
+                        🗂️ Notes File
+                      </button>
+                      <button 
+                        className={styles.outputBtn}
+                        onClick={() => handleCopyClaudePrompt()}
+                        title="Copy as Claude prompt with destination instructions"
+                      >
+                        📋 Copy Claude Prompt
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={styles.notesPreview}>
+                {selectedProject && isLoadingJournal ? (
+                  <div className={styles.loadingState}>
+                    <div className={styles.spinner}></div>
+                    <p>Loading journal...</p>
+                  </div>
+                ) : selectedProject ? (
+                  <div className={styles.journalContent}>
+                    <pre className={styles.journalMarkdown}>
+                      {journalContent || '# Dev Journal\n\nNo journal entries yet.\n\nStart documenting your journey!'}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <div className={styles.noteTypeExplanation}>
+                      <h4>📝 Quick Notes</h4>
+                      <p>Write notes, prompts, or commands and save them to the right place:</p>
+                      <ul>
+                        <li><strong>📝 Note:</strong> General development thoughts and observations</li>
+                        <li><strong>🤖 Prompt:</strong> Claude prompt templates for future use</li>
+                        <li><strong>⌨️ Command:</strong> Useful commands, scripts, or code snippets</li>
+                      </ul>
+                      <p className={styles.hint}>💡 Click Edit to start writing. Your note can be saved to journals, CLAUDE.md, or copied as a Claude prompt!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </animated.div>
         )}
       </div>

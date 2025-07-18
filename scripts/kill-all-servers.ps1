@@ -10,8 +10,11 @@ function Get-ProcessOnPort {
         $netstat = netstat -ano | Select-String ":$Port "
         if ($netstat) {
             $processId = ($netstat -split '\s+')[-1]
-            $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-            return $process
+            # Validate process ID is a valid number and not 0
+            if ($processId -match '^\d+$' -and [int]$processId -gt 0) {
+                $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+                return $process
+            }
         }
     } catch {
         return $null
@@ -71,8 +74,22 @@ if ($nodeProcesses) {
         Write-Host "  - PID: $($_.Id), Start Time: $($_.StartTime)" -ForegroundColor Gray
     }
     Write-Host ""
-    Write-Host "To kill all Node.js processes (use with caution):" -ForegroundColor Yellow
-    Write-Host "  Get-Process -Name 'node' | Stop-Process -Force" -ForegroundColor Gray
+    
+    # Ask if user wants to kill all Node processes
+    $response = Read-Host "Kill all remaining Node.js processes? (y/N)"
+    if ($response -eq 'y' -or $response -eq 'Y') {
+        Write-Host "🛑 Attempting to kill all Node.js processes..." -ForegroundColor Yellow
+        try {
+            Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force
+            Write-Host "✅ All Node.js processes terminated" -ForegroundColor Green
+        } catch {
+            Write-Host "❌ Some processes require administrator privileges to terminate" -ForegroundColor Red
+            Write-Host "💡 Try running PowerShell as Administrator and run this script again" -ForegroundColor Cyan
+        }
+    } else {
+        Write-Host "🔍 Node.js processes left running" -ForegroundColor Gray
+        Write-Host "💡 To kill manually: Get-Process -Name 'node' | Stop-Process -Force" -ForegroundColor Cyan
+    }
 } else {
     Write-Host "✅ No Node.js processes found" -ForegroundColor Green
 }

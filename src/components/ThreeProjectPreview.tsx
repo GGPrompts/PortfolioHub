@@ -21,10 +21,28 @@ export default function ThreeProjectPreview({
   const rendererRef = useRef<THREE.WebGLRenderer>()
   const cameraRef = useRef<THREE.PerspectiveCamera>()
   const screenGroupRef = useRef<THREE.Group>()
-  const [isRotating, setIsRotating] = useState(true)
+  const [isAnimating, setIsAnimating] = useState(true)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const raycasterRef = useRef<THREE.Raycaster>()
   const mouseRef = useRef(new THREE.Vector2())
+  
+  // Camera controls state
+  const [cameraDistance, setCameraDistance] = useState(12)
+  const [cameraRotation, setCameraRotation] = useState({ x: 0.15, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 })
+
+  // Update camera position function
+  const updateCameraPosition = () => {
+    if (!cameraRef.current) return
+    
+    const x = Math.sin(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraDistance
+    const y = Math.sin(cameraRotation.x) * cameraDistance
+    const z = Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraDistance
+    
+    cameraRef.current.position.set(x, y, z)
+    cameraRef.current.lookAt(0, 0, 0)
+  }
 
   useEffect(() => {
     if (!mountRef.current) return
@@ -34,15 +52,17 @@ export default function ThreeProjectPreview({
     scene.background = new THREE.Color(0x0a0a0a)
     sceneRef.current = scene
 
-    // Camera setup
+    // Camera setup - Interactive camera with controls
     const camera = new THREE.PerspectiveCamera(
-      75,
+      60,
       mountRef.current.clientWidth / mountRef.current.clientHeight,
       0.1,
       1000
     )
-    camera.position.set(0, 0, 8)
     cameraRef.current = camera
+    
+    // Initial camera position
+    updateCameraPosition()
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -67,17 +87,32 @@ export default function ThreeProjectPreview({
     scene.add(screenGroup)
     screenGroupRef.current = screenGroup
 
-    // Create screens for projects
-    createScreens()
+    // Create screens for projects (will be updated via useEffect when data loads)
+    if (projects.length > 0) {
+      createScreens()
+    }
 
-    // Animation loop
+    // Animation loop with floating effects
     const animate = () => {
       requestAnimationFrame(animate)
       
-      if (isRotating && screenGroupRef.current) {
-        screenGroupRef.current.rotation.y += 0.002 // Much slower rotation
+      const time = Date.now() * 0.001
+      
+      // Animate individual floating displays instead of rotating the group
+      if (isAnimating && screenGroupRef.current && screenGroupRef.current.children.length > 0) {
+        screenGroupRef.current.children.forEach((child, index) => {
+          if (child.userData.isScreen) {
+            // Gentle floating motion
+            child.position.y = child.userData.baseY + Math.sin(time + index * 0.5) * 0.2
+            // Subtle rotation
+            child.rotation.y = Math.sin(time * 0.3 + index) * 0.05
+          }
+        })
       }
 
+      // Update camera position in animation loop
+      updateCameraPosition()
+      
       renderer.render(scene, camera)
     }
     animate()
@@ -102,9 +137,41 @@ export default function ThreeProjectPreview({
       const rect = mountRef.current.getBoundingClientRect()
       mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      
+      // Handle camera rotation while dragging
+      if (isDragging) {
+        const deltaX = event.clientX - lastMousePos.x
+        const deltaY = event.clientY - lastMousePos.y
+        
+        setCameraRotation(prev => ({
+          x: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, prev.x - deltaY * 0.01)),
+          y: prev.y + deltaX * 0.01
+        }))
+        
+        setLastMousePos({ x: event.clientX, y: event.clientY })
+      }
+    }
+    
+    const handleMouseDown = (event: MouseEvent) => {
+      setIsDragging(true)
+      setLastMousePos({ x: event.clientX, y: event.clientY })
+    }
+    
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+    
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      const zoomSpeed = 0.5
+      const newDistance = Math.max(5, Math.min(30, cameraDistance + event.deltaY * zoomSpeed * 0.01))
+      setCameraDistance(newDistance)
     }
 
     const handleClick = (event: MouseEvent) => {
+      // Don't trigger click if we were dragging
+      if (isDragging) return
+      
       if (!raycasterRef.current || !cameraRef.current || !screenGroupRef.current) return
       
       const rect = mountRef.current!.getBoundingClientRect()
@@ -126,13 +193,19 @@ export default function ThreeProjectPreview({
     }
 
     mountRef.current.addEventListener('mousemove', handleMouseMove)
+    mountRef.current.addEventListener('mousedown', handleMouseDown)
+    mountRef.current.addEventListener('mouseup', handleMouseUp)
     mountRef.current.addEventListener('click', handleClick)
+    mountRef.current.addEventListener('wheel', handleWheel, { passive: false })
 
     return () => {
       window.removeEventListener('resize', handleResize)
       if (mountRef.current) {
         mountRef.current.removeEventListener('mousemove', handleMouseMove)
+        mountRef.current.removeEventListener('mousedown', handleMouseDown)
+        mountRef.current.removeEventListener('mouseup', handleMouseUp)
         mountRef.current.removeEventListener('click', handleClick)
+        mountRef.current.removeEventListener('wheel', handleWheel)
         mountRef.current.removeChild(renderer.domElement)
       }
       renderer.dispose()
@@ -147,13 +220,22 @@ export default function ThreeProjectPreview({
       screenGroupRef.current.remove(screenGroupRef.current.children[0])
     }
 
-    const radius = 5
-    const screenCount = Math.max(projects.length, 6)
+    // Create floating grid layout
+    const cols = Math.ceil(Math.sqrt(projects.length))
+    const rows = Math.ceil(projects.length / cols)
+    const spacing = 4
     
     projects.forEach((project, index) => {
-      const angle = (index / screenCount) * Math.PI * 2
-      const x = Math.cos(angle) * radius
-      const z = Math.sin(angle) * radius
+      console.log(`Creating screen for project ${index}: ${project.title}`)
+      
+      // Grid positioning
+      const col = index % cols
+      const row = Math.floor(index / cols)
+      
+      // Center the grid
+      const x = (col - (cols - 1) / 2) * spacing
+      const z = (row - (rows - 1) / 2) * spacing
+      const baseY = Math.random() * 2 - 1 // Random height variation
 
       // Screen geometry
       const screenGeometry = new THREE.PlaneGeometry(2.5, 1.8)
@@ -237,26 +319,34 @@ export default function ThreeProjectPreview({
       ctx.lineWidth = 6
       ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6)
       
-      // Create texture from canvas
+      // Create texture from canvas with proper settings
       const texture = new THREE.CanvasTexture(canvas)
       texture.needsUpdate = true
       texture.generateMipmaps = false
       texture.minFilter = THREE.LinearFilter
       texture.magFilter = THREE.LinearFilter
+      texture.wrapS = THREE.ClampToEdgeWrapping
+      texture.wrapT = THREE.ClampToEdgeWrapping
+      texture.flipY = false
       
-      // Screen material - More opaque and responsive to lighting
+      // Screen material - Ensure full opacity and proper texture display
       const screenMaterial = new THREE.MeshBasicMaterial({
         map: texture,
         transparent: false,
-        side: THREE.DoubleSide
+        opacity: 1.0,
+        side: THREE.FrontSide,
+        alphaTest: 0.1
       })
       
       // Create screen mesh
       const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial)
-      screenMesh.position.set(x, 0, z)
-      // Make screens face outward instead of inward
-      screenMesh.lookAt(x * 2, 0, z * 2)
-      screenMesh.userData = { projectId: project.id }
+      screenMesh.position.set(x, baseY, z)
+      // Face the camera (no rotation needed for floating displays)
+      screenMesh.userData = { 
+        projectId: project.id,
+        isScreen: true,
+        baseY: baseY // Store base Y position for floating animation
+      }
       
       // Add subtle glow effect for running projects
       if (isRunning) {
@@ -269,11 +359,11 @@ export default function ThreeProjectPreview({
         const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial)
         glowMesh.position.copy(screenMesh.position)
         glowMesh.position.z -= 0.02
-        glowMesh.lookAt(x * 2, 0, z * 2) // Face outward like screen
+        glowMesh.userData = { isGlow: true }
         screenGroupRef.current.add(glowMesh)
       }
       
-      // Frame - Simple basic material
+      // Frame - Simple basic material positioned clearly behind screen
       const frameGeometry = new THREE.BoxGeometry(2.6, 1.9, 0.1)
       const frameMaterial = new THREE.MeshBasicMaterial({
         color: isRunning ? 0x333333 : 0x222222, // Dark frames
@@ -281,8 +371,8 @@ export default function ThreeProjectPreview({
       })
       const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial)
       frameMesh.position.copy(screenMesh.position)
-      frameMesh.position.z -= 0.05
-      frameMesh.lookAt(x * 2, 0, z * 2) // Face outward like screen
+      frameMesh.position.z -= 0.15 // Move frame further back
+      frameMesh.userData = { isFrame: true }
       
       screenGroupRef.current.add(frameMesh)
       screenGroupRef.current.add(screenMesh)
@@ -291,9 +381,17 @@ export default function ThreeProjectPreview({
 
   // Update screens when projects change (debounced to prevent flashing)
   useEffect(() => {
+    // Only create screens if we have projects loaded
+    if (projects.length === 0) {
+      console.log('No projects loaded yet, skipping screen creation')
+      return
+    }
+    
     const timeoutId = setTimeout(() => {
+      console.log('Updating screens for projects:', projects.length)
+      console.log('Projects data:', projects.map(p => ({ id: p.id, title: p.title })))
       createScreens()
-    }, 500) // Longer delay to prevent rapid updates
+    }, 500) // Reduce delay since we're checking for data
     
     return () => clearTimeout(timeoutId)
   }, [projects, runningStatus, projectPorts])
@@ -302,10 +400,10 @@ export default function ThreeProjectPreview({
     <div className={styles.container}>
       <div className={styles.controls}>
         <button
-          onClick={() => setIsRotating(!isRotating)}
+          onClick={() => setIsAnimating(!isAnimating)}
           className={styles.controlButton}
         >
-          {isRotating ? '⏸️ Pause' : '▶️ Play'}
+          {isAnimating ? '⏸️ Pause Float' : '▶️ Float'}
         </button>
         <div className={styles.projectInfo}>
           {selectedProject && (
@@ -318,13 +416,13 @@ export default function ThreeProjectPreview({
         ref={mountRef} 
         className={styles.threeContainer}
         style={{ 
-          cursor: selectedProject ? 'pointer' : 'grab'
+          cursor: isDragging ? 'grabbing' : 'grab'
         }}
       />
       
       <div className={styles.instructions}>
-        <p>Click on screens to view projects • Mouse to look around</p>
-        <p>Running projects glow green • {projects.length} projects loaded</p>
+        <p>Drag to rotate • Scroll to zoom • Click displays to view projects</p>
+        <p>Running projects glow green • {projects.length} projects floating</p>
       </div>
     </div>
   )

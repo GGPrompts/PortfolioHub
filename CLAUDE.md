@@ -110,16 +110,25 @@ npm run dev
 - **ggprompts-style-guide**: Design system documentation and component library
 
 ## Recent Updates (2025-07-18)
+
+### Latest Features (Current Session)
+- **Port Conflict Resolution**: Fixed portfolio incorrectly detecting projects as running
+  - Portfolio moved to dedicated port 5173 (isolated from project ports)
+  - Improved port detection accuracy with false positive prevention
+  - Enhanced project status monitoring for reliable online/offline indicators
 - **DEV NOTES System**: Transformed journal panel into versatile note-taking system with:
-  - Three note types (Note, Prompt, Command) with smart templates
+  - Three note types (Note, Prompt, Command) with context-specific templates
   - Flexible output destinations (Journal, CLAUDE.md, README, Notes File)
-  - Clipboard integration for instant Claude prompt generation
-  - Context-aware prompts with project information
+  - Clipboard integration for instant Claude prompt generation with file paths
+  - Context-aware prompts automatically including project information
+  - Smart workflow examples and comprehensive documentation
+
+### Previous Major Updates
 - **Notebook-Style Sidebar**: Complete redesign with professional tabs that stick to panel edges
 - **Dynamic Panel System**: Order-based panel opening with smooth React Spring animations
 - **Professional SVG Icons**: Replaced emojis with custom icon library from GGPrompts design system
 - **Status Dashboard**: Comprehensive project management with real-time port detection
-- **Smart Port Management**: Automatic port allocation and conflict resolution (ports 3000-3099)
+- **Smart Port Management**: Dedicated port assignments with conflict prevention
 - **Enhanced UX**: No auto-browser launching, clean startup, perfect tab alignment
 - **Dynamic Width Management**: Main content adjusts properly to sidebar changes
 - **Online/Offline Project Separation**: Projects automatically grouped by running status for cleaner workflow
@@ -128,6 +137,42 @@ npm run dev
 
 ## Development Workflow
 
+### DEV NOTES System Workflow
+1. Click ✏️ **Edit** button in DEV NOTES panel
+2. Select note type (**📝 Note** | **🤖 Prompt** | **⌨️ Command**)
+3. Write content using provided templates and examples
+4. Choose output destination:
+   - **📓 Dev Journal**: Add to project's dev journal file
+   - **🤖 CLAUDE.md**: Add to project or root CLAUDE.md instructions
+   - **📋 README**: Add to project README.md
+   - **🗂️ Notes File**: Save to dedicated NOTES.md file
+   - **📋 Copy Claude Prompt**: Generate instant Claude prompt with context
+5. One-click copying generates perfect Claude prompts with file paths and instructions
+
+### Example DEV NOTES Workflows
+
+**Workflow 1: Saving a Prompt Template**
+1. Open DEV NOTES panel → Click **✏️ Edit**
+2. Select **🤖 Prompt** type
+3. Write: `Help me implement responsive design in [PROJECT]. I need mobile-first CSS with breakpoints for tablet and desktop. Current context: [CONTEXT]`
+4. Click **🤖 CLAUDE.md** button
+5. **Instant clipboard**: `"Please add this prompt to CLAUDE.md at D:\...\projects\project-name\CLAUDE.md: ## Claude Prompt - 2025-07-18 [your formatted content]"`
+6. Paste in Claude Code and your prompt is instantly saved with proper formatting!
+
+**Workflow 2: Quick Command Reference**
+1. Select **⌨️ Command** type
+2. Write: `# Start all projects\ncd D:\\ClaudeWindows\\claude-dev-portfolio\n.\\scripts\\start-all-improved.ps1\n\n# Kill all servers\n.\\scripts\\kill-all-servers.ps1`
+3. Click **🗂️ Notes File** to save to NOTES.md
+4. Future reference: Commands are organized and searchable
+
+**Workflow 3: Development Notes**
+1. Select **📝 Note** type
+2. Write: `The new sidebar tabs need better visual separation. Consider adding subtle borders between notebook tabs and adjusting the glow effects for active states.`
+3. Click **📓 Dev Journal** to add to current project's journal
+4. Context preserved: Note includes timestamp and project association
+
+## Project Management
+
 ### Creating New Projects
 ```bash
 # Create a new project with automatic setup
@@ -135,10 +180,28 @@ npm run dev
 
 # The script will:
 # - Create project directory from template
-# - Assign available port automatically
+# - Assign available port automatically (from fallback range)
 # - Initialize git repository
 # - Create development journal
 # - Provide manifest.json entry to copy
+```
+
+### Port Assignment for New Projects
+When adding new projects to `manifest.json`:
+1. **Check current port assignments** in the manifest file
+2. **Assign next available port** from the series: 3006, 3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177
+3. **Update `src/utils/portManager.ts`** to include the new project in `DEFAULT_PORTS`
+4. **Test port detection** to ensure no conflicts with existing services
+
+**Example manifest entry:**
+```json
+{
+  "id": "new-project",
+  "title": "New Project",
+  "localPort": 3006,
+  "buildCommand": "npm run dev",
+  "path": "new-project"
+}
 ```
 
 ### Git Integration
@@ -165,9 +228,16 @@ Each project card displays:
 
 ### Port Management
 - **Portfolio**: Runs on port 5173 (Vite dev server, excluded from project detection)
-- **Projects**: Assigned specific ports (3001-3005, 9323) to avoid conflicts
+- **Projects**: Assigned specific ports to avoid conflicts:
+  - GGPrompts Style Guide: 3001
+  - Matrix Cards: 3002
+  - Sleak Card: 3003
+  - 3D File System: 3004
+  - 3D Matrix Cards: 3005
+  - GGPrompts Main: 9323
 - **Conflict Detection**: Portfolio port excluded from project status detection
-- **Range**: Projects use assigned ports with fallback range 3006-3010, 5174-5177
+- **Fallback Ports**: 3006-3010, 5174-5177 (automatically assigned if defaults are taken)
+- **Status Accuracy**: Only actual project ports are monitored for online/offline status
 
 ### Component Architecture
 ```
@@ -193,6 +263,26 @@ src/components/
 2. **3D Performance**: Reduce project count or disable 3D view on older hardware
 3. **PowerShell Execution**: Set execution policy with `Set-ExecutionPolicy RemoteSigned`
 4. **Git Commands**: Ensure git is installed and accessible from command line
+
+### Port Management Issues
+**Problem**: Project showing as "running" when it's not, or incorrect status detection
+**Solution**: 
+- Check if another service is using the project's assigned port
+- Use `netstat -ano | findstr :PORT` to identify process on specific port
+- Kill conflicting process: `powershell "Stop-Process -Id PROCESS_ID -Force"`
+- Portfolio port (5173) is excluded from project detection to prevent false positives
+
+**Problem**: Portfolio won't start or uses wrong port
+**Solution**:
+- Ensure port 5173 is free: `netstat -ano | findstr :5173`
+- If port is taken, kill the process or change `vite.config.ts` port setting
+- Vite will automatically try next available port if 5173 is occupied
+
+**Problem**: DEV NOTES system clipboard not working
+**Solution**:
+- Ensure browser allows clipboard access (HTTPS or localhost required)
+- Check browser console for clipboard permission errors
+- Try manually copying generated prompts from browser developer tools
 
 ### Project Won't Start
 ```bash

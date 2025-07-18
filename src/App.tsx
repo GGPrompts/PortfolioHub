@@ -20,6 +20,7 @@ export default function App() {
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<string | null>(null)
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
   const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
+  const [sidebarWidth, setSidebarWidth] = useState(0)
 
   // Load projects from manifest
   useEffect(() => {
@@ -98,7 +99,17 @@ export default function App() {
   }, [selectedProject, showProject, lastSelectedProjectId])
 
   const handleProjectClick = async (project: any) => {
-    selectProject(project)
+    // Check if project is running
+    const isRunning = runningStatus[project.id]
+    if (isRunning && projectPorts[project.id]) {
+      // Open running project in new tab
+      const url = `http://localhost:${projectPorts[project.id]}`
+      window.open(url, '_blank')
+    } else {
+      // Show project info or start prompt
+      selectProject(project)
+      setShowGrid(false)
+    }
   }
 
   const handleCloseViewer = () => {
@@ -115,19 +126,15 @@ export default function App() {
     setRefreshKey(prev => prev + 1)
   }
 
-  // Define widths for sidebar states (matching PortfolioSidebar)
-  const sidebarWidths = {
-    collapsed: 48,
-    normal: 48 + 320,
-    expanded: 48 + 320 + 500
-  }
-
-  // Use collapsed width on mobile regardless of sidebar state
-  const currentMarginLeft = isMobile ? sidebarWidths.collapsed : sidebarWidths[sidebarState]
+  // Use dynamic sidebar width
+  const currentMarginLeft = isMobile ? 0 : sidebarWidth
 
   return (
     <div className="app">
-      <PortfolioSidebar />
+      <PortfolioSidebar 
+        onOpenDashboard={() => setIsDashboardOpen(true)}
+        onWidthChange={setSidebarWidth}
+      />
       
       <main 
         className="main-content"

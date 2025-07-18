@@ -3,9 +3,15 @@ import { useSpring, animated } from '@react-spring/web'
 import { usePortfolioStore } from '../store/portfolioStore'
 import { checkPort } from '../utils/portManager'
 import GitUpdateButton from './GitUpdateButton'
+import SvgIcon from './SvgIcon'
 import styles from './PortfolioSidebar.module.css'
 
-export default function PortfolioSidebar() {
+interface PortfolioSidebarProps {
+  onOpenDashboard?: () => void
+  onWidthChange?: (width: number) => void
+}
+
+export default function PortfolioSidebar({ onOpenDashboard, onWidthChange }: PortfolioSidebarProps) {
   const { 
     sidebarState, 
     setSidebarState, 
@@ -15,24 +21,64 @@ export default function PortfolioSidebar() {
     setActiveFilter,
     selectProject,
     expandedProjects,
-    toggleProjectExpanded
+    toggleProjectExpanded,
+    collapseAllProjects
   } = usePortfolioStore()
   
   const [journalContent, setJournalContent] = useState<string>('')
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
   const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
   const [searchQuery, setSearchQuery] = useState('')
+  const [journalMode, setJournalMode] = useState<'full-width' | 'with-projects'>('with-projects')
   
-  // Define widths for each state - now cumulative
-  const widths = {
-    collapsed: 48,     // Icon bar only
-    normal: 48 + 320,  // Icon bar + projects panel
-    expanded: 48 + 320 + 500  // Icon bar + projects + journal
+  // Tab-based state management - Array to maintain order
+  const [activeTabs, setActiveTabs] = useState<string[]>([])
+  
+  // Define tab configurations
+  const tabs = {
+    projects: { width: 320, icon: 'fileText', title: 'Projects' },
+    journals: { width: 600, icon: 'edit', title: 'Dev Journals' },
+    // Future tabs can be added here: settings, git, etc.
+  }
+
+  // All tabs stay attached to the right edge of the total sidebar width
+  const getTabPosition = () => {
+    // Calculate total sidebar width and position tabs at the right edge
+    const totalWidth = calculateWidth()
+    return totalWidth === 0 ? 0 : totalWidth // Tabs sit exactly at the right edge
+  }
+  
+  // Calculate total width based on active tabs only
+  const calculateWidth = () => {
+    if (activeTabs.length === 0) {
+      return 0 // No width when no panels are open
+    }
+    
+    let totalWidth = 0
+    activeTabs.forEach(tabId => {
+      if (tabs[tabId as keyof typeof tabs]) {
+        totalWidth += tabs[tabId as keyof typeof tabs].width
+      }
+    })
+    return totalWidth
+  }
+  
+  // Toggle tab function - maintains order
+  const toggleTab = (tabId: string) => {
+    setActiveTabs(prev => {
+      if (prev.includes(tabId)) {
+        // Remove tab if it exists
+        return prev.filter(id => id !== tabId)
+      } else {
+        // Add tab to the end (rightmost position)
+        return [...prev, tabId]
+      }
+    })
   }
   
   // Spring animation for smooth transitions
   const springProps = useSpring({
-    width: widths[sidebarState],
+    width: calculateWidth(),
     config: {
       tension: 280,
       friction: 32,
@@ -40,19 +86,29 @@ export default function PortfolioSidebar() {
     }
   })
 
-  // Journal panel animation
+  // Individual panel animations
+  const projectsSpring = useSpring({
+    opacity: activeTabs.includes('projects') ? 1 : 0,
+    transform: activeTabs.includes('projects') ? 'translateX(0px)' : 'translateX(-20px)',
+    pointerEvents: activeTabs.includes('projects') ? 'auto' : 'none',
+    config: { tension: 280, friction: 32, clamp: true }
+  })
+  
   const journalSpring = useSpring({
-    opacity: sidebarState === 'expanded' ? 1 : 0,
-    transform: sidebarState === 'expanded' ? 'translateX(0px)' : 'translateX(-20px)',
-    pointerEvents: sidebarState === 'expanded' ? 'auto' : 'none',
-    config: {
-      tension: 280,
-      friction: 32
-    }
+    opacity: activeTabs.includes('journals') ? 1 : 0,
+    transform: activeTabs.includes('journals') ? 'translateX(0px)' : 'translateX(-20px)',
+    pointerEvents: activeTabs.includes('journals') ? 'auto' : 'none',
+    config: { tension: 280, friction: 32, clamp: true }
   })
   
   // Get unique tags for filtering
   const allTags = Array.from(new Set(projects.flatMap(p => p.tags)))
+
+  // Notify parent of width changes
+  useEffect(() => {
+    const currentWidth = calculateWidth()
+    onWidthChange?.(currentWidth)
+  }, [activeTabs, onWidthChange])
   
   // Filter projects based on search query
   const filteredProjects = projects.filter(project => {
@@ -111,88 +167,34 @@ export default function PortfolioSidebar() {
       style={{ width: springProps.width }}
     >
       <div className={styles.sidebarContainer}>
-        {/* Toggle Arrows - positioned on each panel edge */}
-        {sidebarState === 'collapsed' && (
-          <button 
-            className={`${styles.arrowButton} ${styles.expandProjects}`}
-            onClick={() => setSidebarState('normal')}
-            title="Show projects panel"
-          >
-            ▶
-          </button>
-        )}
-        {sidebarState === 'normal' && (
-          <>
-            <button 
-              className={`${styles.arrowButton} ${styles.collapseProjects}`}
-              onClick={() => setSidebarState('collapsed')}
-              title="Hide projects panel"
-            >
-              ◀
-            </button>
-            <button 
-              className={`${styles.arrowButton} ${styles.expandJournal}`}
-              onClick={() => setSidebarState('expanded')}
-              title="Show dev journal"
-            >
-              ▶
-            </button>
-          </>
-        )}
-        {sidebarState === 'expanded' && (
-          <button 
-            className={`${styles.arrowButton} ${styles.collapseJournal}`}
-            onClick={() => setSidebarState('normal')}
-            title="Hide dev journal"
-          >
-            ◀
-          </button>
-        )}
-      
-        {/* Icon Bar - Always Visible */}
-        <div className={styles.iconBar}>
+        {/* Notebook-style Tabs - Positioned at screen edge */}
+        {Object.entries(tabs).map(([tabId, config]) => (
           <div 
-            className={`${styles.icon} ${sidebarState === 'normal' || sidebarState === 'expanded' ? styles.active : ''}`}
-            title="Portfolio Home"
-            onClick={handlePortfolioHome}
-          >
-            📁
-          </div>
-          <div 
-            className={`${styles.icon} ${sidebarState === 'expanded' ? styles.active : ''}`}
-            title="Dev Journals"
-            onClick={() => setSidebarState('expanded')}
-          >
-            📓
-          </div>
-          <div className={styles.iconDivider}></div>
-          <div 
-            className={styles.icon} 
-            title="Start All Projects"
-            onClick={() => {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
-              navigator.clipboard.writeText(command)
-              alert('Start command copied to clipboard!')
+            key={tabId}
+            className={`${styles.notebookTab} ${activeTabs.includes(tabId) ? styles.active : ''}`}
+            title={config.title}
+            onClick={() => toggleTab(tabId)}
+            style={{
+              position: 'fixed',
+              left: `${getTabPosition()}px`,
+              top: `${20 + (Object.keys(tabs).indexOf(tabId) * 40)}px`,
+              zIndex: activeTabs.includes(tabId) ? 10 : 5,
+              transition: 'left 0.3s ease, background 0.3s ease'
             }}
           >
-            🚀
+            <div className={styles.tabIcon}>
+              <SvgIcon name={config.icon} size={18} color="currentColor" />
+            </div>
           </div>
-          <div 
-            className={styles.icon} 
-            title="Kill All Projects"
-            onClick={() => {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-              navigator.clipboard.writeText(command)
-              alert('Kill command copied to clipboard!')
-            }}
-          >
-            🛑
-          </div>
-        </div>
+        ))}
+
       
-        {/* Projects Panel - Visible in normal and expanded states */}
-        {(sidebarState === 'normal' || sidebarState === 'expanded') && (
-        <div className={styles.projectsPanel}>
+        {/* Projects Panel - Visible when projects tab is active */}
+        {activeTabs.includes('projects') && (
+        <animated.div 
+          className={styles.projectsPanel}
+          style={projectsSpring}
+        >
           <h3 className={styles.title}>PROJECTS</h3>
           
           {/* Search Bar */}
@@ -314,6 +316,13 @@ export default function PortfolioSidebar() {
           <div className={styles.quickActions}>
             <button 
               className={styles.actionBtn}
+              onClick={() => onOpenDashboard?.()}
+              title="Open project status dashboard"
+            >
+              <SvgIcon name="settings" size={16} /> Dashboard
+            </button>
+            <button 
+              className={styles.actionBtn}
               onClick={() => {
                 const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
                 navigator.clipboard.writeText(command)
@@ -321,7 +330,7 @@ export default function PortfolioSidebar() {
               }}
               title="Start all projects"
             >
-              🚀 All
+              <SvgIcon name="play" size={16} /> All
             </button>
             <button 
               className={styles.actionBtn}
@@ -332,26 +341,43 @@ export default function PortfolioSidebar() {
               }}
               title="Kill all projects"
             >
-              🛑 Kill
+              <SvgIcon name="stop" size={16} /> Kill
             </button>
             <button
               className={styles.actionBtn}
-              onClick={() => setActiveFilter('all')}
-              title="Clear filters"
+              onClick={() => {
+                setActiveFilter('all')
+                collapseAllProjects()
+                setSearchQuery('')
+              }}
+              title="Clear filters and collapse all projects"
             >
-              🔄 Clear
+              <SvgIcon name="refresh" size={16} /> Clear
             </button>
           </div>
-        </div>
+        </animated.div>
         )}
         
-        {/* Dev Journal - Always rendered, animated visibility */}
+        {/* Journal Panel - Visible when journals tab is active */}
+        {activeTabs.includes('journals') && (
         <animated.div 
           className={styles.expandedContent}
           style={journalSpring}
         >
           <div className={styles.expandedHeader}>
-            <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
+            <div className={styles.journalHeaderTop}>
+              <h3>📓 Dev Journal - {selectedProject?.title || 'Select a Project'}</h3>
+              
+              {/* Mode Toggle */}
+              <button 
+                className={styles.modeToggle}
+                onClick={() => setJournalMode(journalMode === 'full-width' ? 'with-projects' : 'full-width')}
+                title={journalMode === 'full-width' ? 'Show with projects' : 'Full width view'}
+              >
+                {journalMode === 'full-width' ? '📑' : '📄'}
+              </button>
+            </div>
+            
             {selectedProject?.devJournal && (
               <button 
                 className={styles.editJournalBtn}
@@ -391,6 +417,7 @@ export default function PortfolioSidebar() {
             </div>
           )}
         </animated.div>
+        )}
       </div>
     </animated.div>
   )

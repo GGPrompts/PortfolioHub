@@ -40,6 +40,7 @@ interface PortfolioStore {
   setActiveFilter: (filter: string) => void
   setProjectLoading: (loading: boolean) => void
   toggleProjectExpanded: (projectId: string) => void
+  collapseAllProjects: () => void
   
   // Filtered projects getter
   getFilteredProjects: () => Project[]
@@ -79,6 +80,7 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
     }
     return { expandedProjects: expanded }
   }),
+  collapseAllProjects: () => set({ expandedProjects: new Set() }),
   
   // Filtered projects
   getFilteredProjects: () => {

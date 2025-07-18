@@ -1,13 +1,15 @@
 # Claude Development Portfolio
 
 ## Overview
-This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with an immersive 3D interface and comprehensive development tools.
+This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with a clean, professional interface and comprehensive development tools.
 
 ## Key Features
-- **3D Project Visualization**: Interactive Three.js environment with rotating project preview screens
+- **Notebook-Style Sidebar**: Professional tabs that slide to panel edges like real notebook dividers
+- **Dynamic Panel System**: Order-based panel opening with smooth React Spring animations
 - **Live Project Previews**: Real-time iframe displays with monitor-style UI and status indicators
-- **Git Integration**: Update buttons throughout the interface with clipboard-based commands
-- **Project Template System**: One-command project creation with automatic port assignment
+- **Professional SVG Icons**: Custom icon library adapted from GGPrompts design system
+- **Status Dashboard**: Comprehensive project management with real-time port detection
+- **Smart Port Management**: Automatic port allocation and conflict resolution
 - **Development Journals**: Track progress for each project with markdown support
 - **PowerShell Automation**: Scripts for project management and lifecycle operations
 
@@ -15,22 +17,29 @@ This is the root directory for all Claude-assisted development projects. The por
 ```
 claude-dev-portfolio/
 ├── src/                        # Portfolio React app
-│   ├── components/             # React components (sidebar, grid, viewer)
-│   │   ├── ThreeProjectPreview.tsx      # 3D visualization component
+│   ├── components/             # React components
+│   │   ├── PortfolioSidebar.tsx         # Notebook-style sidebar with dynamic tabs
+│   │   ├── ProjectGrid.tsx              # Project card grid layout
 │   │   ├── LiveProjectPreview.tsx       # Monitor-style project displays
-│   │   ├── PortfolioSidebar.tsx         # Navigation with journal panel
+│   │   ├── ProjectStatusDashboard.tsx   # Comprehensive status management
+│   │   ├── SvgIcon.jsx                  # Professional icon library
 │   │   └── GitUpdateButton.tsx          # Git integration component
-│   ├── store/                  # State management
-│   └── utils/                  # Port manager, project launcher
+│   ├── store/                  # State management (Zustand)
+│   ├── utils/                  # Port manager, project launcher
+│   └── App.tsx                 # Main application with dynamic sidebar width
 ├── projects/                   # All development projects
 │   ├── manifest.json           # Project configuration and metadata
 │   ├── dev-journals/           # Development logs for each project
-│   └── [project-folders]/      # Individual project directories
-├── project-template/           # Template for creating new projects
+│   ├── 3d-matrix-cards/        # Three.js interactive card display
+│   ├── matrix-cards/           # React cyberpunk card components
+│   ├── sleak-card/             # Modern card system with water effects
+│   ├── ggprompts/              # Main AI prompt platform
+│   ├── ggprompts-style-guide/  # Design system documentation
+│   └── 3d-file-system/         # 3D file system explorer
 ├── scripts/                    # PowerShell automation scripts
-│   ├── start-all.ps1          # Start all projects automatically
-│   └── create-project.ps1     # Create new project from template
-└── docs/                      # Documentation
+│   ├── start-all-improved.ps1  # Enhanced project launcher (no auto-browser)
+│   └── create-project.ps1      # Create new project from template
+└── docs/                       # Documentation
 ```
 
 ## Quick Start
@@ -38,15 +47,39 @@ claude-dev-portfolio/
 # Install dependencies
 npm install
 
-# Start portfolio hub (runs on port 5173)
+# Start portfolio hub (runs on port 3000)
 npm run dev
 
-# Start all projects automatically
-.\scripts\start-all.ps1
+# Start all projects automatically (no browser auto-launch)
+.\scripts\start-all-improved.ps1
 
 # Create new project
 .\scripts\create-project.ps1 -ProjectName "my-new-project" -Description "Project description"
 ```
+
+## User Interface
+
+### Notebook-Style Sidebar
+- **Professional tabs** stick out from the left edge of the screen
+- **Dynamic positioning** - tabs slide to the right edge of their panels when opened
+- **Order-based opening** - panels appear in the order tabs are clicked
+- **Click to toggle** - click active tab to close its panel
+- **SVG icons** for professional appearance:
+  - 📄 `fileText` for Projects panel
+  - ✏️ `edit` for Dev Journals panel
+
+### Status Dashboard
+- Accessible via **Dashboard** button in Projects panel
+- **Real-time port detection** shows actual running status
+- **Individual project controls** (start/stop/open)
+- **Batch operations** (Start All/Kill All)
+- **Smart command generation** with clipboard integration
+
+### Project Management
+- **Smart port allocation** - Projects use ports 3000-3099 with conflict resolution
+- **No auto-browser opening** - Clean startup without surprise windows
+- **Live status indicators** - Green dots for running, red for stopped
+- **Click to open** - Running projects open in new tabs when clicked
 
 ## Current Projects
 - **3d-matrix-cards**: Three.js interactive card display with cyberpunk aesthetics
@@ -55,12 +88,14 @@ npm run dev
 - **ggprompts**: Main AI prompt platform with advanced features
 - **ggprompts-style-guide**: Design system documentation and component library
 
-## Recent Updates (2025-07-17)
-- **Enhanced 3D View**: Fixed screen orientation, improved lighting, reduced rotation speed
-- **Monitor-Style UI**: Realistic monitor displays with status bars and professional styling
-- **Git Update System**: Comprehensive update buttons with secure clipboard-based commands
-- **Project Template**: Complete template system with automated project creation
-- **Sidebar Improvements**: Fixed z-index issues, enhanced animations, journal panel integration
+## Recent Updates (2025-07-18)
+- **Notebook-Style Sidebar**: Complete redesign with professional tabs that stick to panel edges
+- **Dynamic Panel System**: Order-based panel opening with smooth React Spring animations
+- **Professional SVG Icons**: Replaced emojis with custom icon library from GGPrompts design system
+- **Status Dashboard**: Comprehensive project management with real-time port detection
+- **Smart Port Management**: Automatic port allocation and conflict resolution (ports 3000-3099)
+- **Enhanced UX**: No auto-browser launching, clean startup, perfect tab alignment
+- **Dynamic Width Management**: Main content adjusts properly to sidebar changes
 
 ## Development Workflow
 

@@ -5,6 +5,7 @@ import { checkPort } from '../utils/portManager'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
+import ProjectWizard from './ProjectWizard'
 import styles from './PortfolioSidebar.module.css'
 
 interface PortfolioSidebarProps {
@@ -45,17 +46,52 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   // Selected projects for launch/kill operations
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set())
   
+  // Section collapse state
+  const [onlineSectionCollapsed, setOnlineSectionCollapsed] = useState(false)
+  const [offlineSectionCollapsed, setOfflineSectionCollapsed] = useState(false)
+  
   // Notes display state
   const [showNotesList, setShowNotesList] = useState(true)
   const [toSortNotes, setToSortNotes] = useState<any[]>([])
+  
+  // Refresh function for status updates
+  const refreshProjectStatus = async () => {
+    // Force re-check of all project statuses
+    const newStatuses = new Map<string, boolean>()
+    
+    // Check all projects in parallel
+    await Promise.all(
+      projects.map(async (project) => {
+        if (project.localPort) {
+          try {
+            const response = await fetch(`http://localhost:${project.localPort}`, { 
+              method: 'HEAD',
+              mode: 'no-cors',
+              timeout: 2000
+            })
+            newStatuses.set(project.id, true)
+          } catch {
+            newStatuses.set(project.id, false)
+          }
+        } else {
+          newStatuses.set(project.id, false)
+        }
+      })
+    )
+    
+    setProjectStatuses(newStatuses)
+  }
+  
+  // Project wizard state
+  const [showProjectWizard, setShowProjectWizard] = useState(false)
   
   // Tab-based state management - Array to maintain order
   const [activeTabs, setActiveTabs] = useState<string[]>([])
   
   // Define tab configurations
   const tabs = {
-    projects: { width: 320, icon: 'fileText', title: 'Projects' },
-    journals: { width: 600, icon: 'edit', title: 'Dev Notes' },
+    projects: { width: 320, icon: 'sidebarSmall', title: 'Projects' },
+    journals: { width: 600, icon: 'sidebarLarge', title: 'Dev Notes' },
     // Future tabs can be added here: settings, git, etc.
   }
 
@@ -464,6 +500,30 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     }
   }
 
+  // Project wizard handlers
+  const handleNewProject = () => {
+    setShowProjectWizard(true)
+    setShowNotesList(false)
+    setIsEditingNote(false)
+    setIsSelectingNote(false)
+    // Ensure the journals tab is open to show the wizard
+    if (!activeTabs.includes('journals')) {
+      toggleTab('journals')
+    }
+  }
+
+  const handleWizardCancel = () => {
+    setShowProjectWizard(false)
+    setShowNotesList(true)
+  }
+
+  const handleWizardSuccess = (projectId: string) => {
+    setShowProjectWizard(false)
+    setShowNotesList(true)
+    // Optionally, you could trigger a project list refresh here
+    console.log(`Project ${projectId} created successfully!`)
+  }
+
   // Project selection management
   const toggleProjectSelection = (projectId: string) => {
     setSelectedProjects(prev => {
@@ -580,6 +640,18 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
         >
           <h3 className={styles.title}>PROJECTS</h3>
           
+          {/* New Project Button */}
+          <div className={styles.newProjectSection}>
+            <button 
+              className={styles.newProjectBtn}
+              onClick={handleNewProject}
+              title="Create a new project with guided setup"
+            >
+              <SvgIcon name="plus" size={18} />
+              <span>New Project</span>
+            </button>
+          </div>
+          
           {/* Search Bar */}
           <div className={styles.searchSection}>
             <input 
@@ -603,10 +675,13 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             </div>
             <button 
               className={styles.refreshBtn}
-              onClick={() => window.location.reload()}
+              onClick={(e) => {
+                e.stopPropagation()
+                refreshProjectStatus()
+              }}
               title="Refresh project status"
             >
-              🔄
+              <SvgIcon name="refreshCw" size={14} />
             </button>
           </div>
 
@@ -638,11 +713,17 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             {/* Online Projects Section */}
             {filteredProjects.some(p => projectStatuses.get(p.id) || false) && (
               <>
-                <div className={styles.statusSectionHeader}>
+                <div className={styles.statusSectionHeader} onClick={() => setOnlineSectionCollapsed(!onlineSectionCollapsed)}>
+                  <button className={`${styles.sectionCollapseToggle} ${onlineSectionCollapsed ? styles.collapsed : ''}`}>
+                    ▼
+                  </button>
                   <span className={styles.statusIndicator}>🟢</span>
                   <span className={styles.statusLabel}>ONLINE</span>
+                  <span className={styles.projectCount}>
+                    ({filteredProjects.filter(p => projectStatuses.get(p.id) || false).length})
+                  </span>
                 </div>
-                {filteredProjects.filter(p => projectStatuses.get(p.id) || false).map(project => {
+                {!onlineSectionCollapsed && filteredProjects.filter(p => projectStatuses.get(p.id) || false).map(project => {
                   const isRunning = projectStatuses.get(project.id) || false
                   const isExpanded = expandedProjects.has(project.id)
                   
@@ -749,11 +830,17 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             {/* Offline Projects Section */}
             {filteredProjects.some(p => !(projectStatuses.get(p.id) || false)) && (
               <>
-                <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`}>
+                <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`} onClick={() => setOfflineSectionCollapsed(!offlineSectionCollapsed)}>
+                  <button className={`${styles.sectionCollapseToggle} ${offlineSectionCollapsed ? styles.collapsed : ''}`}>
+                    ▼
+                  </button>
                   <span className={styles.statusIndicator}>🔴</span>
                   <span className={styles.statusLabel}>OFFLINE</span>
+                  <span className={styles.projectCount}>
+                    ({filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).length})
+                  </span>
                 </div>
-                {filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).map(project => {
+                {!offlineSectionCollapsed && filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).map(project => {
                   const isRunning = projectStatuses.get(project.id) || false
                   const isExpanded = expandedProjects.has(project.id)
                   
@@ -971,7 +1058,12 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
           </div>
           
           <div className={styles.expandedBody}>
-            {isEditingNote ? (
+            {showProjectWizard ? (
+              <ProjectWizard
+                onCancel={handleWizardCancel}
+                onSuccess={handleWizardSuccess}
+              />
+            ) : isEditingNote ? (
               <NoteCard
                 claudeInstructions={claudeInstructions}
                 noteContent={currentNote}

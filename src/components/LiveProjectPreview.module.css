@@ -6,6 +6,7 @@
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -31,34 +32,19 @@
   z-index: 1;
 }
 
-/* Preview Container - Phone-like tall styling */
+/* Preview Container - Dynamic sizing based on device type */
 .previewContainer {
   position: relative;
-  width: 100%;
-  height: 500px;
-  margin: 0;
+  margin: 0 auto;
   background: rgba(5, 5, 5, 0.95);
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 2px solid rgba(40, 40, 40, 0.8);
   box-shadow: 
     inset 0 1px 2px rgba(255, 255, 255, 0.05),
     0 3px 12px rgba(0, 0, 0, 0.4),
     0 1px 4px rgba(0, 0, 0, 0.6);
-}
-
-/* Desktop view container adjustments - Wide landscape format */
-.previewContainer:has(.desktop) {
-  height: 320px;
-  width: 100%;
-  margin: 0;
-  background: rgba(10, 10, 10, 0.98);
-  border-radius: 8px;
-  border: 2px solid rgba(60, 60, 60, 0.8);
-  box-shadow: 
-    inset 0 1px 3px rgba(255, 255, 255, 0.1),
-    0 8px 24px rgba(0, 0, 0, 0.6),
-    0 2px 8px rgba(0, 0, 0, 0.8);
+  /* Size will be set dynamically via inline styles */
 }
 
 .livePreviewWrapper {
@@ -69,44 +55,50 @@
   align-items: center;
   justify-content: center;
   background: rgba(5, 5, 5, 0.95);
-}
-
-/* Mobile view - uses full container dimensions */
-.livePreviewWrapper.mobile {
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 0;
-}
-
-.livePreviewWrapper.mobile .livePreview {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  border: none;
-  box-shadow: none;
-}
-
-/* Desktop view (16:9 aspect ratio) - True landscape orientation */
-.livePreviewWrapper.desktop {
-  align-items: center;
-  justify-content: center;
   padding: 8px;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
+  box-sizing: border-box;
 }
 
-.livePreviewWrapper.desktop .livePreview {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  border: 2px solid rgba(60, 60, 60, 0.8);
-  transform: scale(1);
-  transform-origin: center;
+/* Mobile display styling */
+.livePreviewWrapper.mobileDisplay {
+  align-items: flex-start;
+  justify-content: flex-start;
+  background: rgba(5, 5, 5, 0.98);
+  border-radius: 12px;
+  /* Add mobile device bezel effect */
+  box-shadow: 
+    inset 0 0 8px rgba(255, 255, 255, 0.1),
+    0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.livePreviewWrapper.mobileDisplay .deviceViewport {
+  border-radius: 12px;
+  border: 2px solid rgba(80, 80, 80, 0.8);
   background: #000;
   box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.6),
-    inset 0 1px 3px rgba(255, 255, 255, 0.1);
+    0 2px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Desktop display styling */
+.livePreviewWrapper.desktopDisplay {
+  align-items: flex-start;
+  justify-content: flex-start;
+  background: rgba(10, 10, 10, 0.98);
+  border-radius: 8px;
+  /* Add desktop monitor bezel effect */
+  box-shadow: 
+    inset 0 0 12px rgba(255, 255, 255, 0.05),
+    0 6px 30px rgba(0, 0, 0, 0.7);
+}
+
+.livePreviewWrapper.desktopDisplay .deviceViewport {
+  border-radius: 6px;
+  border: 3px solid rgba(60, 60, 60, 0.9);
+  background: #000;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.8),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
 }
 
 
@@ -192,12 +184,13 @@
   background: rgba(20, 20, 20, 0.95);
   border: 1px solid rgba(60, 60, 60, 0.4);
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: 'Courier New', monospace;
   font-size: 11px;
+  min-height: 40px;
   box-shadow: 
     inset 0 1px 2px rgba(255, 255, 255, 0.05),
     0 1px 3px rgba(0, 0, 0, 0.3);
@@ -214,6 +207,26 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.refreshIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  color: #00ffff;
+  animation: refreshPulse 1s ease-in-out infinite;
+}
+
+@keyframes refreshPulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 .statusDot {
@@ -237,33 +250,40 @@
 }
 
 .statusText {
-  font-size: 12px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   font-family: 'Courier New', monospace;
 }
 
 .controlButtons {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 
 .previewToggle,
 .openExternal,
-.viewModeToggle {
+.viewModeToggle,
+.zoomToggle {
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: #00ff88;
-  padding: 3px 6px;
-  border-radius: 3px;
+  padding: 6px 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
   transition: all 0.2s ease;
-  min-width: 20px;
-  height: 18px;
+  min-width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.zoomToggle {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.3);
+  color: #00ffff;
 }
 
 .previewToggle:hover,
@@ -271,6 +291,41 @@
 .viewModeToggle:hover {
   background: rgba(0, 255, 136, 0.2);
   border-color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+}
+
+.zoomToggle:hover {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+/* Device viewport container for proper scaling */
+.deviceViewport {
+  position: relative;
+  border-radius: 6px;
+  background: #000;
+  box-shadow: 
+    0 2px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  /* Device-specific styling applied via parent selectors */
+}
+
+/* Scale indicator */
+.scaleIndicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 255, 136, 0.9);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.6);
 }
 
 /* Project Info - Separated from monitor */
@@ -327,6 +382,29 @@
   white-space: nowrap;
 }
 
+/* Status bar tech stack */
+.statusTechStack {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+  margin: 0 12px;
+}
+
+.statusTechBadge {
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  color: rgba(0, 255, 136, 0.7);
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: 'Courier New', monospace;
+}
+
 .projectActions {
   display: flex;
   gap: 8px;
@@ -354,9 +432,13 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .previewContainer {
-    height: 400px;
-    overflow: hidden;
+    /* Allow container to scale down proportionally on mobile screens */
     max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .livePreviewWrapper {
+    padding: 4px;
   }
   
   .projectMeta {
@@ -367,5 +449,10 @@
   
   .techStack {
     margin-bottom: 8px;
+  }
+  
+  .scaleIndicator {
+    font-size: 9px;
+    padding: 1px 4px;
   }
 }

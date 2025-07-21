@@ -3,11 +3,29 @@
 ## Overview
 This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with a clean, professional interface and comprehensive development tools.
 
+## CCGlobalCommands Integration
+**Slash commands are now available globally!** The ClaudeGlobalCommands system provides 9 core commands and 47+ specialized agents that work from any project directory.
+
+### Quick Start with Slash Commands:
+- `/guide` - Get comprehensive help and overview
+- `/agents` - Browse all 47+ AI specialists  
+- `/execute <task>` - Quick task execution with intelligent routing
+- `/workflows <name>` - Multi-agent automation workflows
+- `/senior-engineer` - Code reviews and architecture guidance
+- `/documentation` - Generate technical documentation
+
+### Integration with Portfolio Projects:
+The slash commands work seamlessly within any project in your portfolio. You can use `/senior-engineer` for code reviews, `/documentation` for generating docs, or `/execute` for quick tasks while working on any project.
+
+**Installation Location:** `%USERPROFILE%\.claude\` (Windows)
+**Repository Location:** `D:\ClaudeWindows\ClaudeGlobalCommands\`
+
 ## Key Features
-- **Notebook-Style Sidebar**: Professional tabs that slide to panel edges like real notebook dividers
+- **Notebook-Style Sidebar**: Professional tabs with custom sidebar state icons that slide to panel edges like real notebook dividers
 - **Dynamic Panel System**: Order-based panel opening with smooth React Spring animations
-- **Live Project Previews**: Real-time iframe displays with monitor-style UI and status indicators
-- **Professional SVG Icons**: Custom icon library adapted from GGPrompts design system
+- **Live Project Previews**: Real-time iframe displays with realistic device scaling and refresh indicators
+- **Professional SVG Icons**: Custom icon library with simplified sidebar representations and comprehensive controls
+- **Enhanced Status Bar**: Larger, more readable tech tags and control buttons with refresh indicators
 - **Status Dashboard**: Comprehensive project management with real-time port detection
 - **Smart Port Management**: Automatic port allocation and conflict resolution
 - **Development Journals**: Track progress for each project with markdown support
@@ -49,7 +67,7 @@ claude-dev-portfolio/
 # Install dependencies
 npm install
 
-# Start portfolio hub (runs on port 5173)
+# Start portfolio hub (runs on port 5173+, auto-assigned by Vite)
 npm run dev
 
 # Start all projects in tabbed Windows Terminal (recommended)
@@ -121,9 +139,9 @@ Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
 - **Dynamic positioning** - tabs slide to the right edge of their panels when opened
 - **Order-based opening** - panels appear in the order tabs are clicked
 - **Click to toggle** - click active tab to close its panel
-- **SVG icons** for professional appearance:
-  - 📄 `fileText` for Projects panel
-  - ✏️ `edit` for Dev Notes panel
+- **Custom sidebar state icons** for intuitive visual representation:
+  - 🔲 `sidebarSmall` for Projects panel (rectangle with narrow vertical line)
+  - 🔳 `sidebarLarge` for Dev Notes panel (rectangle with wide vertical line)
 
 ### Status Dashboard
 - Accessible via **Dashboard** button in Projects panel
@@ -173,11 +191,47 @@ Outdated scripts have been moved to `scripts/archive/` to avoid confusion:
 - **sleak-card**: Modern card system with water effects and responsive design
 - **ggprompts**: Main AI prompt platform with advanced features
 - **ggprompts-style-guide**: Design system documentation and component library
+- **ggprompts-professional**: Work-appropriate replica with corporate-friendly interface
 - **3d-file-system**: Advanced file system viewer with terminal interface, expandable sidebar, and working 3D card flipping
 
-## Recent Updates (2025-07-18)
+## Recent Updates (2025-07-21)
 
 ### Latest Features (Current Session)
+- **Enhanced Project Status Bar**: Comprehensive improvements to project card status displays:
+  - **Larger, more readable text**: Status bar font increased from 12px to 14px for better visibility
+  - **Enhanced tech tags**: Moved to status bar center with increased size (9px→12px) and better spacing
+  - **Larger control buttons**: Increased from 18px to 28px height with 14px font size for emojis/icons
+  - **Visual refresh indicators**: Eye icon with pulse animation shows when projects are refreshing
+  - **Better space utilization**: Three-section layout (status | tech tags | controls) with proper spacing
+  - **Improved button gaps**: Increased spacing between all interactive elements for better UX
+- **Custom Sidebar State Icons**: Replaced generic icons with intuitive sidebar representations:
+  - **Projects tab**: Simple rectangle with narrow vertical line (`sidebarSmall`)
+  - **DEV NOTES tab**: Simple rectangle with wide vertical line (`sidebarLarge`)  
+  - **Clean design**: No fills, consistent stroke width, minimal geometric approach
+  - **Visual clarity**: Icons directly represent the sidebar width states they activate
+- **Improved Header Refresh**: Fixed portfolio header refresh button to only update status without collapsing sidebars
+
+### Previous Features (2025-07-20)
+- **Realistic Device Display System**: Revolutionary preview system with true-to-life device scaling:
+  - **Mobile previews**: iPhone 13/14 proportions (375×812px) with proper 9:19.5 aspect ratio
+  - **Desktop previews**: Accurate 1920×1080 resolution with 16:9 aspect ratio 
+  - **Smart zoom levels**: 25%, 50%, 75%, 100%, and "fit to container" modes
+  - **Device bezel effects**: Realistic borders and shadows simulating actual device frames
+  - **Viewport injection**: Automatically sets proper viewport meta tags for accurate rendering
+  - **Top-left alignment**: All zoom levels consistently start from the top of the page
+  - **Desktop-first default**: Projects now default to desktop view for better showcase
+- **Collapsible Project Sections**: Major sidebar organization improvement:
+  - **Clickable section headers**: Click "🟢 ONLINE" or "🔴 OFFLINE" to collapse/expand
+  - **Project count indicators**: Shows number of projects in each section (e.g., "ONLINE (3)")
+  - **Animated visual feedback**: Arrows rotate to show collapsed/expanded state
+  - **Focus mode capability**: Hide offline projects to focus only on active development
+- **Enhanced Styling Consistency**: Professional interface standardization:
+  - **Normalized section headers**: Match project item sizing for unified appearance
+  - **Updated status display**: Modern fonts matching rest of interface instead of monospace
+  - **Professional refresh icon**: SVG refreshCw icon instead of emoji
+  - **Consistent typography**: System fonts throughout for professional appearance
+
+### Previous Features (2025-07-18)
 - **Streamlined Project Interface**: Major redesign of Projects panel for better workflow:
   - **Auto-sorted layout** - Online projects at top, offline projects at bottom above controls
   - **Enhanced bottom controls** with visual command grouping (Dashboard | Run | Kill)
@@ -355,16 +409,17 @@ Each project card displays:
 ## Architecture Details
 
 ### Port Management
-- **Portfolio**: Runs on port 5173 (Vite dev server, excluded from project detection)
+- **Portfolio**: Runs on port 5173+ (Vite auto-assigns next available port, excluded from project detection)
 - **Projects**: Assigned specific ports to avoid conflicts:
   - GGPrompts Style Guide: 3001
   - Matrix Cards: 3002
   - Sleak Card: 3003
   - 3D File System: 3004
   - 3D Matrix Cards: 3005
+  - GGPrompts Professional: 3006
   - GGPrompts Main: 9323
 - **Conflict Detection**: Portfolio port excluded from project status detection
-- **Fallback Ports**: 3006-3010, 5174-5177 (automatically assigned if defaults are taken)
+- **Fallback Ports**: 3007-3010, 5174-5177 (automatically assigned if defaults are taken)
 - **Status Accuracy**: Only actual project ports are monitored for online/offline status
 
 ### Component Architecture

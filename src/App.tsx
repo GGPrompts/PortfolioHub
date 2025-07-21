@@ -22,7 +22,7 @@ export default function App() {
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
   const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
   const [sidebarWidth, setSidebarWidth] = useState(0)
-  const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('mobile')
+  const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
 
@@ -135,6 +135,26 @@ export default function App() {
     setRefreshKey(prev => prev + 1)
   }
 
+  const handleRefreshPortfolio = async (event: React.MouseEvent) => {
+    event.stopPropagation()
+    // Just refresh the project status without reloading the page
+    const running = await getRunningProjects()
+    const newRunningStatus: { [key: string]: boolean } = {}
+    const newPortStatus: { [key: string]: number | null } = {}
+    
+    for (const project of projects) {
+      if (project.displayType === 'external') {
+        const isRunning = running.has(project.id)
+        const port = await getProjectPort(project)
+        newRunningStatus[project.id] = isRunning
+        newPortStatus[project.id] = port
+      }
+    }
+    
+    setRunningStatus(newRunningStatus)
+    setProjectPorts(newPortStatus)
+  }
+
   // Smart responsive layout strategy
   const getLayoutStrategy = () => {
     if (isMobile) {
@@ -195,10 +215,10 @@ export default function App() {
                   />
                   <button 
                     className="refresh-icon-btn"
-                    onClick={() => window.location.reload()}
-                    title="Refresh page"
+                    onClick={handleRefreshPortfolio}
+                    title="Refresh project status"
                   >
-                    <SvgIcon name="refresh" size={16} />
+                    <SvgIcon name="refreshCw" size={16} />
                   </button>
                   {/* View Mode Toggle Buttons */}
                   <div className="view-mode-toggle">

@@ -447,7 +447,12 @@
   background: rgba(15, 15, 15, 0.95);
   border-right: 1px solid rgba(0, 255, 136, 0.3);
   z-index: 1;
-  max-width: 600px;
+  max-width: 600px; /* Default for DEV NOTES */
+}
+
+/* VS Code specific width */
+.vscodePanel {
+  max-width: 800px !important;
 }
 
 /* Holographic effect */

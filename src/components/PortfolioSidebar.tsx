@@ -6,6 +6,7 @@ import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
+import { VSCodeManager } from './VSCodeManager'
 import styles from './PortfolioSidebar.module.css'
 
 interface PortfolioSidebarProps {
@@ -92,13 +93,31 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const tabs = {
     projects: { width: 320, icon: 'sidebarSmall', title: 'Projects' },
     journals: { width: 600, icon: 'sidebarLarge', title: 'Dev Notes' },
+    vscode: { width: 800, icon: 'code', title: 'VS Code' },
     // Future tabs can be added here: settings, git, etc.
   }
 
-  // All tabs stay attached to the right edge of the total sidebar width (simpler approach)
-  const getTabPosition = () => {
-    const totalWidth = calculateWidth()
-    return totalWidth === 0 ? 0 : totalWidth // All tabs sit at the right edge of the sidebar
+  // Calculate position for each tab based on fixed order and active tabs
+  const getTabPosition = (tabId: string) => {
+    if (!activeTabs.includes(tabId)) return 0 // Tab not active
+    
+    // Fixed order: projects -> journals -> vscode (left to right)
+    const fixedOrder = ['projects', 'journals', 'vscode']
+    
+    // Calculate cumulative width up to and including this tab's panel
+    let cumulativeWidth = 0
+    for (const orderedTabId of fixedOrder) {
+      if (activeTabs.includes(orderedTabId)) {
+        if (tabs[orderedTabId as keyof typeof tabs]) {
+          cumulativeWidth += tabs[orderedTabId as keyof typeof tabs].width
+        }
+      }
+      // Stop when we reach the current tab
+      if (orderedTabId === tabId) {
+        break
+      }
+    }
+    return cumulativeWidth // Position at the right edge of this panel
   }
   
   // Calculate total width based on active tabs only
@@ -151,6 +170,13 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     opacity: activeTabs.includes('journals') ? 1 : 0,
     transform: activeTabs.includes('journals') ? 'translateX(0px)' : 'translateX(-20px)',
     pointerEvents: activeTabs.includes('journals') ? 'auto' : 'none',
+    config: { tension: 280, friction: 32, clamp: true }
+  })
+  
+  const vscodeSpring = useSpring({
+    opacity: activeTabs.includes('vscode') ? 1 : 0,
+    transform: activeTabs.includes('vscode') ? 'translateX(0px)' : 'translateX(-20px)',
+    pointerEvents: activeTabs.includes('vscode') ? 'auto' : 'none',
     config: { tension: 280, friction: 32, clamp: true }
   })
   
@@ -619,7 +645,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             onClick={() => toggleTab(tabId)}
             style={{
               position: 'fixed',
-              left: `${getTabPosition()}px`,
+              left: `${getTabPosition(tabId)}px`,
               top: `${20 + (Object.keys(tabs).indexOf(tabId) * 40)}px`,
               zIndex: activeTabs.includes(tabId) ? 10 : 5,
               transition: 'left 0.3s ease, background 0.3s ease'
@@ -1214,6 +1240,16 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               />
             )}
           </div>
+        </animated.div>
+        )}
+        
+        {/* VS Code Panel - Visible when vscode tab is active */}
+        {activeTabs.includes('vscode') && (
+        <animated.div 
+          className={`${styles.expandedContent} ${styles.vscodePanel}`}
+          style={vscodeSpring}
+        >
+          <VSCodeManager />
         </animated.div>
         )}
       </div>

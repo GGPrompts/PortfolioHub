@@ -1,0 +1,602 @@
+/* VS Code Terminal Component Styles */
+.vscode-terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.vscode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(37, 37, 38, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  min-height: 44px;
+}
+
+.vscode-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #00ff88;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.vscode-icon {
+  width: 16px;
+  height: 16px;
+  color: #00ff88;
+}
+
+.vscode-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-status {
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.connection-status.connected {
+  color: #00ff88;
+}
+
+.connection-status.disconnected {
+  color: #ff4444;
+}
+
+.vscode-control-btn {
+  background: none;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 28px;
+  height: 28px;
+}
+
+.vscode-control-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.5);
+  color: #00ff88;
+}
+
+.vscode-control-btn.vscode-close:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.5);
+  color: #ff4444;
+}
+
+.vscode-control-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vscode-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.vscode-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #1e1e1e;
+  transition: opacity 0.3s ease;
+}
+
+.vscode-iframe.loading {
+  opacity: 0.5;
+}
+
+.vscode-iframe.loaded {
+  opacity: 1;
+}
+
+.vscode-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 2;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 255, 136, 0.3);
+  border-top: 3px solid #00ff88;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.vscode-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 24px;
+  z-index: 2;
+}
+
+.error-icon {
+  width: 48px;
+  height: 48px;
+  color: #ff4444;
+}
+
+.error-message h3 {
+  margin: 0 0 8px 0;
+  color: #ff4444;
+  font-size: 18px;
+}
+
+.error-message p {
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.retry-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .vscode-header {
+    padding: 6px 10px;
+    min-height: 40px;
+  }
+  
+  .vscode-title {
+    font-size: 12px;
+  }
+  
+  .vscode-control-btn {
+    min-width: 24px;
+    height: 24px;
+    padding: 4px;
+  }
+  
+  .vscode-control-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* VS Code Manager Styles */
+.vscode-manager {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: rgba(15, 15, 15, 0.95);
+  padding: 0;
+  margin: 0;
+}
+
+.vscode-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(25, 25, 25, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-left h3 {
+  margin: 0;
+  color: #00ff88;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  font-size: 12px;
+}
+
+.status-indicator.running {
+  color: #00ff88;
+}
+
+.status-indicator.checking {
+  color: #ffaa00;
+}
+
+.status-indicator.stopped {
+  color: #ff4444;
+}
+
+.status-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.start-server-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.start-server-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.project-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-selector label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+
+.project-selector select {
+  background: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  min-width: 150px;
+  cursor: pointer;
+}
+
+.project-selector select:focus {
+  outline: none;
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.vscode-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px 0;
+  background: rgba(20, 20, 20, 0.9);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  overflow-x: auto;
+}
+
+.vscode-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(40, 40, 40, 0.7);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.vscode-tab:hover {
+  background: rgba(50, 50, 50, 0.8);
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+.vscode-tab.active {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(0, 255, 136, 0.5);
+  position: relative;
+}
+
+.vscode-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(30, 30, 30, 0.95);
+}
+
+.tab-icon {
+  width: 14px;
+  height: 14px;
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+.tab-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-close:hover {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+}
+
+.tab-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.vscode-content-area {
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+  background: rgba(15, 15, 15, 0.95);
+}
+
+.active-vscode-terminal {
+  height: 100%;
+}
+
+.vscode-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(15, 15, 15, 0.95);
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  color: rgba(0, 255, 136, 0.3);
+  margin-bottom: 16px;
+}
+
+.vscode-empty-state h3 {
+  margin: 0 0 8px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+}
+
+.vscode-empty-state p {
+  margin: 0 0 24px 0;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.quick-action-btn:hover:not(:disabled) {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.quick-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quick-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive design for VS Code Manager */
+@media (max-width: 768px) {
+  .vscode-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    justify-content: space-between;
+  }
+  
+  .project-selector {
+    flex: 1;
+  }
+  
+  .project-selector select {
+    flex: 1;
+    min-width: unset;
+  }
+  
+  .vscode-tabs {
+    padding: 6px 8px 0;
+  }
+  
+  .vscode-tab {
+    min-width: 100px;
+    max-width: 150px;
+    padding: 6px 8px;
+  }
+}
+
+/* Integration with Portfolio Hub theme */
+.portfolio-sidebar .vscode-terminal {
+  border-radius: 0;
+  border: none;
+  height: calc(100vh - 120px);
+}
+
+.portfolio-sidebar .vscode-header {
+  background: rgba(20, 20, 20, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+}
+
+/* VS Code Manager integration with sidebar */
+.expandedContent .vscode-manager {
+  height: calc(100vh - 80px); /* Match other sidebar panels */
+  border-radius: 0;
+  background: transparent;
+  width: 100%;
+  overflow: hidden; /* Prevent content from exceeding panel bounds */
+}
+
+.expandedContent .vscode-toolbar {
+  background: rgba(20, 20, 20, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  padding: 12px 16px;
+  width: 100%;
+}
+
+.expandedContent .vscode-content-area {
+  background: rgba(15, 15, 15, 0.95);
+  border-radius: 0;
+  width: 100%;
+  flex: 1;
+}
+
+.expandedContent .vscode-terminal {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.expandedContent .vscode-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.expandedContent .active-vscode-terminal {
+  width: 100%;
+  height: 100%;
+}
+
+.expandedContent .vscode-empty-state {
+  width: 100%;
+}
+
+/* Force full width for all VS Code content */
+.expandedContent .vscode-manager * {
+  box-sizing: border-box;
+}
+
+.expandedContent .vscode-manager,
+.expandedContent .vscode-toolbar,
+.expandedContent .vscode-content-area,
+.expandedContent .vscode-terminal,
+.expandedContent .vscode-iframe,
+.expandedContent .active-vscode-terminal,
+.expandedContent .vscode-empty-state {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Ensure no margins or padding create blank space */
+.expandedContent .vscode-manager {
+  margin: 0;
+  padding: 0;
+}
+
+/* Force the content area to stretch */
+.expandedContent .vscode-content-area {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,7 +1,97 @@
-# Claude Development Portfolio
+## Recent Problem Solutions
+
+### Console Error Fixes
+**Problem**: ERR_CONNECTION_REFUSED spam in console
+**Solution**: Replaced fetch() with Image loading for silent port checking
+**Files Changed**: 
+- `src/utils/portManager.ts`
+- `src/components/VSCodeManager.tsx`
+
+### Workspace Persistence
+**Problem**: "Workspace does not exist" errors, state loss on tab switch
+**Solution**: 
+1. Created absolute path workspace files
+2. Keep VS Code instances mounted (hide with CSS)
+3. Removed problematic folder URL parameters
+**Files Changed**:
+- `portfolio-absolute-paths.code-workspace`
+- `src/components/VSCodeTerminal.tsx`
+- `src/components/VSCodeManager.tsx`
+
+### Dark Mode Fix
+**Problem**: Theme resets when opening workspace
+**Solution**: Removed theme override from workspace settings
+**Files Changed**:
+- `portfolio-dev.code-workspace`
+- `launch-vscode-with-profile.ps1`## Development Workflow Updates
+
+### VS Code Extension Workflow (Recommended)
+1. **Install Extension**: Build and install the Claude Portfolio extension
+2. **Open VS Code**: Look for the Claude Portfolio icon in activity bar
+3. **Manage Projects**: Click projects to open, right-click to run
+4. **Use Dashboard**: Click status bar item for beautiful overview
+5. **Quick Commands**: Access common tasks from sidebar
+
+### Web Portfolio Workflow (Original)
+1. **Start Portfolio**: `npm run dev` in root directory
+2. **View Projects**: Navigate to http://localhost:5173
+3. **Launch Projects**: Use automation scripts or manual start
+4. **VS Code Integration**: Now legacy - use extension instead## Technical Architecture
+
+### Recent Architectural Changes
+
+#### VS Code Extension Architecture
+```
+vscode-extension/claude-portfolio/
+├── src/
+│   ├── extension.ts          # Main activation point
+│   ├── projectProvider.ts    # Tree view for projects
+│   ├── dashboardPanel.ts     # Webview dashboard
+│   ├── commandsProvider.ts   # Quick commands tree
+│   └── cheatSheetProvider.ts # Development cheat sheet
+├── media/                    # Dashboard styling
+└── package.json             # Extension manifest
+```
+
+#### Port Management Improvements
+- Silent port checking using Image loading (no console errors)
+- WebSocket fallback for VS Code Server detection
+- Graceful handling of connection failures
+
+#### State Persistence Solution
+- VS Code instances remain mounted (hidden with CSS)
+- No re-rendering when switching tabs
+- Workspace state preserved across tab switches# Claude Development Portfolio
 
 ## Overview
 This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with a clean, professional interface and comprehensive development tools.
+
+## 🆕 Major Updates (January 2024)
+
+### VS Code Extension Integration
+The portfolio now includes a native VS Code extension that solves all previous iframe integration issues:
+
+#### What's New:
+- **Native VS Code Extension** (`vscode-extension/claude-portfolio/`)
+  - Projects appear in VS Code activity bar
+  - Beautiful webview dashboard
+  - Right-click context menus
+  - Persistent workspace state (no more lost tabs!)
+  - One-click project management
+
+#### Fixed Issues:
+- ✅ Console errors eliminated (silent port checking)
+- ✅ Workspace persistence (no more "workspace does not exist")
+- ✅ Dark mode preservation
+- ✅ State loss when switching tabs
+
+#### Quick Start:
+```powershell
+cd vscode-extension\claude-portfolio
+npm install
+npm run compile
+code --extensionDevelopmentPath=.
+```
 
 ## CCGlobalCommands Integration
 **Slash commands are now available globally!** The ClaudeGlobalCommands system provides 9 core commands and 47+ specialized agents that work from any project directory.

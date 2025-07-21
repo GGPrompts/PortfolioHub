@@ -1,9 +1,72 @@
-# PortfolioHub 🚀
+## 🌟 Future Enhancements
 
-A modern, responsive development portfolio dashboard that allows you to view, manage, and showcase multiple projects in a unified interface.
+### VS Code Extension Roadmap
+- **AI Integration**: Claude prompts directly in VS Code
+- **Project Templates**: Create projects from extension
+- **Git Status**: Show repository status in project tree
+- **Dependency Viewer**: Manage npm packages visually
+- **Process Manager**: Start/stop servers from VS Code
+- **Snippet Library**: Project-specific code snippets
+
+### Portfolio Enhancements
+- **Cloud Sync**: Backup project configurations
+- **Team Collaboration**: Share portfolio setups
+- **Performance Metrics**: Track build times and sizes
+- **Docker Integration**: Containerized project support## 📚 Documentation
+
+### New Guides
+- **[VS Code Extension Quick Start](vscode-extension/QUICK_START.md)** - Get started with the extension
+- **[Workspace Persistence Guide](docs/vscode-workspace-persistence.md)** - Fix workspace state issues
+- **[Console Error Fixes](docs/vscode-integration-fixes.md)** - Silent port checking implementation
+- **[Dark Mode Fix](docs/fix-vscode-dark-mode.md)** - Preserve theme settings
+
+### Existing Guides
+- **[Terminal Integration](docs/terminal-integration-guide.md)** - xterm.js + node-pty setup
+- **[Project Creation](scripts/README.md)** - Automated project scaffolding
+- **[Port Management](src/utils/README.md)** - Smart port allocation## 🛠️ Troubleshooting
+
+### VS Code Extension Issues
+- **Extension not loading**: Ensure you've run `npm install` and `npm run compile`
+- **Projects not showing**: Check that `manifest.json` exists in the projects folder
+- **Dashboard blank**: Verify the extension has access to the portfolio path
+
+### Web Portfolio Issues
+- **Console errors fixed**: Update to latest version for silent port checking
+- **Dark mode persistence**: Use `portfolio-absolute-paths.code-workspace`
+- **Workspace not opening**: See `docs/vscode-workspace-fix.md`
+
+### Common Fixes
+```powershell
+# Fix VS Code workspace issues
+.\troubleshoot-workspace.ps1
+
+# Kill stuck servers
+.\scripts\kill-all-servers.ps1
+
+# Start VS Code with profile
+.\launch-vscode-with-profile.ps1
+```# Claude Windows Portfolio Hub 🚀
+
+A modern, AI-powered development portfolio dashboard with VS Code integration, allowing you to view, manage, and showcase multiple projects in a unified interface.
+
+## 🆕 What's New
+
+### VS Code Extension Integration 🎉
+- **Native VS Code Experience**: New extension replaces problematic iframe integration
+- **Persistent Workspace**: No more losing state when switching tabs
+- **Sidebar Integration**: Projects, commands, and cheat sheets in the activity bar
+- **Beautiful Dashboard**: Webview with project statistics and quick actions
+- **One-Click Actions**: Open, run, and browse projects directly from VS Code
+
+### Recent Improvements
+- **Fixed Console Errors**: Silent port checking eliminates ERR_CONNECTION_REFUSED spam
+- **Workspace Persistence**: Multiple workspace files with absolute paths
+- **Enhanced UI**: Better instructions and troubleshooting guides
+- **Dark Mode Fix**: Workspace no longer overrides profile theme settings
 
 ## ✨ Features
 
+### Core Portfolio Features
 - **🔄 Real-time Project Status** - Automatically detects running development servers
 - **📱 Realistic Device Displays** - True-to-life mobile (375×812) and desktop (1920×1080) preview scaling
 - **🎯 Collapsible Project Sections** - Hide offline projects to focus on active development
@@ -14,6 +77,15 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
 - **📊 Dashboard Analytics** - View project status, technologies used, and portfolio statistics
 - **📝 Matrix Card Notes** - Professional note-taking system with 3D flip animations and AI organization
 - **📱 Responsive Design** - Adaptive sidebar with collapsed, normal, and expanded states
+
+### New VS Code Extension Features
+- **🗂️ Project Browser** - See all your projects in the VS Code sidebar
+- **📊 Integrated Dashboard** - Beautiful webview dashboard within VS Code
+- **⚡ Quick Commands** - Fast access to common tasks and Git operations
+- **📚 Built-in Cheat Sheet** - Development commands at your fingertips
+- **🚀 Context Menus** - Right-click actions on projects
+- **⌨️ Keyboard Shortcuts** - Full VS Code keyboard integration
+- **📍 Status Bar Access** - Quick dashboard access from status bar
 
 ## 🎯 Perfect For
 
@@ -31,12 +103,12 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
 
 ## 🚀 Quick Start
 
-### Installation
+### Option 1: Web Portfolio (Original)
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/GGPrompts/PortfolioHub.git
-   cd PortfolioHub
+   git clone https://github.com/GGPrompts/claude-dev-portfolio.git
+   cd claude-dev-portfolio
    ```
 
 2. **Install dependencies:**
@@ -49,17 +121,44 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
    npm run dev
    ```
 
-4. **Visit** `http://localhost:5173` to see your portfolio (or the next available port)
+4. **Visit** `http://localhost:5173` to see your portfolio
+
+### Option 2: VS Code Extension (Recommended) 🆕
+
+1. **Build the extension:**
+   ```powershell
+   cd vscode-extension\claude-portfolio
+   npm install
+   npm run compile
+   ```
+
+2. **Install in VS Code:**
+   ```powershell
+   # For development/testing
+   code --extensionDevelopmentPath=vscode-extension\claude-portfolio
+   
+   # For permanent installation
+   npm install -g vsce
+   vsce package
+   code --install-extension claude-portfolio-0.0.1.vsix
+   ```
+
+3. **Use the extension:**
+   - Look for Claude Portfolio icon in the activity bar
+   - Click projects to open them in workspace
+   - Use status bar for dashboard access
+   - Right-click projects for quick actions
 
 ## 📁 Project Structure
 
 ```
-PortfolioHub/
-├── src/
+claudeWindows-portfolio/
+├── src/                     # React portfolio application
 │   ├── components/          # React components
 │   │   ├── ProjectGrid.tsx  # Project grid layout
 │   │   ├── ProjectViewer.tsx # Inline project viewer
 │   │   ├── PortfolioSidebar.tsx # Adaptive sidebar
+│   │   ├── VSCodeManager.tsx # VS Code integration (legacy)
 │   │   └── ProjectStatusDashboard.tsx # Status management
 │   ├── store/              # Zustand state management
 │   ├── utils/              # Port management utilities
@@ -68,6 +167,19 @@ PortfolioHub/
 │   ├── manifest.json       # Project configuration
 │   └── [project-folders]/  # Individual project directories
 ├── scripts/               # PowerShell automation scripts
+├── vscode-extension/      # VS Code extension (NEW)
+│   └── claude-portfolio/  
+│       ├── src/           # Extension source code
+│       │   ├── extension.ts # Main entry point
+│       │   ├── projectProvider.ts # Project tree view
+│       │   ├── dashboardPanel.ts # Webview dashboard
+│       │   └── commandsProvider.ts # Quick commands
+│       ├── media/         # Dashboard assets
+│       └── package.json   # Extension manifest
+├── docs/                  # Documentation
+│   ├── vscode-workspace-fix.md # Workspace persistence guide
+│   ├── vscode-integration-fixes.md # Console error fixes
+│   └── terminal-integration-guide.md # Terminal features
 └── public/               # Static assets
 ```
 
@@ -158,6 +270,55 @@ To add an existing project to the portfolio:
 ### Kill All Servers
 ```bash
 .\scripts\kill-all-servers.ps1
+```
+
+## 🎨 VS Code Extension Deep Dive 🆕
+
+### Why Use the Extension?
+- **No More iFrame Issues**: Workspace state persists perfectly
+- **Native Integration**: Projects open in proper VS Code workspace
+- **Better Performance**: No embedded browser overhead
+- **Full VS Code Features**: Terminals, debugging, extensions all work
+- **Professional Workflow**: Everything in one IDE
+
+### Extension Features
+
+#### Activity Bar Integration
+```
+🚀 Claude Portfolio
+├── 📂 Projects
+│   ├── 3D Matrix Cards (Port 3005)
+│   ├── GGPrompts (Port 9323)
+│   └── [Your Projects]
+├── ⚡ Quick Commands
+│   ├── VS Code Commands
+│   ├── Git Commands
+│   └── Portfolio Commands
+└── 📚 Cheat Sheet
+    ├── PowerShell
+    ├── Git
+    └── npm
+```
+
+#### Dashboard Webview
+- Project statistics and overview
+- Quick actions to run all servers
+- Technology breakdown
+- One-click project opening
+
+#### Smart Project Management
+- Right-click to run projects
+- Automatic terminal creation
+- Port status tracking
+- Workspace folder integration
+
+### Configuration
+```json
+{
+  "claudePortfolio.portfolioPath": "D:\\ClaudeWindows\\claude-dev-portfolio",
+  "claudePortfolio.autoStartProjects": false,
+  "claudePortfolio.defaultBrowser": "default"
+}
 ```
 
 ## 🎨 Sidebar States
@@ -363,10 +524,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-Built with modern web technologies and love for developer productivity.
+- Built with modern web technologies and love for developer productivity
+- VS Code extension architecture for seamless IDE integration
+- Community feedback that led to the extension approach
 
 ---
 
-**Made with ❤️ by the GGPrompts Team**
+**Made with ❤️ by the Claude Windows Team**
 
-*Transform your development workflow with PortfolioHub - where all your projects live in harmony.* 🚀
+*Transform your development workflow with Claude Portfolio - now with native VS Code integration!* 🚀

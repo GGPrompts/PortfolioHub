@@ -2,24 +2,32 @@
 	"folders": [
 		{
 			"name": "Portfolio Hub",
-			"path": "D:\\ClaudeWindows\\claude-dev-portfolio"
+			"path": "."
 		},
 		{
 			"name": "Projects",
-			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\projects"
+			"path": "./projects"
 		},
 		{
 			"name": "Scripts",
-			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\scripts"
+			"path": "./scripts"
 		}
 	],
 	"settings": {
+		// Explicitly inherit theme from profile
+		"window.newWindowProfile": "inherit",
+		
+		// Terminal settings
 		"terminal.integrated.defaultProfile.windows": "PowerShell",
-		"terminal.integrated.cwd": "D:\\ClaudeWindows\\claude-dev-portfolio",
+		"terminal.integrated.cwd": "${workspaceFolder}",
+		
+		// Editor settings
 		"files.autoSave": "afterDelay",
 		"editor.fontSize": 14,
 		"editor.tabSize": 2,
 		"editor.insertSpaces": true,
+		
+		// File exclusions
 		"files.exclude": {
 			"**/node_modules": true,
 			"**/dist": true,
@@ -32,10 +40,14 @@
 			"**/dist": true,
 			"**/build": true
 		},
+		
+		// TypeScript settings
 		"typescript.preferences.importModuleSpecifier": "relative",
 		"editor.codeActionsOnSave": {
 			"source.fixAll.eslint": "explicit"
 		},
+		
+		// Workbench settings
 		"workbench.startupEditor": "none",
 		"explorer.confirmDelete": false,
 		"git.enableSmartCommit": true,
@@ -45,7 +57,7 @@
 		"breadcrumbs.enabled": true,
 		"editor.bracketPairColorization.enabled": true,
 		"editor.guides.bracketPairs": true,
-		"powershell.cwd": "D:\\ClaudeWindows\\claude-dev-portfolio",
+		"powershell.cwd": "Portfolio Hub",
 		
 		// Panel Layout Settings
 		"workbench.panel.defaultLocation": "bottom",

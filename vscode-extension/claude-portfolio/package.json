@@ -1,0 +1,137 @@
+{
+  "name": "claude-portfolio",
+  "displayName": "Claude Portfolio Manager",
+  "description": "Manage your Claude Windows portfolio projects directly in VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-portfolio.openProject",
+        "title": "Open Project",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.showDashboard",
+        "title": "Show Portfolio Dashboard",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.runProject",
+        "title": "Run Project",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.openProjectInBrowser",
+        "title": "Open in Browser",
+        "category": "Claude Portfolio"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-portfolio",
+          "title": "Claude Portfolio",
+          "icon": "$(folder-library)"
+        }
+      ]
+    },
+    "views": {
+      "claude-portfolio": [
+        {
+          "id": "claudeProjects",
+          "name": "Projects",
+          "contextualTitle": "Claude Projects"
+        },
+        {
+          "id": "claudeCommands",
+          "name": "Quick Commands",
+          "contextualTitle": "Claude Commands"
+        },
+        {
+          "id": "claudeCheatSheet",
+          "name": "Cheat Sheet",
+          "contextualTitle": "Development Cheat Sheet"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "claudeProjects",
+        "contents": "Welcome to Claude Portfolio!\n\n[Open Portfolio Dashboard](command:claude-portfolio.showDashboard)\n\n[Refresh Projects](command:claude-portfolio.refreshProjects)"
+      }
+    ],
+    "webviewOptions": {
+      "retainContextWhenHidden": true
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "claude-portfolio.refreshProjects",
+          "when": "view == claudeProjects",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "claude-portfolio.runProject",
+          "when": "view == claudeProjects && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "claude-portfolio.openProjectInBrowser",
+          "when": "view == claudeProjects && viewItem == project",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Portfolio",
+      "properties": {
+        "claudePortfolio.portfolioPath": {
+          "type": "string",
+          "default": "D:\\ClaudeWindows\\claude-dev-portfolio",
+          "description": "Path to your Claude portfolio directory"
+        },
+        "claudePortfolio.autoStartProjects": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start projects when opening them"
+        },
+        "claudePortfolio.defaultBrowser": {
+          "type": "string",
+          "enum": ["chrome", "firefox", "edge", "default"],
+          "default": "default",
+          "description": "Default browser for opening projects"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "open": "^9.1.0"
+  }
+}

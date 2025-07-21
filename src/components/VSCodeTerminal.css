@@ -981,6 +981,154 @@
   color: #ff8800;
 }
 
+/* Workspace instructions styling */
+.workspace-instructions {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.workspace-instructions ol {
+  margin: 10px 0 10px 20px;
+  padding: 0;
+  list-style: decimal;
+}
+
+.workspace-instructions li {
+  margin: 5px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.workspace-instructions code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: #00ff88;
+}
+
+.troubleshooting-note {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background: rgba(255, 136, 0, 0.1);
+  border-left: 3px solid #ff8800;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9em;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Workspace notice styling */
+.vscode-workspace-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 15px;
+  background: rgba(0, 136, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 136, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9em;
+  position: relative;
+}
+
+.vscode-workspace-notice .notice-icon {
+  width: 16px;
+  height: 16px;
+  color: #0088ff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vscode-workspace-notice .notice-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vscode-workspace-notice .notice-main {
+  font-size: 1em;
+}
+
+.vscode-workspace-notice .notice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.vscode-workspace-notice .notice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.vscode-workspace-notice .option-number {
+  font-weight: 600;
+  color: #0088ff;
+  min-width: 16px;
+}
+
+.vscode-workspace-notice kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.85em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  font-family: monospace;
+}
+
+.vscode-workspace-notice code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #00ff88;
+  font-size: 0.85em;
+  font-family: monospace;
+}
+
+.vscode-workspace-notice .notice-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.vscode-workspace-notice .notice-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.vscode-workspace-notice .notice-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* VS Code instance container - keeps iframes mounted */
+.vscode-instance-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Hide non-active instances without unmounting */
+.vscode-instance-container[style*="display: none"] {
+  visibility: hidden;
+  position: absolute;
+  pointer-events: none;
+}
+
 /* Responsive design for commands panel */
 @media (max-width: 768px) {
   .command-buttons {

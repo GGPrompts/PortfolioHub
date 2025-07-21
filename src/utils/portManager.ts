@@ -24,19 +24,35 @@ export const DEFAULT_PORTS = {
 // Fallback ports if defaults are taken (excluding portfolio port 5173)
 const FALLBACK_PORTS = [3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177];
 
-// Check if a port is available
+// Silent port checking to avoid console errors
 export async function checkPort(port: number): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1000);
     
-    await fetch(`http://localhost:${port}`, { 
-      mode: 'no-cors',
-      signal: controller.signal 
-    });
+    // Create a simple image request to check port availability
+    // This avoids CORS errors and connection refused messages
+    const img = new Image();
     
-    clearTimeout(timeoutId);
-    return true; // Port is in use
+    return new Promise((resolve) => {
+      img.onload = () => {
+        clearTimeout(timeoutId);
+        resolve(true); // Port is in use
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        resolve(false); // Port is available
+      };
+      
+      // Use a cache-busting query parameter
+      img.src = `http://localhost:${port}/favicon.ico?t=${Date.now()}`;
+      
+      // Fallback timeout
+      setTimeout(() => {
+        resolve(false);
+      }, 1000);
+    });
   } catch {
     return false; // Port is available
   }

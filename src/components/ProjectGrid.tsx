@@ -44,12 +44,16 @@ export default function ProjectGrid({ onProjectClick, globalViewMode = 'mobile',
     return () => clearInterval(interval)
   }, [projects])
 
+  // Debug logging commented out to reduce console noise
+  // Uncomment for debugging
+  /*
   useEffect(() => {
     console.log('Projects in store:', projects)
     console.log('Active filter:', activeFilter)
     console.log('Filtered projects:', filteredProjects)
     console.log('Running status:', runningStatus)
   }, [projects, activeFilter, filteredProjects, runningStatus])
+  */
 
   return (
     <div className={styles.gridContainer}>

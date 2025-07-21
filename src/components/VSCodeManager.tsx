@@ -23,6 +23,15 @@ export const VSCodeManager: React.FC = () => {
   const [instances, setInstances] = useState<VSCodeInstance[]>([]);
   const [activeInstanceId, setActiveInstanceId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  
+  // Store workspace state for each instance
+  const [instanceWorkspaces, setInstanceWorkspaces] = useState<Record<string, string>>({});
+  
+  // Store whether tips have been shown for each instance
+  const [instanceTipsShown, setInstanceTipsShown] = useState<Record<string, boolean>>({});
+  
+  // Keep track of which instances have been rendered to prevent re-rendering
+  const [renderedInstances, setRenderedInstances] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Load projects from manifest
@@ -66,10 +75,36 @@ export const VSCodeManager: React.FC = () => {
     
     setInstances(prev => [...prev, instance]);
     setActiveInstanceId(instance.id);
+    
+    // Set default workspace for this instance
+    setInstanceWorkspaces(prev => ({
+      ...prev,
+      [instance.id]: 'D:\\ClaudeWindows\\claude-dev-portfolio\\portfolio-absolute-paths.code-workspace'
+    }));
+    
+    // Initialize tip state
+    setInstanceTipsShown(prev => ({
+      ...prev,
+      [instance.id]: false
+    }));
   };
 
   const closeInstance = (instanceId: string) => {
     setInstances(prev => prev.filter(instance => instance.id !== instanceId));
+    
+    // Clean up workspace state
+    setInstanceWorkspaces(prev => {
+      const newWorkspaces = { ...prev };
+      delete newWorkspaces[instanceId];
+      return newWorkspaces;
+    });
+    
+    // Clean up tip state
+    setInstanceTipsShown(prev => {
+      const newTips = { ...prev };
+      delete newTips[instanceId];
+      return newTips;
+    });
     
     if (activeInstanceId === instanceId) {
       const remainingInstances = instances.filter(instance => instance.id !== instanceId);
@@ -79,6 +114,14 @@ export const VSCodeManager: React.FC = () => {
 
   // VS Code Server API automation functions
   const executeVSCodeServerAPI = async (command: string, args?: any): Promise<boolean> => {
+    // IMPORTANT: VS Code Server doesn't expose REST APIs for command execution
+    // This is a security limitation. The automation will always fall back to clipboard.
+    // Future enhancement: Could use browser extension or postMessage to VS Code iframe
+    return false;
+    
+    /* 
+    // This code is commented out because VS Code Server doesn't expose these endpoints
+    // Keeping for future reference if API becomes available
     try {
       const response = await fetch('http://localhost:8080/api/commands', {
         method: 'POST',
@@ -104,9 +147,12 @@ export const VSCodeManager: React.FC = () => {
       console.warn('VS Code Server API not available:', error);
       return false;
     }
+    */
   };
 
   const executeVSCodeCommand = async (command: string) => {
+    // Debug: console.log('Executing VS Code command:', command, 'Server status:', serverStatus, 'Automation status:', automationStatus);
+    
     if (serverStatus !== 'running') {
       alert('VS Code Server is not running');
       return;
@@ -200,12 +246,17 @@ export const VSCodeManager: React.FC = () => {
       } else {
         // Fallback to clipboard method
         const commandName = getCommandDisplayName(command);
-        navigator.clipboard.writeText(commandName);
-        alert(`Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
+        try {
+          await navigator.clipboard.writeText(commandName);
+          alert(`📋 Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
+        } catch (clipboardError) {
+          console.error('Clipboard access failed:', clipboardError);
+          alert(`⚠️ Cannot access clipboard. Command: ${commandName}\n\nManually use: Ctrl+Shift+P in VS Code → Type: ${commandName}`);
+        }
       }
     } catch (error) {
       console.error('Failed to execute VS Code command:', error);
-      alert('Failed to execute command');
+      alert(`❌ Command execution failed: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -233,29 +284,44 @@ export const VSCodeManager: React.FC = () => {
 
   const checkVSCodeServerStatus = async () => {
     try {
-      // Use image loading to check if server is running (avoids CORS issues)
+      // Use WebSocket to check if server is running (silent, no console errors)
       return new Promise<boolean>((resolve) => {
-        const img = new Image();
         const timeout = setTimeout(() => {
           resolve(false);
-        }, 3000);
+        }, 2000);
         
-        img.onload = () => {
+        try {
+          const ws = new WebSocket('ws://localhost:8080');
+          
+          ws.onopen = () => {
+            clearTimeout(timeout);
+            ws.close();
+            resolve(true);
+          };
+          
+          ws.onerror = () => {
+            clearTimeout(timeout);
+            resolve(false);
+          };
+          
+          // Fallback: Also try image loading as secondary check
+          const img = new Image();
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve(true);
+          };
+          
+          // Suppress error logging by handling it
+          img.onerror = () => {
+            // Silent fail - expected when server is not running
+          };
+          
+          // Use a non-existent endpoint to avoid 404 logs
+          img.src = `http://localhost:8080/vscode-server-check-${Date.now()}.png`;
+        } catch {
           clearTimeout(timeout);
-          resolve(true);
-        };
-        
-        img.onerror = () => {
-          clearTimeout(timeout);
-          // Even if favicon fails, server might be running - try to detect port
-          fetch('http://localhost:8080/', { 
-            method: 'HEAD', 
-            mode: 'no-cors',
-            cache: 'no-cache'
-          }).then(() => resolve(true)).catch(() => resolve(false));
-        };
-        
-        img.src = `http://localhost:8080/favicon.ico?t=${Date.now()}`;
+          resolve(false);
+        }
       });
     } catch (error) {
       return false;
@@ -266,15 +332,47 @@ export const VSCodeManager: React.FC = () => {
   const [automationStatus, setAutomationStatus] = useState<'unknown' | 'available' | 'unavailable'>('unknown');
 
   const checkAutomationAvailability = async (): Promise<boolean> => {
+    // VS Code Server (serve-web) doesn't expose REST APIs for security reasons
+    // Always return false to use clipboard method
+    // Removed console.log to reduce noise
+    return false;
+    
+    /* 
+    // Future: Could implement automation via:
+    // 1. Browser extension with content script injection
+    // 2. VS Code extension with WebSocket communication  
+    // 3. PostMessage communication with VS Code iframe (limited by security)
+    // 4. Custom VS Code Server build with API endpoints
+    
     try {
-      const response = await fetch('http://localhost:8080/api/commands', {
-        method: 'HEAD',
-        credentials: 'include'
-      });
-      return response.ok;
+      // Test multiple potential API endpoints
+      const endpoints = [
+        'http://localhost:8080/api/commands',
+        'http://localhost:8080/api/execute-command', 
+        'http://localhost:8080/vscode-server-api/commands'
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'HEAD',
+            credentials: 'include'
+          });
+          if (response.ok) {
+            console.log('VS Code API available at:', endpoint);
+            return true;
+          }
+        } catch (e) {
+          console.log('API not available at:', endpoint);
+        }
+      }
+      
+      console.log('No VS Code Server API endpoints found - using clipboard fallback');
+      return false;
     } catch {
       return false;
     }
+    */
   };
 
   useEffect(() => {
@@ -419,7 +517,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               onClick={() => setActiveInstanceId(instance.id)}
             >
               <SvgIcon name="code" className="tab-icon" />
-              <span className="tab-title">{projects.find(p => p.id === instance.projectId)?.title || instance.projectId}</span>
+              <span className="tab-title">{instance.title || projects.find(p => p.id === instance.projectId)?.title || instance.projectId}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -435,7 +533,25 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
       )}
 
       <div className="vscode-content-area">
-        {activeInstanceId === 'commands' ? (
+        {/* Render all VS Code instances but only show the active one */}
+        {instances.map(instance => (
+          <div
+            key={instance.id}
+            style={{ display: activeInstanceId === instance.id ? 'block' : 'none' }}
+            className="vscode-instance-container"
+          >
+            <VSCodeTerminal
+              projectPath={instance.projectPath}
+              serverPort={instance.port}
+              onClose={() => closeInstance(instance.id)}
+              className="active-vscode-terminal"
+              workspacePath={instanceWorkspaces[instance.id]}
+            />
+          </div>
+        ))}
+        
+        {/* Command panels and other non-instance content */}
+        {activeInstanceId === 'commands' && (
           // VS Code Commands Panel
           <div className="vscode-commands-panel">
             <div className="commands-header">
@@ -547,7 +663,9 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               </div>
             </div>
           </div>
-        ) : activeInstanceId === 'cheatsheet' ? (
+        )}
+        
+        {activeInstanceId === 'cheatsheet' && (
           // PowerShell & Development Commands Panel
           <div className="vscode-commands-panel">
             <div className="commands-header">
@@ -698,7 +816,9 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               </div>
             </div>
           </div>
-        ) : activeInstanceId === 'prompts' ? (
+        )}
+        
+        {activeInstanceId === 'prompts' && (
           // Claude AI Prompts Panel
           <div className="vscode-commands-panel">
             <div className="commands-header">
@@ -803,13 +923,23 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               </div>
             </div>
           </div>
-        ) : instances.length === 0 ? (
+        )}
+        
+        {/* Empty state when no instances and no special tab selected */}
+        {instances.length === 0 && !['commands', 'cheatsheet', 'prompts'].includes(activeInstanceId || '') && (
           <div className="vscode-empty-state">
             <SvgIcon name="code" className="empty-icon" />
             <h3>No VS Code Instances</h3>
             <p>Click the Commands tab (⚙️) above or create a new VS Code tab</p>
             <div className="workspace-instructions">
-              <p><strong>💡 Pro Tip:</strong> After opening VS Code, use <code>File → Open Workspace...</code> and select <code>portfolio-dev.code-workspace</code> to automatically load all project folders with optimized settings!</p>
+              <p><strong>💡 Pro Tip:</strong> After opening VS Code:</p>
+              <ol>
+                <li>Use <code>File → Open Workspace from File...</code></li>
+                <li>Navigate to <code>D:\ClaudeWindows\claude-dev-portfolio</code></li>
+                <li>Select <code>portfolio-absolute-paths.code-workspace</code></li>
+              </ol>
+              <p>This will automatically load all project folders with optimized settings!</p>
+              <p className="troubleshooting-note">If folders don't appear, use <code>File → Add Folder to Workspace</code> and add the Portfolio Hub, Projects, and Scripts folders manually.</p>
             </div>
             <div className="quick-actions">
               <button
@@ -835,15 +965,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               </button>
             </div>
           </div>
-        ) : activeInstance ? (
-          <VSCodeTerminal
-            key={activeInstance.id}
-            projectPath={activeInstance.projectPath}
-            serverPort={activeInstance.port}
-            onClose={() => closeInstance(activeInstance.id)}
-            className="active-vscode-terminal"
-          />
-        ) : null}
+        )}
       </div>
     </div>
   );

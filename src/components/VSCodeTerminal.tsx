@@ -6,20 +6,23 @@ interface VSCodeTerminalProps {
   serverPort?: number;
   className?: string;
   onClose?: () => void;
+  workspacePath?: string;
 }
 
 export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
   projectPath = 'D:/ClaudeWindows/claude-dev-portfolio',
   serverPort = 8080,
   className = '',
-  onClose
+  onClose,
+  workspacePath = 'D:/ClaudeWindows/claude-dev-portfolio/portfolio-absolute-paths.code-workspace'
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasShownTip, setHasShownTip] = useState(false);
 
-  // Connect to VS Code Server with Matt profile
-  const vscodeUrl = `http://localhost:${serverPort}/?profile=Matt`;
+  // Simple VS Code Server URL without folder parameter to avoid errors
+  const vscodeUrl = `http://localhost:${serverPort}/`;
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -56,6 +59,23 @@ export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
     }
   };
 
+  const copyFolderPaths = () => {
+    const paths = `D:\\ClaudeWindows\\claude-dev-portfolio
+D:\\ClaudeWindows\\claude-dev-portfolio\\projects  
+D:\\ClaudeWindows\\claude-dev-portfolio\\scripts`;
+    navigator.clipboard.writeText(paths);
+    alert(`Folder paths copied!\n\nTo create a multi-root workspace:\n1. Press Ctrl+Shift+P\n2. Type "Add Folder to Workspace"\n3. Add each folder one by one\n4. Save as workspace: File → Save Workspace As...`);
+  };
+
+  const copyWorkspacePath = () => {
+    navigator.clipboard.writeText(workspacePath);
+    alert(`Workspace path copied!\n\n${workspacePath}\n\nIf the file dialog doesn't show .code-workspace files:\n1. Change file filter to "All Files (*.*)" \n2. Or manually type the filename\n3. Or use "Add Folder to Workspace" instead`);
+  };
+
+  const hideTip = () => {
+    setHasShownTip(true);
+  };
+
   return (
     <div className={`vscode-terminal ${className}`}>
       <div className="vscode-header">
@@ -68,6 +88,22 @@ export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
           <span className={`connection-status ${isLoaded && !error ? 'connected' : 'disconnected'}`}>
             {isLoaded && !error ? '●' : '○'}
           </span>
+          
+          <button 
+            onClick={copyFolderPaths}
+            className="vscode-control-btn"
+            title="Copy folder paths for multi-root workspace"
+          >
+            <SvgIcon name="folder" />
+          </button>
+          
+          <button 
+            onClick={copyWorkspacePath}
+            className="vscode-control-btn"
+            title="Copy workspace path"
+          >
+            <SvgIcon name="copy" />
+          </button>
           
           <button 
             onClick={refreshIframe}
@@ -96,6 +132,34 @@ export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
           )}
         </div>
       </div>
+
+      {isLoaded && !hasShownTip && (
+        <div className="vscode-workspace-notice">
+          <SvgIcon name="info" className="notice-icon" />
+          <div className="notice-content">
+            <div className="notice-main">
+              <strong>Quick Setup - Choose One:</strong>
+            </div>
+            <div className="notice-options">
+              <div className="notice-option">
+                <span className="option-number">1.</span>
+                <span>Open single folder: <kbd>Ctrl+K</kbd> <kbd>Ctrl+O</kbd> → Navigate to <code>D:\ClaudeWindows\claude-dev-portfolio</code></span>
+              </div>
+              <div className="notice-option">
+                <span className="option-number">2.</span>
+                <span>Multi-root workspace: <kbd>Ctrl+Shift+P</kbd> → "Add Folder to Workspace" → Add Portfolio, Projects, and Scripts folders</span>
+              </div>
+              <div className="notice-option">
+                <span className="option-number">3.</span>
+                <span>Click the folder button above to copy paths for easy pasting</span>
+              </div>
+            </div>
+          </div>
+          <button onClick={hideTip} className="notice-close" title="Hide tip">
+            <SvgIcon name="x" />
+          </button>
+        </div>
+      )}
 
       <div className="vscode-content">
         {error ? (

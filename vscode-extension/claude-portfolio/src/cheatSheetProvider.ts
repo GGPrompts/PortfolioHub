@@ -79,9 +79,9 @@ export class CheatItem extends vscode.TreeItem {
             
             // Copy command on click
             this.command = {
-                command: 'workbench.action.terminal.sendSequence',
-                title: 'Send to Terminal',
-                arguments: [{ text: this.cmd }]
+                command: 'claude-portfolio.copyCheatCommand',
+                title: 'Copy Command',
+                arguments: [this.cmd]
             };
         } else {
             this.contextValue = 'category';

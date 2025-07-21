@@ -104,12 +104,31 @@ export function activate(context: vscode.ExtensionContext) {
                 const project = treeItem?.project || treeItem;
                 if (project?.localPort) {
                     const url = `http://localhost:${project.localPort}`;
-                    vscode.env.openExternal(vscode.Uri.parse(url));
+                    // Use VS Code's simple browser instead of external browser
+                    await vscode.commands.executeCommand('simpleBrowser.show', url);
+                    vscode.window.showInformationMessage(`Opened ${project.title} in VS Code browser`);
                 } else {
                     vscode.window.showErrorMessage('No port information found for this project');
                 }
             } catch (error) {
                 vscode.window.showErrorMessage(`Error opening browser: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        const openInExternalBrowserCommand = vscode.commands.registerCommand('claude-portfolio.openProjectInExternalBrowser', async (treeItem) => {
+            try {
+                // Extract project data from tree item
+                const project = treeItem?.project || treeItem;
+                if (project?.localPort) {
+                    const url = `http://localhost:${project.localPort}`;
+                    // Use external browser
+                    vscode.env.openExternal(vscode.Uri.parse(url));
+                    vscode.window.showInformationMessage(`Opened ${project.title} in external browser`);
+                } else {
+                    vscode.window.showErrorMessage('No port information found for this project');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error opening external browser: ${error instanceof Error ? error.message : String(error)}`);
             }
         });
 
@@ -142,6 +161,16 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
+        // Copy cheat command to clipboard
+        const copyCheatCommand = vscode.commands.registerCommand('claude-portfolio.copyCheatCommand', async (command: string) => {
+            try {
+                await vscode.env.clipboard.writeText(command);
+                vscode.window.showInformationMessage(`Copied to clipboard: ${command}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to copy command: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
         // Test command (keep for verification)
         const testCommand = vscode.commands.registerCommand('claude-portfolio.test', () => {
             vscode.window.showInformationMessage('Claude Portfolio extension is working!');
@@ -160,8 +189,10 @@ export function activate(context: vscode.ExtensionContext) {
             showDashboardCommand,
             runProjectCommand,
             openInBrowserCommand,
+            openInExternalBrowserCommand,
             refreshProjectsCommand,
             quickOpenCommand,
+            copyCheatCommand,
             testCommand,
             statusBarItem
         );

@@ -69,6 +69,9 @@ class DashboardPanel {
                 case 'openInBrowser':
                     vscode.commands.executeCommand('claude-portfolio.openProjectInBrowser', message.project);
                     return;
+                case 'openInExternalBrowser':
+                    vscode.commands.executeCommand('claude-portfolio.openProjectInExternalBrowser', message.project);
+                    return;
             }
         }, null, this._disposables);
     }
@@ -189,9 +192,10 @@ class DashboardPanel {
                                 \${project.tech.map(t => \`<span class="tech-tag">\${t}</span>\`).join('')}
                             </div>
                             <div class="project-actions">
-                                <button onclick='openProject(\${JSON.stringify(project)})'>Open</button>
-                                <button onclick='runProject(\${JSON.stringify(project)})'>Run</button>
-                                <button onclick='openInBrowser(\${JSON.stringify(project)})'>Browser</button>
+                                <button onclick='openProject(\${JSON.stringify(project)})'>📂 Open</button>
+                                <button onclick='runProject(\${JSON.stringify(project)})'>▶️ Run</button>
+                                <button onclick='openInBrowser(\${JSON.stringify(project)})'>🌐 VS Code</button>
+                                <button onclick='openInExternalBrowser(\${JSON.stringify(project)})'>🔗 External</button>
                             </div>
                         </div>
                     \`).join('');
@@ -216,6 +220,10 @@ class DashboardPanel {
 
                 function openInBrowser(project) {
                     vscode.postMessage({ command: 'openInBrowser', project });
+                }
+
+                function openInExternalBrowser(project) {
+                    vscode.postMessage({ command: 'openInExternalBrowser', project });
                 }
 
                 function refreshProjects() {

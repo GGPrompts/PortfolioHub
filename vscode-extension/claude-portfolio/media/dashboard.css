@@ -130,12 +130,12 @@ header p {
 }
 
 .project-actions {
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
 .project-actions button {
-    flex: 1;
     padding: 8px 12px;
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
@@ -144,6 +144,7 @@ header p {
     cursor: pointer;
     font-size: 0.85em;
     transition: background 0.2s;
+    white-space: nowrap;
 }
 
 .project-actions button:hover {

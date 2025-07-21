@@ -6,22 +6,24 @@
 
 .projectGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(420px, 520px));
   gap: 24px;
   max-width: 1800px;
   margin: 0 auto;
   grid-auto-rows: minmax(420px, auto);
   overflow: hidden;
   width: 100%;
+  justify-content: center;
 }
 
 /* Desktop view adjustments - Wider cards for landscape previews */
 .projectGrid.desktop {
-  grid-template-columns: repeat(auto-fill, minmax(620px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(620px, 720px));
   gap: 20px;
   grid-auto-rows: minmax(380px, auto);
   overflow: hidden;
   width: 100%;
+  justify-content: center;
 }
 
 .projectCard {
@@ -34,6 +36,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   max-width: 100%;
 }
 

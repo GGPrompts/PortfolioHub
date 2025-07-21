@@ -128,6 +128,32 @@
         "Mobile/desktop view toggle support",
         "Iframe sandbox compatibility for portfolio integration"
       ]
+    },
+    {
+      "id": "ggprompts-professional",
+      "title": "GGPrompts Professional",
+      "description": "Work-appropriate replica of GGPrompts with corporate-friendly interface. Full-stack React app with authentication, prompt management, and kanban organization.",
+      "displayType": "external",
+      "localPort": 3006,
+      "buildCommand": "npm run dev",
+      "path": "ggprompts-professional",
+      "repository": "https://github.com/GGPrompts/ggprompts-professional",
+      "thumbnail": "thumbnails/ggprompts-professional.png",
+      "tags": ["React", "Full-Stack", "Authentication", "Database", "Kanban"],
+      "tech": ["React 19", "TypeScript", "Vite", "Supabase", "Tailwind CSS"],
+      "status": "active",
+      "devJournal": "projects/dev-journals/ggprompts-professional.md",
+      "features": [
+        "Professional UI with dual theme support",
+        "Supabase authentication with OAuth (GitHub/Google)",
+        "Kanban-style prompt organization",
+        "Advanced search and filtering",
+        "User profiles with activity feeds",
+        "Responsive mobile design",
+        "XML prompt editor with validation",
+        "Real-time notifications system",
+        "Client-side filtering and infinite scroll"
+      ]
     }
   ]
 }

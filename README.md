@@ -5,13 +5,15 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
 ## ✨ Features
 
 - **🔄 Real-time Project Status** - Automatically detects running development servers
-- **📱 Responsive Design** - Adaptive sidebar with collapsed, normal, and expanded states
+- **📱 Realistic Device Displays** - True-to-life mobile (375×812) and desktop (1920×1080) preview scaling
+- **🎯 Collapsible Project Sections** - Hide offline projects to focus on active development
 - **🖼️ Inline Project Viewing** - View projects directly in the portfolio with iframe integration
 - **🎯 Smart Port Management** - Automatic port detection and conflict resolution
 - **⚡ One-Click Launch** - Start all projects with a single PowerShell script
 - **🔍 Project Filtering** - Filter projects by technology, status, or tags
 - **📊 Dashboard Analytics** - View project status, technologies used, and portfolio statistics
 - **📝 Matrix Card Notes** - Professional note-taking system with 3D flip animations and AI organization
+- **📱 Responsive Design** - Adaptive sidebar with collapsed, normal, and expanded states
 
 ## 🎯 Perfect For
 
@@ -47,7 +49,7 @@ A modern, responsive development portfolio dashboard that allows you to view, ma
    npm run dev
    ```
 
-4. **Visit** `http://localhost:3000` to see your portfolio
+4. **Visit** `http://localhost:5173` to see your portfolio (or the next available port)
 
 ## 📁 Project Structure
 
@@ -232,9 +234,14 @@ Once a project is added (via script or manually), it's automatically integrated 
 Default port assignments are in `src/utils/portManager.ts`:
 ```typescript
 export const DEFAULT_PORTS = {
-  'portfolio': 3000,
-  'my-project': 3010,
-  // Add your projects here
+  'ggprompts-style-guide': 3001,
+  'matrix-cards': 3002,
+  'sleak-card': 3003,
+  '3d-file-system': 3004,
+  '3d-matrix-cards': 3005,
+  'ggprompts-professional': 3006,
+  'ggprompts-main': 9323
+  // Portfolio runs on 5173+ (auto-assigned by Vite)
 }
 ```
 
@@ -249,25 +256,44 @@ Each project in `projects/manifest.json` supports:
 
 ## 🔍 Key Features Deep Dive
 
+### 📱 Realistic Device Display System
+- **True Mobile Previews**: iPhone 13/14 proportions (375×812px) with proper 9:19.5 aspect ratio
+- **Desktop Accuracy**: 1920×1080 resolution with 16:9 aspect ratio for realistic desktop viewing
+- **Smart Zoom Levels**: 25%, 50%, 75%, 100%, and "fit to container" modes
+- **Device Bezel Effects**: Realistic borders and shadows simulating actual device frames
+- **Viewport Injection**: Automatically sets proper viewport meta tags for accurate rendering
+- **Top-Left Alignment**: All zoom levels consistently start from the top of the page
+
+### 🎯 Collapsible Project Organization
+- **Section Headers**: Click "🟢 ONLINE" or "🔴 OFFLINE" to collapse/expand sections
+- **Project Counts**: Shows number of projects in each section (e.g., "ONLINE (3)")
+- **Visual Indicators**: Animated arrows rotate to show collapsed/expanded state
+- **Focus Mode**: Hide offline projects to focus only on active development
+- **Consistent Styling**: Section headers match project item sizing for unified appearance
+
 ### 📊 Real-time Status Detection
 - Automatically detects which projects are running
 - Shows port information and server status
 - Updates every 5 seconds
+- Excludes portfolio port (5173) from project detection
 
 ### 🖼️ Inline Project Viewing
 - External projects load in secure iframes
 - Maintains sidebar navigation
 - Seamless switching between projects
+- Desktop view as default with mobile toggle option
 
 ### 📱 Responsive Design
 - Mobile-first approach
 - Adaptive sidebar that collapses on mobile
 - Smooth animations and transitions
+- Professional SVG icons throughout interface
 
 ### ⚡ Smart Port Management
 - Automatic port conflict resolution
-- Fallback port assignments
+- Fallback port assignments (3006-3010, 5174-5177)
 - Support for custom port configurations
+- Portfolio auto-detection starting from port 5173
 
 ## 🤝 Contributing
 

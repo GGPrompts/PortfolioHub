@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT_NAME - 3D Experience</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+        }
+        
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* Loading screen */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .loading.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* UI Overlays */
+        .ui-overlay {
+            position: absolute;
+            color: white;
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        .ui-overlay * {
+            pointer-events: auto;
+        }
+        
+        /* Info panel */
+        #info {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+        
+        /* Controls info */
+        .controls-info {
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+        
+        .controls-info h3 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+            font-size: 16px;
+        }
+        
+        .controls-info kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <div id="info" class="ui-overlay">PROJECT_NAME</div>
+    
+    <div class="controls-info ui-overlay">
+        <h3>Controls</h3>
+        <div id="controls-display">
+            Loading controls...
+        </div>
+    </div>
+    
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

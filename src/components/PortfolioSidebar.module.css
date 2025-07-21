@@ -162,6 +162,61 @@
   flex-shrink: 0;
 }
 
+/* New Project Section */
+.newProjectSection {
+  padding: 16px 16px 8px 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 255, 0.02));
+}
+
+.newProjectBtn {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 8px;
+  color: #00ff88;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.newProjectBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.newProjectBtn:hover::before {
+  left: 100%;
+}
+
+.newProjectBtn:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 255, 136, 0.2));
+  border-color: #00ff88;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+  transform: translateY(-2px);
+}
+
+.newProjectBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
 /* Quick Actions Footer */
 .quickActions {
   display: flex;
@@ -712,32 +767,43 @@
 }
 
 .statusText {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #00ff88;
-  font-family: 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .lastUpdated {
-  font-size: 10px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
-  font-family: 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .refreshBtn {
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: #00ff88;
-  padding: 6px 8px;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .refreshBtn:hover {
   background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
   transform: rotate(90deg);
+}
+
+.refreshBtn:active {
+  transform: rotate(180deg);
 }
 
 /* Selection Controls */
@@ -998,22 +1064,66 @@
   flex-direction: column;
 }
 
-/* Status Section Headers */
+/* Status Section Headers - Match project item sizing */
 .statusSectionHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 12px;
   margin: 12px 0 8px 0;
   background: rgba(0, 255, 136, 0.08);
   border: 1px solid rgba(0, 255, 136, 0.2);
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
+  min-height: 20px;
 }
 
 .statusSectionHeader:first-child {
   margin-top: 0;
+}
+
+/* Make status section headers clickable */
+.statusSectionHeader {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.statusSectionHeader:hover {
+  background-color: rgba(0, 255, 136, 0.1);
+}
+
+/* Section collapse toggle button */
+.sectionCollapseToggle {
+  background: none;
+  border: none;
+  color: rgba(0, 255, 136, 0.8);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px;
+  transition: transform 0.2s ease, color 0.2s ease;
+  margin-right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sectionCollapseToggle:hover {
+  color: #00ff88;
+}
+
+.sectionCollapseToggle.collapsed {
+  transform: rotate(-90deg);
+}
+
+/* Project count indicator */
+.projectCount {
+  margin-left: auto;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: normal;
 }
 
 /* Push offline projects to the bottom with more spacing */

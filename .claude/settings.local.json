@@ -15,7 +15,21 @@
       "Bash($env:PORT=3002)",
       "Bash(wc:*)",
       "Bash(mv:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(git clone:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(copy:*)",
+      "Bash(cp:*)",
+      "Bash(npm install)",
+      "Bash(.scriptskill-all-servers.ps1)",
+      "Bash(timeout 8 npm run dev)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(pnpm:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

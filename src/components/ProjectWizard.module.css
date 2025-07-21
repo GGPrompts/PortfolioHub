@@ -1,0 +1,572 @@
+/* Project Wizard - Cyberpunk themed project creation wizard */
+
+.wizardContainer {
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wizardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 255, 0.05));
+}
+
+.wizardTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.stepIndicator {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 255, 136, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.progressBar {
+  height: 3px;
+  background: rgba(0, 255, 136, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00ffff);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.wizardContent {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 136, 0.3) transparent;
+}
+
+.wizardContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wizardContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wizardContent::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.stepContent {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.stepTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.stepDescription {
+  margin: 0 0 24px 0;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
+
+/* Input Styles */
+.projectInput,
+.descriptionInput,
+.portInput {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s ease;
+}
+
+.projectInput:focus,
+.descriptionInput:focus,
+.portInput:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.projectInput::placeholder,
+.descriptionInput::placeholder,
+.portInput::placeholder {
+  color: rgba(0, 255, 136, 0.5);
+}
+
+.descriptionInput {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.portInput {
+  max-width: 120px;
+}
+
+.inputHint,
+.portHint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Type Selection Cards */
+.typeCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.typeCard {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.typeCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 255, 0.02));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.typeCard:hover::before {
+  opacity: 1;
+}
+
+.typeCard:hover {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 255, 136, 0.2);
+  transform: translateY(-2px);
+}
+
+.typeCard.selected {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.typeCard input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.typeIcon {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.typeTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #00ff88;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.typeDescription {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.typeUseCase {
+  font-size: 12px;
+  color: rgba(0, 255, 255, 0.8);
+  font-style: italic;
+  text-align: center;
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  padding-top: 8px;
+}
+
+/* Control System Cards */
+.controlCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.controlCard {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.controlCard:hover {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 2px 12px rgba(0, 255, 136, 0.2);
+}
+
+.controlCard.selected {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.controlCard input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.controlIcon {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.controlTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ff88;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.controlDescription {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.controlUseCase {
+  font-size: 11px;
+  color: rgba(0, 255, 255, 0.8);
+  font-style: italic;
+  text-align: center;
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  padding-top: 6px;
+}
+
+/* AI Suggestion Section */
+.aiSuggestionSection {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.aiSuggestionBtn {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 136, 0.1));
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  border-radius: 6px;
+  color: #00ffff;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.aiSuggestionBtn:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 136, 0.2));
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.aiSuggestionText {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Port Section */
+.portSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.usedPortsList {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.usedPortsList h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #00ff88;
+}
+
+.usedPorts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.usedPort {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Review Section */
+.reviewSection {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.reviewItem {
+  display: flex;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.reviewItem:last-child {
+  margin-bottom: 0;
+}
+
+.reviewItem strong {
+  color: #00ff88;
+  min-width: 140px;
+}
+
+/* Wizard Actions */
+.wizardActions {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.primaryBtn,
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #00ff88, #00ffaa);
+  color: #000000;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+  transform: translateY(-1px);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondaryBtn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Success/Error Messages */
+.successMessage {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.5);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.successContent h4 {
+  margin: 0 0 8px 0;
+  color: #00ff88;
+  font-size: 16px;
+}
+
+.successContent p {
+  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-line;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.successBtn {
+  background: #00ff88;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.successBtn:hover {
+  background: #00ffaa;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.successActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.secondarySuccessBtn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondarySuccessBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.errorMessage {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  color: #ff6b6b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wizardHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .typeCards,
+  .controlCards {
+    grid-template-columns: 1fr;
+  }
+
+  .wizardActions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .portSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reviewItem {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reviewItem strong {
+    min-width: auto;
+  }
+}

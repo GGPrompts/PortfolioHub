@@ -1,0 +1,19 @@
+{
+  "name": "modular3d",
+  "version": "1.0.0",
+  "description": "Modular 3D component development environment",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "stats.js": "^0.17.0",
+    "lil-gui": "^0.19.1"
+  }
+}

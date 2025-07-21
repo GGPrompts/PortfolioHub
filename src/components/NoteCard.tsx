@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import styles from './NoteCard.module.css'
+import SvgIcon from './SvgIcon'
 
 interface NoteCardProps {
   claudeInstructions: string
@@ -82,8 +83,14 @@ const NoteCard: React.FC<NoteCardProps> = ({
     textarea.style.height = newHeight + 'px'
   }
 
-  // Initial resize on mount to set proper heights
+  // Initial resize on mount to set proper heights and default instructions
   useEffect(() => {
+    // Set default instructions if empty
+    if (!claudeInstructions.trim()) {
+      const defaultType = noteTypes.general
+      onClaudeInstructionsChange(defaultType.instructions)
+    }
+    
     // Small delay to ensure DOM is fully rendered
     setTimeout(() => {
       if (instructionsRef.current) {
@@ -137,6 +144,49 @@ const NoteCard: React.FC<NoteCardProps> = ({
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped)
+  }
+
+  // Generate Claude prompt based on selections
+  const generateClaudePrompt = () => {
+    const selectedProjectData = projects.find(p => p.id === selectedProject)
+    const projectPath = selectedProjectData ? `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${selectedProjectData.path || selectedProject}` : null
+    const typeConfig = noteTypes[noteType as keyof typeof noteTypes]
+    
+    let prompt = `Here's a note I captured in my development portfolio:\n\n`
+    
+    if (claudeInstructions.trim()) {
+      prompt += `### Claude Instructions\n${claudeInstructions}\n\n`
+    }
+    
+    prompt += `### Note Content\n${noteContent}\n\n`
+    
+    prompt += `### Context\n`
+    prompt += `- **Type**: ${typeConfig.label}\n`
+    prompt += `- **Project**: ${selectedProjectData ? selectedProjectData.title : 'General (No Project)'}\n`
+    if (projectPath) {
+      prompt += `- **Project Path**: ${projectPath}\n`
+    }
+    prompt += `- **Timestamp**: ${new Date().toISOString()}\n\n`
+    
+    if (typeConfig.instructions) {
+      prompt += `Please help with: ${typeConfig.instructions}`
+    }
+    
+    return prompt
+  }
+
+  // Copy prompt to clipboard
+  const copyToClipboard = async () => {
+    try {
+      const prompt = generateClaudePrompt()
+      await navigator.clipboard.writeText(prompt)
+      // Could add a toast notification here
+      console.log('Claude prompt copied to clipboard!')
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      // Fallback: show prompt in alert
+      alert('Claude prompt:\n\n' + generateClaudePrompt())
+    }
   }
 
   return (
@@ -221,11 +271,20 @@ Perfect for capturing ideas across all your projects!"
 
           <div className={styles.cardActions}>
             <button
+              className={`${styles.actionBtn} ${styles.copyBtn}`}
+              onClick={copyToClipboard}
+              title="Copy Claude prompt to clipboard"
+              disabled={!noteContent.trim()}
+            >
+              <SvgIcon name="copy" size={16} />
+              <span className={styles.actionText}>Copy Prompt</span>
+            </button>
+            <button
               className={styles.actionBtn}
               onClick={handleFlip}
               title="Preview note format"
             >
-              <span className={styles.actionIcon}>👁️</span>
+              <SvgIcon name="eye" size={16} />
               <span className={styles.actionText}>Preview</span>
             </button>
             <button
@@ -234,7 +293,7 @@ Perfect for capturing ideas across all your projects!"
               title="Save to to-sort folder"
               disabled={!noteContent.trim()}
             >
-              <span className={styles.actionIcon}>💾</span>
+              <SvgIcon name="save" size={16} />
               <span className={styles.actionText}>Save</span>
             </button>
             <button
@@ -242,7 +301,7 @@ Perfect for capturing ideas across all your projects!"
               onClick={onCancel}
               title="Cancel and clear"
             >
-              <span className={styles.actionIcon}>❌</span>
+              <SvgIcon name="x" size={16} />
               <span className={styles.actionText}>Cancel</span>
             </button>
           </div>
@@ -272,6 +331,7 @@ Perfect for capturing ideas across all your projects!"
                 
                 <div className={styles.previewMetadata}>
                   <p><strong>Project:</strong> {selectedProject ? projects.find(p => p.id === selectedProject)?.title || 'Unknown' : 'General (No Project)'}</p>
+                  <p><strong>Type:</strong> <span className={styles.noteTag}>{noteTypes[noteType as keyof typeof noteTypes]?.label}</span></p>
                   {selectedProject && (
                     <p><strong>Project Path:</strong> D:\ClaudeWindows\claude-dev-portfolio\projects\{projects.find(p => p.id === selectedProject)?.path || selectedProject}</p>
                   )}
@@ -296,11 +356,20 @@ Perfect for capturing ideas across all your projects!"
 
           <div className={styles.cardActions}>
             <button
+              className={`${styles.actionBtn} ${styles.copyBtn}`}
+              onClick={copyToClipboard}
+              title="Copy Claude prompt to clipboard"
+              disabled={!noteContent.trim()}
+            >
+              <SvgIcon name="copy" size={16} />
+              <span className={styles.actionText}>Copy Prompt</span>
+            </button>
+            <button
               className={styles.actionBtn}
               onClick={handleFlip}
               title="Back to editing"
             >
-              <span className={styles.actionIcon}>✏️</span>
+              <SvgIcon name="edit" size={16} />
               <span className={styles.actionText}>Edit</span>
             </button>
             <button
@@ -309,7 +378,7 @@ Perfect for capturing ideas across all your projects!"
               title="Save to to-sort folder"
               disabled={!noteContent.trim()}
             >
-              <span className={styles.actionIcon}>💾</span>
+              <SvgIcon name="save" size={16} />
               <span className={styles.actionText}>Save</span>
             </button>
             <button
@@ -317,7 +386,7 @@ Perfect for capturing ideas across all your projects!"
               onClick={onCancel}
               title="Cancel and clear"
             >
-              <span className={styles.actionIcon}>❌</span>
+              <SvgIcon name="x" size={16} />
               <span className={styles.actionText}>Cancel</span>
             </button>
           </div>

@@ -676,6 +676,31 @@
   margin: 0 2px;
 }
 
+.automation-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.automation-status.available {
+  border-color: rgba(0, 255, 136, 0.4);
+  background: rgba(0, 255, 136, 0.08);
+  color: #00ff88;
+}
+
+.automation-status.unavailable {
+  border-color: rgba(255, 136, 0, 0.4);
+  background: rgba(255, 136, 0, 0.08);
+  color: #ff8800;
+}
+
 .command-groups {
   flex: 1;
   padding: 16px;
@@ -739,6 +764,7 @@
   text-align: left;
   justify-content: flex-start;
   min-height: 40px;
+  position: relative;
 }
 
 .command-btn:hover {
@@ -926,6 +952,35 @@
   opacity: 0.6;
 }
 
+/* Automation badges */
+.automation-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  z-index: 1;
+}
+
+.automation-badge.available {
+  border-color: rgba(0, 255, 136, 0.6);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+  color: #00ff88;
+}
+
+.automation-badge.unavailable {
+  border-color: rgba(255, 136, 0, 0.6);
+  background: linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 136, 0, 0.1));
+  color: #ff8800;
+}
+
 /* Responsive design for commands panel */
 @media (max-width: 768px) {
   .command-buttons {
@@ -955,5 +1010,11 @@
   .cheat-item code {
     min-width: unset;
     width: 100%;
+  }
+  
+  .automation-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
   }
 }

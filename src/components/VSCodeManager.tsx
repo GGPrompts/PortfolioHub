@@ -77,6 +77,35 @@ export const VSCodeManager: React.FC = () => {
     }
   };
 
+  // VS Code Server API automation functions
+  const executeVSCodeServerAPI = async (command: string, args?: any): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:8080/api/commands', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          command: command,
+          arguments: args || []
+        }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('VS Code command executed successfully:', result);
+        return true;
+      } else {
+        console.warn('VS Code API call failed:', response.status);
+        return false;
+      }
+    } catch (error) {
+      console.warn('VS Code Server API not available:', error);
+      return false;
+    }
+  };
+
   const executeVSCodeCommand = async (command: string) => {
     if (serverStatus !== 'running') {
       alert('VS Code Server is not running');
@@ -94,41 +123,86 @@ export const VSCodeManager: React.FC = () => {
       return;
     }
 
-    // Handle portfolio workspace
+    // Handle portfolio workspace - Try automation first
     if (command === 'open-portfolio-workspace') {
-      const workspacePath = 'D:\\ClaudeWindows\\claude-dev-portfolio\\portfolio-dev.code-workspace';
-      navigator.clipboard.writeText(workspacePath);
-      alert(`Workspace path copied: ${workspacePath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`);
-      return;
+      const workspacePath = 'D:/ClaudeWindows/claude-dev-portfolio/portfolio-dev.code-workspace';
+      
+      // Try automated workspace opening
+      const success = await executeVSCodeServerAPI('workbench.action.openWorkspace', [
+        { uri: `file:///${workspacePath.replace(/\\/g, '/')}` }
+      ]);
+      
+      if (success) {
+        alert('✅ Portfolio workspace opened automatically!');
+        return;
+      } else {
+        // Fallback to clipboard method
+        const windowsPath = workspacePath.replace(/\//g, '\\');
+        navigator.clipboard.writeText(windowsPath);
+        alert(`Workspace path copied: ${windowsPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`);
+        return;
+      }
     }
 
-    // Handle custom commands
+    // Handle custom project opening - Try automation first
     if (command.startsWith('open-project-')) {
       const projectId = command.replace('open-project-', '');
       const project = projects.find(p => p.id === projectId);
       if (project) {
-        // Copy just the clean folder path
-        const folderPath = project.path.replace(/\//g, '\\');
-        navigator.clipboard.writeText(folderPath);
-        alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`);
+        const projectPath = project.path;
+        
+        // Try automated folder opening
+        const success = await executeVSCodeServerAPI('vscode.openFolder', [
+          { uri: `file:///${projectPath.replace(/\\/g, '/')}` }
+        ]);
+        
+        if (success) {
+          alert(`✅ ${project.title} opened automatically!`);
+          return;
+        } else {
+          // Fallback to clipboard method
+          const folderPath = projectPath.replace(/\//g, '\\');
+          navigator.clipboard.writeText(folderPath);
+          alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`);
+          return;
+        }
       }
-      return;
     }
 
-    // Handle terminal commands
+    // Handle terminal commands - Try API automation first
     if (command.startsWith('npm-') || command.startsWith('git-')) {
       const terminalCommand = command.replace('npm-', 'npm ').replace('git-', 'git ').replace('-', ' ');
-      navigator.clipboard.writeText(terminalCommand);
-      alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`);
-      return;
+      
+      // Try automated terminal execution
+      const success = await executeVSCodeServerAPI('workbench.action.terminal.sendSequence', [
+        { text: terminalCommand + '\r' }
+      ]);
+      
+      if (success) {
+        alert(`✅ Command executed automatically: ${terminalCommand}`);
+        return;
+      } else {
+        // Fallback to clipboard method
+        navigator.clipboard.writeText(terminalCommand);
+        alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`);
+        return;
+      }
     }
 
-    // Execute VS Code command palette commands
+    // Execute VS Code command palette commands - Try automation first
     try {
-      // Copy just the clean command name
-      const commandName = getCommandDisplayName(command);
-      navigator.clipboard.writeText(commandName);
-      alert(`Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
+      const success = await executeVSCodeServerAPI(command);
+      
+      if (success) {
+        const commandName = getCommandDisplayName(command);
+        alert(`✅ Command executed automatically: ${commandName}`);
+        return;
+      } else {
+        // Fallback to clipboard method
+        const commandName = getCommandDisplayName(command);
+        navigator.clipboard.writeText(commandName);
+        alert(`Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
+      }
     } catch (error) {
       console.error('Failed to execute VS Code command:', error);
       alert('Failed to execute command');
@@ -189,11 +263,32 @@ export const VSCodeManager: React.FC = () => {
   };
 
   const [serverStatus, setServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking');
+  const [automationStatus, setAutomationStatus] = useState<'unknown' | 'available' | 'unavailable'>('unknown');
+
+  const checkAutomationAvailability = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:8080/api/commands', {
+        method: 'HEAD',
+        credentials: 'include'
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const checkStatus = async () => {
       const isRunning = await checkVSCodeServerStatus();
       const newStatus = isRunning ? 'running' : 'stopped';
+      
+      // Check automation availability when server is running
+      if (newStatus === 'running') {
+        const isAutomationAvailable = await checkAutomationAvailability();
+        setAutomationStatus(isAutomationAvailable ? 'available' : 'unavailable');
+      } else {
+        setAutomationStatus('unknown');
+      }
       
       // Auto-load portfolio when server starts running and no instances exist
       if (newStatus === 'running' && serverStatus !== 'running' && instances.length === 0 && projects.length > 0) {
@@ -235,6 +330,17 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
 
   const activeInstance = instances.find(instance => instance.id === activeInstanceId);
 
+  // Helper function to render automation badge
+  const AutomationBadge = ({ show }: { show: boolean }) => {
+    if (!show || automationStatus === 'unknown') return null;
+    
+    return (
+      <span className={`automation-badge ${automationStatus}`}>
+        {automationStatus === 'available' ? '⚡' : '📋'}
+      </span>
+    );
+  };
+
   return (
     <div className="vscode-manager">
       <div className="vscode-toolbar">
@@ -258,7 +364,13 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
         <div className="toolbar-right">
           <div className="server-info">
             <span className="info-text">
-              {serverStatus === 'running' ? 'Click the ⚙️ Commands tab for VS Code operations' : 'Start server to access commands'}
+              {serverStatus === 'running' ? (
+                automationStatus === 'available' ? 
+                  '⚡ Automation enabled - Commands execute automatically!' :
+                  automationStatus === 'unavailable' ?
+                  '📋 Automation unavailable - Commands copy to clipboard' :
+                  'Click the ⚙️ Commands tab for VS Code operations'
+              ) : 'Start server to access commands'}
             </span>
           </div>
         </div>
@@ -330,6 +442,14 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <SvgIcon name="settings" className="header-icon" />
               <h3>VS Code Commands</h3>
               <p>Quick access to common VS Code operations</p>
+              {automationStatus !== 'unknown' && (
+                <div className={`automation-status ${automationStatus}`}>
+                  {automationStatus === 'available' ? 
+                    '⚡ Automation enabled - Commands execute automatically!' :
+                    '📋 API unavailable - Commands copy to clipboard for manual execution'
+                  }
+                </div>
+              )}
               <div className="keyboard-hint">
                 <SvgIcon name="terminal" />
                 <span>Most commands start with <kbd>Ctrl+Shift+P</kbd> in VS Code</span>
@@ -351,6 +471,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
                   <button onClick={() => executeVSCodeCommand('open-portfolio-workspace')} className="command-btn primary">
                     <SvgIcon name="settings" />
                     Open Portfolio Workspace
+                    <AutomationBadge show={true} />
                   </button>
                 </div>
               </div>
@@ -389,18 +510,22 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
                   <button onClick={() => executeVSCodeCommand('npm-run-dev')} className="command-btn">
                     <SvgIcon name="play" />
                     npm run dev
+                    <AutomationBadge show={true} />
                   </button>
                   <button onClick={() => executeVSCodeCommand('npm-install')} className="command-btn">
                     <SvgIcon name="settings" />
                     npm install
+                    <AutomationBadge show={true} />
                   </button>
                   <button onClick={() => executeVSCodeCommand('git-status')} className="command-btn">
                     <SvgIcon name="github" />
                     git status
+                    <AutomationBadge show={true} />
                   </button>
                   <button onClick={() => executeVSCodeCommand('git-pull')} className="command-btn">
                     <SvgIcon name="refreshCw" />
                     git pull
+                    <AutomationBadge show={true} />
                   </button>
                 </div>
               </div>

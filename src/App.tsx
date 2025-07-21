@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { usePortfolioStore } from './store/portfolioStore'
 import PortfolioSidebar from './components/PortfolioSidebar'
+import { RightSidebar } from './components/RightSidebar'
 import ProjectGrid from './components/ProjectGrid'
 import ProjectViewer from './components/ProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
@@ -22,6 +23,7 @@ export default function App() {
   const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
   const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
   const [sidebarWidth, setSidebarWidth] = useState(0)
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(0)
   const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
@@ -180,6 +182,8 @@ export default function App() {
         layoutStrategy={layout.contentStrategy}
       />
       
+      <RightSidebar onWidthChange={setRightSidebarWidth} />
+      
       {/* Backdrop for overlay mode */}
       {layout.contentStrategy === 'overlay' && sidebarWidth > 0 && (
         <div 
@@ -194,7 +198,8 @@ export default function App() {
         className="main-content"
         style={{ 
           marginLeft: `${currentMarginLeft}px`,
-          transition: 'margin-left 0.3s ease'
+          marginRight: `${rightSidebarWidth}px`,
+          transition: 'margin-left 0.3s ease, margin-right 0.3s ease'
         }}
       >
         {showGrid ? (

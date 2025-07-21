@@ -6,7 +6,6 @@ import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
-import { VSCodeManager } from './VSCodeManager'
 import styles from './PortfolioSidebar.module.css'
 
 interface PortfolioSidebarProps {
@@ -93,7 +92,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const tabs = {
     projects: { width: 320, icon: 'sidebarSmall', title: 'Projects' },
     journals: { width: 600, icon: 'sidebarLarge', title: 'Dev Notes' },
-    vscode: { width: 800, icon: 'code', title: 'VS Code' },
     // Future tabs can be added here: settings, git, etc.
   }
 
@@ -101,8 +99,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const getTabPosition = (tabId: string) => {
     if (!activeTabs.includes(tabId)) return 0 // Tab not active
     
-    // Fixed order: projects -> journals -> vscode (left to right)
-    const fixedOrder = ['projects', 'journals', 'vscode']
+    // Fixed order: projects -> journals (left to right)
+    const fixedOrder = ['projects', 'journals']
     
     // Calculate cumulative width up to and including this tab's panel
     let cumulativeWidth = 0
@@ -173,12 +171,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     config: { tension: 280, friction: 32, clamp: true }
   })
   
-  const vscodeSpring = useSpring({
-    opacity: activeTabs.includes('vscode') ? 1 : 0,
-    transform: activeTabs.includes('vscode') ? 'translateX(0px)' : 'translateX(-20px)',
-    pointerEvents: activeTabs.includes('vscode') ? 'auto' : 'none',
-    config: { tension: 280, friction: 32, clamp: true }
-  })
   
   // Get unique tags for filtering
   const allTags = Array.from(new Set(projects.flatMap(p => p.tags)))
@@ -1243,16 +1235,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
         </animated.div>
         )}
         
-        {/* VS Code Panel - Always rendered to maintain state, but hidden when not active */}
-        <animated.div 
-          className={`${styles.expandedContent} ${styles.vscodePanel}`}
-          style={{
-            ...vscodeSpring,
-            display: activeTabs.includes('vscode') ? 'block' : 'none'
-          }}
-        >
-          <VSCodeManager />
-        </animated.div>
       </div>
     </animated.div>
   )

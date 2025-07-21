@@ -601,3 +601,359 @@
   display: flex;
   flex-direction: column;
 }
+
+/* VS Code Commands Panel - Styled like left sidebar panels */
+.vscode-commands-panel {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 15, 15, 0.95);
+  padding: 0;
+  overflow: hidden;
+}
+
+.commands-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 255, 0.02));
+}
+
+.commands-header .header-icon {
+  width: 24px;
+  height: 24px;
+  color: #00ff88;
+  margin-bottom: 8px;
+}
+
+.commands-header h3 {
+  margin: 0 0 8px 0;
+  color: #00ff88;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.commands-header p {
+  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.keyboard-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.keyboard-hint svg {
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 255, 136, 0.8);
+  flex-shrink: 0;
+}
+
+.keyboard-hint span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.3;
+}
+
+.keyboard-hint kbd {
+  background: rgba(40, 40, 40, 0.8);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #00ff88;
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+.command-groups {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.command-group {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.command-group:hover {
+  border-color: rgba(0, 255, 136, 0.3);
+  background: rgba(25, 25, 25, 0.7);
+}
+
+.command-group h4 {
+  margin: 0 0 12px 0;
+  color: #00ff88;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.command-group h4 svg {
+  width: 16px;
+  height: 16px;
+  color: #00ff88;
+}
+
+.command-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.command-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(40, 40, 40, 0.7);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+.command-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.5);
+  color: #00ff88;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+}
+
+.command-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 255, 136, 0.3);
+}
+
+.command-btn.primary {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+  border-color: rgba(0, 255, 136, 0.5);
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.command-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 255, 136, 0.2));
+  border-color: #00ff88;
+  box-shadow: 0 2px 12px rgba(0, 255, 136, 0.3);
+}
+
+.command-btn svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(0, 255, 136, 0.8);
+  flex-shrink: 0;
+}
+
+.command-btn:hover svg {
+  color: #00ff88;
+}
+
+/* Commands tab styling */
+.vscode-tab.commands-tab {
+  min-width: 40px;
+  max-width: 40px;
+  padding: 8px 8px;
+  justify-content: center;
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+/* Cheat sheet tab styling */
+.vscode-tab.cheatsheet-tab {
+  min-width: 40px;
+  max-width: 40px;
+  padding: 8px 8px;
+  justify-content: center;
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.4);
+}
+
+.vscode-tab.cheatsheet-tab:hover {
+  background: rgba(0, 255, 255, 0.15);
+  border-color: rgba(0, 255, 255, 0.6);
+}
+
+.vscode-tab.cheatsheet-tab.active {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+}
+
+.vscode-tab.cheatsheet-tab .tab-icon {
+  color: #00ffff;
+}
+
+/* Prompts tab styling */
+.vscode-tab.prompts-tab {
+  min-width: 40px;
+  max-width: 40px;
+  padding: 8px 8px;
+  justify-content: center;
+  background: rgba(255, 136, 0, 0.1);
+  border-color: rgba(255, 136, 0, 0.4);
+}
+
+.vscode-tab.prompts-tab:hover {
+  background: rgba(255, 136, 0, 0.15);
+  border-color: rgba(255, 136, 0, 0.6);
+}
+
+.vscode-tab.prompts-tab.active {
+  background: rgba(255, 136, 0, 0.2);
+  border-color: #ff8800;
+}
+
+.vscode-tab.prompts-tab .tab-icon {
+  color: #ff8800;
+}
+
+.vscode-tab.commands-tab:hover {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: rgba(0, 255, 136, 0.6);
+}
+
+.vscode-tab.commands-tab.active {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+}
+
+.vscode-tab.commands-tab .tab-icon {
+  color: #00ff88;
+}
+
+/* Server info styling */
+.server-info .info-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Cheat sheet specific styling */
+.cheat-commands {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cheat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(40, 40, 40, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.cheat-item:hover {
+  background: rgba(0, 255, 255, 0.08);
+  border-color: rgba(0, 255, 255, 0.4);
+  transform: translateX(2px);
+}
+
+.cheat-item code {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #00ffff;
+  font-weight: 600;
+  min-width: 200px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.cheat-item span {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.cheat-item:hover code {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+.cheat-item:hover span {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Copy functionality for cheat items */
+.cheat-item::after {
+  content: '📋';
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.cheat-item:hover::after {
+  opacity: 0.6;
+}
+
+/* Responsive design for commands panel */
+@media (max-width: 768px) {
+  .command-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .commands-header {
+    padding: 16px;
+  }
+  
+  .command-groups {
+    padding: 12px;
+    gap: 16px;
+  }
+  
+  .command-btn {
+    padding: 12px;
+    font-size: 13px;
+  }
+  
+  .cheat-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .cheat-item code {
+    min-width: unset;
+    width: 100%;
+  }
+}

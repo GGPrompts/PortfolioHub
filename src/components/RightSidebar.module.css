@@ -1,0 +1,193 @@
+/* Right Sidebar Container */
+.rightSidebarContainer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  pointer-events: none; /* Allow clicks through when collapsed */
+}
+
+/* Individual Tabs - Match left sidebar styling */
+.tab {
+  position: fixed;
+  right: 0;
+  width: 60px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 200, 255, 0.1));
+  border: 1px solid rgba(0, 255, 150, 0.3);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.tab:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 150, 0.2), rgba(0, 200, 255, 0.2));
+  border-color: rgba(0, 255, 150, 0.5);
+  /* Remove transform hover effect to match left sidebar */
+}
+
+.activeTab {
+  background: linear-gradient(135deg, rgba(0, 255, 150, 0.15), rgba(0, 200, 255, 0.15));
+  border-color: rgba(0, 255, 150, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+}
+
+.tabIcon {
+  width: 18px;
+  height: 18px;
+  color: rgba(0, 255, 150, 0.9);
+}
+
+/* tabLabel removed - using icon only to match left sidebar */
+
+/* Main Sidebar Panel */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 15, 0.95);
+  border-left: 1px solid rgba(0, 255, 150, 0.3);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: row;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* Drag Handle */
+.dragHandle {
+  width: 8px;
+  background: linear-gradient(180deg, 
+    rgba(0, 255, 150, 0.1) 0%, 
+    rgba(0, 200, 255, 0.1) 100%);
+  border-right: 1px solid rgba(0, 255, 150, 0.2);
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dragHandle:hover {
+  background: linear-gradient(180deg, 
+    rgba(0, 255, 150, 0.2) 0%, 
+    rgba(0, 200, 255, 0.2) 100%);
+  border-right-color: rgba(0, 255, 150, 0.4);
+}
+
+.dragHandle.dragging {
+  background: linear-gradient(180deg, 
+    rgba(0, 255, 150, 0.3) 0%, 
+    rgba(0, 200, 255, 0.3) 100%);
+  border-right-color: rgba(0, 255, 150, 0.6);
+}
+
+.dragIndicator {
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(0, 255, 150, 0.5) 50%, 
+    transparent 100%);
+  border-radius: 1px;
+}
+
+/* Sidebar Content */
+.sidebarContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0; /* Prevent flex item from growing beyond container */
+}
+
+/* VS Code Panel */
+.vscodePanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Browser Panel */
+.browserPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(0, 255, 150, 0.2);
+  flex-shrink: 0;
+}
+
+.headerIcon {
+  width: 20px;
+  height: 20px;
+  color: rgba(0, 255, 150, 0.9);
+}
+
+.panelHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Drag Overlay */
+.dragOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  cursor: ew-resize;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .tab {
+    width: 50px;
+  }
+  
+  .tabIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tab {
+    width: 45px;
+    height: 36px;
+  }
+  
+  .tabIcon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .dragHandle {
+    width: 6px;
+  }
+}

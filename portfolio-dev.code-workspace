@@ -45,7 +45,27 @@
 		"workbench.tree.indent": 20,
 		"breadcrumbs.enabled": true,
 		"editor.bracketPairColorization.enabled": true,
-		"editor.guides.bracketPairs": true
+		"editor.guides.bracketPairs": true,
+		"powershell.cwd": "Portfolio Hub",
+		
+		// Panel Layout Settings
+		"workbench.panel.defaultLocation": "bottom",
+		"workbench.panel.opensMaximized": "never",
+		"workbench.sideBar.location": "left",
+		"workbench.activityBar.visible": true,
+		"workbench.statusBar.visible": true,
+		"workbench.editor.showTabs": "multiple",
+		"workbench.editor.tabSizing": "fit",
+		"workbench.view.alwaysShowHeaderActions": true,
+		
+		// Terminal Layout
+		"terminal.integrated.splitCwd": "workspaceRoot",
+		"terminal.integrated.defaultLocation": "panel",
+		
+		// Explorer Settings
+		"explorer.openEditors.visible": 1,
+		"explorer.decorations.badges": true,
+		"explorer.decorations.colors": true
 	},
 	"extensions": {
 		"recommendations": [

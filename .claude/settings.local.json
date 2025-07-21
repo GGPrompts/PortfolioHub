@@ -29,7 +29,12 @@
       "WebFetch(domain:github.com)",
       "Bash(pnpm:*)",
       "Bash(ls:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(tailscale:*)",
+      "Bash(code --version)",
+      "Bash(code serve-web --help)"
     ],
     "deny": []
   }

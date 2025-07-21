@@ -1,0 +1,61 @@
+{
+	"folders": [
+		{
+			"name": "Portfolio Hub",
+			"path": "."
+		},
+		{
+			"name": "Projects",
+			"path": "./projects"
+		},
+		{
+			"name": "Scripts",
+			"path": "./scripts"
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "Dark+ (default dark)",
+		"terminal.integrated.defaultProfile.windows": "PowerShell",
+		"terminal.integrated.cwd": "${workspaceFolder}",
+		"files.autoSave": "afterDelay",
+		"editor.fontSize": 14,
+		"editor.tabSize": 2,
+		"editor.insertSpaces": true,
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/dist": true,
+			"**/build": true,
+			"**/.git/objects": true,
+			"**/.git/subtree-cache": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/dist": true,
+			"**/build": true
+		},
+		"typescript.preferences.importModuleSpecifier": "relative",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		},
+		"workbench.startupEditor": "none",
+		"explorer.confirmDelete": false,
+		"git.enableSmartCommit": true,
+		"git.confirmSync": false,
+		"editor.minimap.enabled": true,
+		"workbench.tree.indent": 20,
+		"breadcrumbs.enabled": true,
+		"editor.bracketPairColorization.enabled": true,
+		"editor.guides.bracketPairs": true
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.vscode-typescript-next",
+			"bradlc.vscode-tailwindcss",
+			"esbenp.prettier-vscode",
+			"ms-vscode.vscode-json",
+			"formulahendry.auto-rename-tag",
+			"christian-kohler.path-intellisense",
+			"ms-vscode.powershell"
+		]
+	}
+}

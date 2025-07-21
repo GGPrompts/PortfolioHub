@@ -36,7 +36,7 @@ export const VSCodeManager: React.FC = () => {
       const projectsData = data.projects.map((project: any) => ({
         id: project.id,
         title: project.title,
-        path: `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path}`,
+        path: `D:/ClaudeWindows/claude-dev-portfolio/projects/${project.path}`,
         localPort: project.localPort
       }));
       
@@ -44,7 +44,7 @@ export const VSCodeManager: React.FC = () => {
       projectsData.unshift({
         id: 'portfolio',
         title: 'Portfolio Hub',
-        path: 'D:\\ClaudeWindows\\claude-dev-portfolio',
+        path: 'D:/ClaudeWindows/claude-dev-portfolio',
         localPort: 5173
       });
       
@@ -54,13 +54,13 @@ export const VSCodeManager: React.FC = () => {
     }
   };
 
-  const createVSCodeInstance = (project: Project) => {
+  const createVSCodeInstance = (project: Project, tabLabel?: string) => {
     const instance: VSCodeInstance = {
       id: `vscode-${project.id}-${Date.now()}`,
       projectId: project.id,
       projectPath: project.path,
       port: 8080, // VS Code Server port
-      title: `${project.title} - VS Code`,
+      title: tabLabel || `${project.title}`,
       isRunning: true
     };
     
@@ -79,19 +79,23 @@ export const VSCodeManager: React.FC = () => {
 
   const checkVSCodeServerStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8080', { 
+      // Use a more reliable method - try to fetch a VS Code specific endpoint
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+      
+      const response = await fetch('http://localhost:8080/favicon.ico', { 
         method: 'HEAD',
-        mode: 'no-cors'
+        signal: controller.signal,
+        cache: 'no-cache'
       });
-      return true; // If no error, server is running
-    } catch {
-      // Try a different approach - attempt to fetch with no-cors
-      try {
-        await fetch('http://localhost:8080', { mode: 'no-cors' });
-        return true;
-      } catch {
-        return false;
-      }
+      
+      clearTimeout(timeoutId);
+      
+      // VS Code Server should respond to favicon requests
+      return response.status < 500; // Any response except server error means it's running
+    } catch (error) {
+      // If fetch fails completely, server is definitely not running
+      return false;
     }
   };
 
@@ -110,9 +114,24 @@ export const VSCodeManager: React.FC = () => {
   }, []);
 
   const startVSCodeServer = () => {
-    // This would typically trigger a server start command
-    // For now, we'll just provide instructions
-    alert('To start VS Code Server, run: code serve-web --port 8080 --host 0.0.0.0 --without-connection-token');
+    // Copy the correct command
+    const commands = `# Stop VS Code Server first (if running)
+Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue
+
+# Change to portfolio directory  
+Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"
+
+# Verify location
+Write-Host "Starting VS Code Server from: $(Get-Location)"
+
+# Start VS Code Server with your Matt profile as default
+code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms --default-profile "Matt"`;
+    
+    navigator.clipboard.writeText(commands).then(() => {
+      alert(`VS Code Server commands copied!\n\nAfter starting, the Portfolio Hub will automatically open your workspace file with dark mode and settings configured.\n\nPaste and run in PowerShell.`);
+    }).catch(() => {
+      alert(`To start VS Code Server:\n\n${commands}`);
+    });
   };
 
   const activeInstance = instances.find(instance => instance.id === activeInstanceId);
@@ -192,19 +211,61 @@ export const VSCodeManager: React.FC = () => {
             <SvgIcon name="code" className="empty-icon" />
             <h3>No VS Code Instances</h3>
             <p>Select a project from the dropdown above to open it in VS Code</p>
+            <div className="workspace-instructions">
+              <p><strong>💡 Pro Tip:</strong> After opening VS Code, use <code>File → Open Workspace...</code> and select <code>portfolio-dev.code-workspace</code> for dark mode and optimized settings!</p>
+            </div>
             <div className="quick-actions">
               <button
                 onClick={() => {
                   const portfolioProject = projects.find(p => p.id === 'portfolio');
                   if (portfolioProject) {
-                    createVSCodeInstance(portfolioProject);
+                    createVSCodeInstance(portfolioProject, 'Portfolio Hub');
                   }
                 }}
                 className="quick-action-btn"
                 disabled={serverStatus !== 'running'}
               >
                 <SvgIcon name="folder" />
-                Open Portfolio Hub
+                Open VS Code
+              </button>
+              <button
+                onClick={() => {
+                  const portfolioProject = projects.find(p => p.id === 'portfolio');
+                  if (portfolioProject) {
+                    createVSCodeInstance(portfolioProject, 'Editor Tab 1');
+                  }
+                }}
+                className="quick-action-btn"
+                disabled={serverStatus !== 'running'}
+              >
+                <SvgIcon name="code" />
+                New Tab 1
+              </button>
+              <button
+                onClick={() => {
+                  const portfolioProject = projects.find(p => p.id === 'portfolio');
+                  if (portfolioProject) {
+                    createVSCodeInstance(portfolioProject, 'Editor Tab 2');
+                  }
+                }}
+                className="quick-action-btn"
+                disabled={serverStatus !== 'running'}
+              >
+                <SvgIcon name="folder" />
+                New Tab 2
+              </button>
+              <button
+                onClick={() => {
+                  const portfolioProject = projects.find(p => p.id === 'portfolio');
+                  if (portfolioProject) {
+                    createVSCodeInstance(portfolioProject, 'Editor Tab 3');
+                  }
+                }}
+                className="quick-action-btn"
+                disabled={serverStatus !== 'running'}
+              >
+                <SvgIcon name="code" />
+                New Tab 3
               </button>
             </div>
           </div>

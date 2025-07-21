@@ -1243,15 +1243,16 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
         </animated.div>
         )}
         
-        {/* VS Code Panel - Visible when vscode tab is active */}
-        {activeTabs.includes('vscode') && (
+        {/* VS Code Panel - Always rendered to maintain state, but hidden when not active */}
         <animated.div 
           className={`${styles.expandedContent} ${styles.vscodePanel}`}
-          style={vscodeSpring}
+          style={{
+            ...vscodeSpring,
+            display: activeTabs.includes('vscode') ? 'block' : 'none'
+          }}
         >
           <VSCodeManager />
         </animated.div>
-        )}
       </div>
     </animated.div>
   )

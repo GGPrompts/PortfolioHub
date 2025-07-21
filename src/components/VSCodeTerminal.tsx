@@ -9,7 +9,7 @@ interface VSCodeTerminalProps {
 }
 
 export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
-  projectPath = '/ClaudeWindows/claude-dev-portfolio',
+  projectPath = 'D:/ClaudeWindows/claude-dev-portfolio',
   serverPort = 8080,
   className = '',
   onClose
@@ -18,7 +18,8 @@ export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const vscodeUrl = `http://localhost:${serverPort}/?folder=${encodeURIComponent(projectPath)}`;
+  // Connect to VS Code Server with Matt profile
+  const vscodeUrl = `http://localhost:${serverPort}/?profile=Matt`;
 
   useEffect(() => {
     const iframe = iframeRef.current;

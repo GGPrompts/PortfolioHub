@@ -89,7 +89,7 @@
 .vscode-content {
   flex: 1;
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* Keep container clean */
 }
 
 .vscode-iframe {
@@ -98,6 +98,7 @@
   border: none;
   background: #1e1e1e;
   transition: opacity 0.3s ease;
+  overflow: auto; /* Allow scrolling within the iframe */
 }
 
 .vscode-iframe.loading {
@@ -325,7 +326,7 @@
   padding: 8px 12px 0;
   background: rgba(20, 20, 20, 0.9);
   border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-  overflow-x: auto;
+  overflow-x: hidden; /* Remove horizontal scrollbar from tabs */
 }
 
 .vscode-tab {

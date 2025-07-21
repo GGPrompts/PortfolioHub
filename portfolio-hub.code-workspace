@@ -1,0 +1,55 @@
+{
+	"folders": [
+		{
+			"name": "Portfolio Hub",
+			"path": "D:\\ClaudeWindows\\claude-dev-portfolio"
+		},
+		{
+			"name": "Projects",
+			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\projects"
+		}
+	],
+	"settings": {
+		"terminal.integrated.defaultProfile.windows": "PowerShell",
+		"terminal.integrated.cwd": "D:\\ClaudeWindows\\claude-dev-portfolio",
+		"terminal.integrated.profiles.windows": {
+			"PowerShell": {
+				"source": "PowerShell",
+				"args": ["-NoLogo"],
+				"cwd": "D:\\ClaudeWindows\\claude-dev-portfolio"
+			},
+			"Command Prompt": {
+				"path": "C:\\Windows\\System32\\cmd.exe",
+				"args": ["/k"],
+				"cwd": "D:\\ClaudeWindows\\claude-dev-portfolio"
+			},
+			"Git Bash": {
+				"path": "C:\\Program Files\\Git\\bin\\bash.exe",
+				"args": ["--login"],
+				"cwd": "D:\\ClaudeWindows\\claude-dev-portfolio"
+			}
+		},
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/.git": false,
+			"**/dist": true,
+			"**/build": true
+		},
+		"typescript.preferences.importModuleSpecifier": "relative",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		},
+		"workbench.startupEditor": "none",
+		"explorer.confirmDelete": false,
+		"git.enableSmartCommit": true,
+		"git.confirmSync": false
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.vscode-typescript-next",
+			"bradlc.vscode-tailwindcss",
+			"esbenp.prettier-vscode",
+			"ms-vscode.vscode-json"
+		]
+	}
+}

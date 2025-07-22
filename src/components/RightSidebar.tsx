@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useSpring, animated } from '@react-spring/web';
 import SvgIcon from './SvgIcon';
 import { VSCodeManager } from './VSCodeManager';
+import QuickCommandsPanel from './QuickCommandsPanel';
 import styles from './RightSidebar.module.css';
 
 interface RightSidebarProps {
@@ -17,7 +18,9 @@ interface Tab {
 }
 
 const tabs: Record<string, Tab> = {
-  vscode: { id: 'vscode', label: 'VS Code', icon: 'code', width: 800 }
+  commands: { id: 'commands', label: 'Quick Commands', icon: 'terminal', width: 800 },
+  vscode: { id: 'vscode', label: 'VS Code Terminals', icon: 'code', width: 800 },
+  preview: { id: 'preview', label: 'Live Preview', icon: 'monitor', width: 800 }
 };
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWidthChange }) => {
@@ -58,7 +61,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
   const getTabPosition = (tabId: string) => {
     if (!activeTabs.includes(tabId)) return 0;
     
-    const fixedOrder = ['vscode']; // Order of tabs from top to bottom
+    const fixedOrder = ['commands', 'vscode', 'preview']; // Order of tabs from top to bottom
     const tabIndex = fixedOrder.indexOf(tabId);
     return tabIndex * 50; // 50px spacing between tabs
   };
@@ -138,6 +141,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
 
         {/* Sidebar content */}
         <div className={styles.sidebarContent}>
+          {activeTabs.includes('commands') && (
+            <div className={styles.commandsPanel}>
+              <QuickCommandsPanel />
+            </div>
+          )}
+          
           {activeTabs.includes('vscode') && (
             <div className={styles.vscodePanel}>
               <div className={styles.panelHeader}>
@@ -145,6 +154,23 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
                 <h3>VS Code Terminals</h3>
               </div>
               <VSCodeManager />
+            </div>
+          )}
+
+          {activeTabs.includes('preview') && (
+            <div className={styles.previewPanel}>
+              <div className={styles.panelHeader}>
+                <SvgIcon name="monitor" className={styles.headerIcon} />
+                <h3>Live Preview</h3>
+              </div>
+              <div className={styles.previewContent}>
+                <div className={styles.previewPlaceholder}>
+                  <SvgIcon name="monitor" size={48} />
+                  <h4>Live Preview Panel</h4>
+                  <p>Project previews will be embedded here when you click "Start Server" in the main portfolio view.</p>
+                  <p>This replaces the need for separate browser tabs!</p>
+                </div>
+              </div>
             </div>
           )}
         </div>

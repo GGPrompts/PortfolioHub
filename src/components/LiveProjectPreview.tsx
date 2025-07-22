@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
-import { executeCommand, openInBrowser, openInVSCode, showNotification, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import { executeCommand, openInBrowser, openInExternalBrowser, openInVSCode, showNotification, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -103,7 +103,15 @@ export default function LiveProjectPreview({
     if (actualPort) {
       const url = `http://localhost:${actualPort}`
       console.log(`🌐 Opening ${project.id} in new tab:`, { url, isVSCode: isVSCodeEnvironment() })
-      openInBrowser(url)
+      
+      // Check if project requires 3D navigation (needs pointer lock)
+      if ((project as any).requires3D) {
+        // Force external browser for 3D projects that need pointer lock
+        openInExternalBrowser(url, 'Requires pointer lock for 3D navigation')
+      } else {
+        // Use Simple Browser for regular projects
+        openInBrowser(url)
+      }
     } else {
       showNotification('Project is not running', 'warning')
     }

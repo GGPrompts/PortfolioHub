@@ -105,6 +105,9 @@ class PortfolioWebviewProvider {
                 case 'browser:open':
                     await this._openInBrowser(message.url);
                     break;
+                case 'browser:openExternal':
+                    await this._openInExternalBrowser(message.url, message.reason);
+                    break;
                 case 'folder:open':
                     await this._openFolder(message.path);
                     break;
@@ -193,6 +196,160 @@ class PortfolioWebviewProvider {
             console.log(`Simple Browser not available, falling back to external browser for ${url}`);
             // Fallback to external browser if Simple Browser is not available
             await vscode.env.openExternal(vscode.Uri.parse(url));
+        }
+    }
+    async _openInExternalBrowser(url, reason) {
+        try {
+            // Force external browser (bypasses Simple Browser limitations)
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            const reasonText = reason ? ` (${reason})` : '';
+            console.log(`🌍 Opened ${url} in external browser${reasonText}`);
+            if (reason) {
+                vscode.window.showInformationMessage(`Opened in external browser: ${reason}`);
+            }
+        }
+        catch (error) {
+            console.error('Failed to open external browser:', error);
+            vscode.window.showErrorMessage(`Failed to open ${url} in external browser`);
+        }
+    }
+    async _createEmbeddedPreview(projectId, url) {
+        try {
+            // Create embedded preview panel with mobile/desktop toggle
+            const panel = vscode.window.createWebviewPanel(`preview-${projectId}`, `🔍 Preview: ${projectId} (Desktop)`, {
+                viewColumn: vscode.ViewColumn.Beside,
+                preserveFocus: true
+            }, {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                portMapping: [
+                    { webviewPort: parseInt(url.split(':')[2]), extensionHostPort: parseInt(url.split(':')[2]) }
+                ]
+            });
+            let isMobileView = false;
+            const getPreviewHTML = (mobile) => {
+                const viewportMeta = mobile
+                    ? '<meta name="viewport" content="width=375, initial-scale=1.0">'
+                    : '<meta name="viewport" content="width=1920, initial-scale=1.0">';
+                const containerStyle = mobile
+                    ? 'width: 375px; height: 812px; margin: 20px auto; border: 2px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'
+                    : 'width: 100%; height: 100%;';
+                const iframeStyle = mobile
+                    ? 'width: 375px; height: 812px; border: none; transform: scale(0.8); transform-origin: top left;'
+                    : 'width: 100%; height: calc(100vh - 60px); border: none;';
+                return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    ${viewportMeta}
+                    <title>Preview: ${projectId} (${mobile ? 'Mobile' : 'Desktop'})</title>
+                    <style>
+                        body, html { 
+                            margin: 0; 
+                            padding: 0; 
+                            width: 100%; 
+                            height: 100%; 
+                            overflow: ${mobile ? 'auto' : 'hidden'};
+                            background: ${mobile ? '#f0f0f0' : '#1e1e1e'};
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        }
+                        .toolbar {
+                            height: 40px;
+                            background: #2d2d30;
+                            color: white;
+                            display: flex;
+                            align-items: center;
+                            padding: 0 20px;
+                            gap: 15px;
+                            border-bottom: 1px solid #3e3e42;
+                        }
+                        .toggle-btn {
+                            background: #0e639c;
+                            color: white;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                        }
+                        .toggle-btn:hover { background: #1177bb; }
+                        .view-info { 
+                            color: #cccccc; 
+                            font-size: 12px;
+                        }
+                        .preview-container {
+                            ${containerStyle}
+                        }
+                        iframe { ${iframeStyle} }
+                        .loading { 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 200px;
+                            color: #ffffff;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="toolbar">
+                        <button class="toggle-btn" onclick="toggleView()">${mobile ? '🖥️ Desktop' : '📱 Mobile'}</button>
+                        <span class="view-info">
+                            ${mobile ? '📱 375×812 Mobile View' : '🖥️ Desktop View'} | ${projectId}
+                        </span>
+                        <button class="toggle-btn" onclick="refreshPreview()">🔄 Refresh</button>
+                    </div>
+                    <div class="preview-container">
+                        <div class="loading" id="loading">Loading ${projectId} preview...</div>
+                        <iframe id="preview" src="${url}" style="display: none;" 
+                                onload="document.getElementById('loading').style.display='none'; this.style.display='block';">
+                        </iframe>
+                    </div>
+                    <script>
+                        const vscode = acquireVsCodeApi();
+                        function toggleView() {
+                            vscode.postMessage({ command: 'toggleView' });
+                        }
+                        function refreshPreview() {
+                            document.getElementById('preview').src = document.getElementById('preview').src;
+                        }
+                    </script>
+                </body>
+                </html>
+            `;
+            };
+            // Handle messages from webview
+            panel.webview.onDidReceiveMessage(message => {
+                if (message.command === 'toggleView') {
+                    isMobileView = !isMobileView;
+                    panel.title = `🔍 Preview: ${projectId} (${isMobileView ? 'Mobile' : 'Desktop'})`;
+                    panel.webview.html = getPreviewHTML(isMobileView);
+                }
+            });
+            // Set initial HTML
+            panel.webview.html = getPreviewHTML(false);
+            console.log(`🔍 Created embedded preview panel for ${projectId} at ${url}`);
+            // Optional: Close panel when project stops running
+            const interval = setInterval(async () => {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 1000);
+                    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!response.ok)
+                        throw new Error('Project not running');
+                }
+                catch {
+                    panel.dispose();
+                    clearInterval(interval);
+                    console.log(`🔍 Closed preview panel for ${projectId} (project stopped)`);
+                }
+            }, 10000);
+            panel.onDidDispose(() => clearInterval(interval));
+        }
+        catch (error) {
+            console.error(`Failed to create embedded preview for ${projectId}:`, error);
+            vscode.window.showErrorMessage(`Failed to create preview for ${projectId}`);
         }
     }
     async _openFolder(folderPath) {

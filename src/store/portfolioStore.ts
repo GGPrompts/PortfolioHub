@@ -19,6 +19,7 @@ export interface Project {
   tech: string[]
   status: 'active' | 'archived' | 'experimental'
   devJournal?: string
+  requires3D?: boolean  // New property for projects needing pointer lock
 }
 
 interface PortfolioStore {

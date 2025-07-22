@@ -89,6 +89,9 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 case 'browser:open':
                     await this._openInBrowser(message.url);
                     break;
+                case 'browser:openExternal':
+                    await this._openInExternalBrowser(message.url, message.reason);
+                    break;
                 case 'folder:open':
                     await this._openFolder(message.path);
                     break;
@@ -195,6 +198,22 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             console.log(`Simple Browser not available, falling back to external browser for ${url}`);
             // Fallback to external browser if Simple Browser is not available
             await vscode.env.openExternal(vscode.Uri.parse(url));
+        }
+    }
+
+    private async _openInExternalBrowser(url: string, reason?: string): Promise<void> {
+        try {
+            // Force external browser (bypasses Simple Browser limitations)
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            const reasonText = reason ? ` (${reason})` : '';
+            console.log(`🌍 Opened ${url} in external browser${reasonText}`);
+            
+            if (reason) {
+                vscode.window.showInformationMessage(`Opened in external browser: ${reason}`);
+            }
+        } catch (error) {
+            console.error('Failed to open external browser:', error);
+            vscode.window.showErrorMessage(`Failed to open ${url} in external browser`);
         }
     }
 
@@ -331,7 +350,10 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             // Optional: Close panel when project stops running
             const interval = setInterval(async () => {
                 try {
-                    const response = await fetch(url, { method: 'HEAD', timeout: 1000 });
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 1000);
+                    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+                    clearTimeout(timeoutId);
                     if (!response.ok) throw new Error('Project not running');
                 } catch {
                     panel.dispose();

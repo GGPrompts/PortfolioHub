@@ -112,15 +112,57 @@
   min-width: 0; /* Prevent flex item from growing beyond container */
 }
 
-/* VS Code Panel */
-.vscodePanel {
+/* Panel Styles */
+.commandsPanel,
+.vscodePanel,
+.previewPanel {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Browser Panel */
+/* Commands Panel - No header since QuickCommandsPanel has its own */
+.commandsPanel {
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+/* Preview Panel Content */
+.previewContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+.previewPlaceholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #888);
+}
+
+.previewPlaceholder svg {
+  color: var(--accent-cyan, #00ffff);
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.previewPlaceholder h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary, #e0e0e0);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.previewPlaceholder p {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 300px;
+}
+
+/* Browser Panel - keep for compatibility */
 .browserPanel {
   flex: 1;
   display: flex;

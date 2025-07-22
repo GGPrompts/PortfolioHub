@@ -77,12 +77,25 @@ export const openInVSCode = async (path: string): Promise<void> => {
   }
 };
 
-// Open in browser
+// Open in browser (VS Code Simple Browser)
 export const openInBrowser = async (url: string): Promise<void> => {
   if (isVSCodeEnvironment()) {
     (window as any).vsCodePortfolio.postMessage({
       type: 'browser:open',
       url
+    });
+  } else {
+    window.open(url, '_blank');
+  }
+};
+
+// Open in external browser (forces external browser even in VS Code)
+export const openInExternalBrowser = async (url: string, reason?: string): Promise<void> => {
+  if (isVSCodeEnvironment()) {
+    (window as any).vsCodePortfolio.postMessage({
+      type: 'browser:openExternal',
+      url,
+      reason
     });
   } else {
     window.open(url, '_blank');

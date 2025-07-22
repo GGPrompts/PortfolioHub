@@ -198,7 +198,9 @@ class PortfolioWebviewProvider {
             // Launch portfolio first
             const portfolioTerminal = vscode.window.createTerminal('Portfolio');
             portfolioTerminal.sendText(`cd "${this._portfolioPath}"`);
-            portfolioTerminal.sendText('$env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"; $env:BROWSER = "none"');
+            portfolioTerminal.sendText('$env:OPEN_BROWSER = false');
+            portfolioTerminal.sendText('$env:REACT_APP_OPEN_BROWSER = false');
+            portfolioTerminal.sendText('$env:BROWSER = none');
             portfolioTerminal.sendText('npm run dev');
             // Launch each project in its own terminal
             let successCount = 0;
@@ -264,9 +266,11 @@ class PortfolioWebviewProvider {
         if (hasPackageJson) {
             // Set environment variables for Node.js projects
             if (project.localPort) {
-                terminal.sendText(`$env:PORT = "${project.localPort}"`);
+                terminal.sendText(`$env:PORT = ${project.localPort}`);
             }
-            terminal.sendText('$env:BROWSER = "none"; $env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"');
+            terminal.sendText('$env:BROWSER = none');
+            terminal.sendText('$env:OPEN_BROWSER = false');
+            terminal.sendText('$env:REACT_APP_OPEN_BROWSER = false');
             // Check if node_modules exists
             const nodeModulesPath = path.join(projectPath, 'node_modules');
             if (!fs.existsSync(nodeModulesPath)) {

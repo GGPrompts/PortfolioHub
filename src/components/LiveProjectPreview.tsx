@@ -66,7 +66,7 @@ export default function LiveProjectPreview({
       return
     }
     
-    const command = `powershell "Get-Process -Port ${port} -ErrorAction SilentlyContinue | Stop-Process -Force"`
+    const command = `taskkill /F /IM node.exe`
     await executeCommand(command, `Kill ${project.title}`)
     showNotification(`Stopping ${project.title}...`, 'info')
   }

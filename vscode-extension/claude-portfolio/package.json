@@ -4,6 +4,12 @@
   "description": "Manage your Claude Windows portfolio projects directly in VS Code",
   "version": "0.0.1",
   "publisher": "claude-dev",
+  "private": true,
+  "__metadata": {
+    "isBuiltin": false,
+    "publisherId": "claude-dev",
+    "publisherDisplayName": "Claude Dev"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -11,6 +17,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "extensionDependencies": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

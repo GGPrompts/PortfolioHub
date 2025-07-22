@@ -35,6 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DashboardPanel = void 0;
 const vscode = __importStar(require("vscode"));
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const http = __importStar(require("http"));
 class DashboardPanel {
     static createOrShow(extensionUri, portfolioPath) {
         const column = vscode.window.activeTextEditor
@@ -72,6 +75,9 @@ class DashboardPanel {
                 case 'openInExternalBrowser':
                     vscode.commands.executeCommand('claude-portfolio.openProjectInExternalBrowser', message.project);
                     return;
+                case 'refresh':
+                    this._update();
+                    return;
             }
         }, null, this._disposables);
     }
@@ -85,14 +91,73 @@ class DashboardPanel {
             }
         }
     }
-    _update() {
+    async _getProjectData() {
+        try {
+            const manifestPath = path.join(this._portfolioPath, 'projects', 'manifest.json');
+            if (fs.existsSync(manifestPath)) {
+                const manifestContent = fs.readFileSync(manifestPath, 'utf8');
+                const manifest = JSON.parse(manifestContent);
+                const projects = manifest.projects || [];
+                // Check real-time status for each project
+                await this._updateProjectStatuses(projects);
+                return projects;
+            }
+        }
+        catch (error) {
+            console.error('Failed to load project manifest:', error);
+        }
+        return [];
+    }
+    async _updateProjectStatuses(projects) {
+        const statusPromises = projects.map(async (project) => {
+            if (project.localPort) {
+                try {
+                    const isRunning = await this._checkPortStatus(project.localPort);
+                    project.status = isRunning ? 'active' : 'inactive';
+                }
+                catch (error) {
+                    project.status = 'inactive';
+                }
+            }
+            else {
+                project.status = 'inactive';
+            }
+            return project;
+        });
+        await Promise.all(statusPromises);
+    }
+    _checkPortStatus(port) {
+        return new Promise((resolve) => {
+            const req = http.request({
+                hostname: 'localhost',
+                port: port,
+                path: '/',
+                method: 'GET',
+                timeout: 1000
+            }, (res) => {
+                // Only resolve true for successful HTTP status codes
+                resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+            });
+            req.on('error', () => {
+                resolve(false);
+            });
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+            });
+            req.end();
+        });
+    }
+    async _update() {
         const webview = this._panel.webview;
         this._panel.title = 'Claude Portfolio Dashboard';
-        this._panel.webview.html = this._getHtmlForWebview(webview);
+        this._panel.webview.html = await this._getHtmlForWebview(webview);
     }
-    _getHtmlForWebview(webview) {
+    async _getHtmlForWebview(webview) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'dashboard.js'));
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'dashboard.css'));
+        // Load project data with real-time status checking
+        const projectData = await this._getProjectData();
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -153,27 +218,12 @@ class DashboardPanel {
             <script>
                 const vscode = acquireVsCodeApi();
                 const portfolioPath = '${this._portfolioPath}';
+                
+                // Load real project data from manifest
+                window.portfolioProjects = ${JSON.stringify(projectData)};
 
                 function loadProjects() {
-                    // In a real implementation, this would load from the manifest
-                    // For now, we'll use placeholder data
-                    const projects = [
-                        {
-                            title: "3D Matrix Cards",
-                            description: "Interactive 3D card display with Matrix effects",
-                            localPort: 3005,
-                            status: "active",
-                            tech: ["Three.js", "JavaScript"]
-                        },
-                        {
-                            title: "GGPrompts",
-                            description: "AI prompt management platform",
-                            localPort: 9323,
-                            status: "active",
-                            tech: ["React", "Supabase"]
-                        }
-                    ];
-
+                    const projects = window.portfolioProjects || [];
                     displayProjects(projects);
                     updateStats(projects);
                 }
@@ -186,16 +236,16 @@ class DashboardPanel {
                             <p>\${project.description}</p>
                             <div class="project-meta">
                                 <span class="port">Port: \${project.localPort}</span>
-                                <span class="status \${project.status}">\${project.status}</span>
+                                <span class="status \${project.status || 'inactive'}">\${project.status || 'inactive'}</span>
                             </div>
                             <div class="project-tech">
-                                \${project.tech.map(t => \`<span class="tech-tag">\${t}</span>\`).join('')}
+                                \${(project.tech || []).map(t => \`<span class="tech-tag">\${t}</span>\`).join('')}
                             </div>
                             <div class="project-actions">
-                                <button onclick='openProject(\${JSON.stringify(project)})'>📂 Open</button>
-                                <button onclick='runProject(\${JSON.stringify(project)})'>▶️ Run</button>
-                                <button onclick='openInBrowser(\${JSON.stringify(project)})'>🌐 VS Code</button>
-                                <button onclick='openInExternalBrowser(\${JSON.stringify(project)})'>🔗 External</button>
+                                <button onclick='openProject("\${project.id}")'>📂 Open</button>
+                                <button onclick='runProject("\${project.id}")'>▶️ Run</button>
+                                <button onclick='openInBrowser("\${project.id}")'>🌐 VS Code</button>
+                                <button onclick='openInExternalBrowser("\${project.id}")'>🔗 External</button>
                             </div>
                         </div>
                     \`).join('');
@@ -210,24 +260,28 @@ class DashboardPanel {
                     document.getElementById('techCount').textContent = allTech.size;
                 }
 
-                function openProject(project) {
-                    vscode.postMessage({ command: 'openProject', project });
+                function openProject(projectId) {
+                    const project = window.portfolioProjects.find(p => p.id === projectId);
+                    if (project) vscode.postMessage({ command: 'openProject', project });
                 }
 
-                function runProject(project) {
-                    vscode.postMessage({ command: 'runProject', project });
+                function runProject(projectId) {
+                    const project = window.portfolioProjects.find(p => p.id === projectId);
+                    if (project) vscode.postMessage({ command: 'runProject', project });
                 }
 
-                function openInBrowser(project) {
-                    vscode.postMessage({ command: 'openInBrowser', project });
+                function openInBrowser(projectId) {
+                    const project = window.portfolioProjects.find(p => p.id === projectId);
+                    if (project) vscode.postMessage({ command: 'openInBrowser', project });
                 }
 
-                function openInExternalBrowser(project) {
-                    vscode.postMessage({ command: 'openInExternalBrowser', project });
+                function openInExternalBrowser(projectId) {
+                    const project = window.portfolioProjects.find(p => p.id === projectId);
+                    if (project) vscode.postMessage({ command: 'openInExternalBrowser', project });
                 }
 
                 function refreshProjects() {
-                    loadProjects();
+                    vscode.postMessage({ command: 'refresh' });
                 }
 
                 // Load projects on startup

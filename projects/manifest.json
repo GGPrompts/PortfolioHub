@@ -11,7 +11,6 @@
       "thumbnail": "thumbnails/3d-matrix-cards.png",
       "tags": ["3D", "Animation", "Interactive", "WebGL"],
       "tech": ["Three.js", "JavaScript", "CSS", "Express"],
-      "status": "active",
       "devJournal": "projects/dev-journals/3d-matrix-cards.md",
       "features": [
         "Multiple 3D layouts (Grid, Sphere, Helix, Table)",
@@ -31,7 +30,6 @@
       "thumbnail": "thumbnails/matrix-cards.png",
       "tags": ["React", "Cards", "UI Components", "Cyberpunk"],
       "tech": ["React", "CSS Modules", "Three.js (planned)"],
-      "status": "active",
       "devJournal": "projects/dev-journals/matrix-cards.md",
       "features": [
         "Matrix & Neon Glass card styles",
@@ -51,7 +49,6 @@
       "thumbnail": "thumbnails/sleak-card.png",
       "tags": ["React", "Cards", "UI Components", "Animations"],
       "tech": ["React 19", "CSS Modules", "Water Effects"],
-      "status": "active",
       "devJournal": "projects/dev-journals/sleak-card.md",
       "features": [
         "7 color variants + glow effects",
@@ -72,7 +69,6 @@
       "thumbnail": "thumbnails/ggprompts-main.png",
       "tags": ["React", "Full-Stack", "Real-time", "Database"],
       "tech": ["React", "Vite", "Supabase", "PostgreSQL", "TanStack Query"],
-      "status": "active",
       "devJournal": "projects/dev-journals/ggprompts-main.md",
       "features": [
         "Real-time collaboration",
@@ -93,7 +89,6 @@
       "thumbnail": "thumbnails/ggprompts-style-guide.png",
       "tags": ["Design System", "Documentation", "React", "Components"],
       "tech": ["React", "Vite", "CSS Modules", "TypeScript"],
-      "status": "active",
       "devJournal": "projects/dev-journals/ggprompts-style-guide.md",
       "features": [
         "Component library with live examples",
@@ -114,7 +109,6 @@
       "thumbnail": "thumbnails/3d-file-system.png",
       "tags": ["3D", "File System", "Terminal", "Interactive", "Next.js"],
       "tech": ["Next.js 14", "React Three Fiber", "TypeScript", "Three.js", "Zustand", "React Spring"],
-      "status": "active",
       "devJournal": "projects/dev-journals/3d-file-system.md",
       "features": [
         "Expandable terminal sidebar (3-state: 48px → 256px → 816px)",
@@ -141,7 +135,6 @@
       "thumbnail": "thumbnails/ggprompts-professional.png",
       "tags": ["React", "Full-Stack", "Authentication", "Database", "Kanban"],
       "tech": ["React 19", "TypeScript", "Vite", "Supabase", "Tailwind CSS"],
-      "status": "active",
       "devJournal": "projects/dev-journals/ggprompts-professional.md",
       "features": [
         "Professional UI with dual theme support",

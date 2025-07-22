@@ -37,6 +37,7 @@ exports.ProjectItem = exports.ProjectProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
+const http = __importStar(require("http"));
 class ProjectProvider {
     constructor(portfolioPath) {
         this.portfolioPath = portfolioPath;
@@ -46,8 +47,9 @@ class ProjectProvider {
         this.loadProjects();
     }
     refresh() {
-        this.loadProjects();
-        this._onDidChangeTreeData.fire();
+        this.loadProjects().then(() => {
+            this._onDidChangeTreeData.fire();
+        });
     }
     getTreeItem(element) {
         return element;
@@ -62,13 +64,55 @@ class ProjectProvider {
     async getProjects() {
         return this.projects;
     }
-    loadProjects() {
+    async loadProjects() {
         const manifestPath = path.join(this.portfolioPath, 'projects', 'manifest.json');
         if (fs.existsSync(manifestPath)) {
             const manifestContent = fs.readFileSync(manifestPath, 'utf8');
             const manifest = JSON.parse(manifestContent);
             this.projects = manifest.projects || [];
+            // Check status for each project
+            await this.updateProjectStatuses();
         }
+    }
+    async updateProjectStatuses() {
+        const statusPromises = this.projects.map(async (project) => {
+            if (project.localPort) {
+                try {
+                    const isRunning = await this.checkPortStatus(project.localPort);
+                    project.status = isRunning ? 'active' : 'inactive';
+                }
+                catch (error) {
+                    project.status = 'inactive';
+                }
+            }
+            else {
+                project.status = 'inactive';
+            }
+            return project;
+        });
+        await Promise.all(statusPromises);
+    }
+    checkPortStatus(port) {
+        return new Promise((resolve) => {
+            const req = http.request({
+                hostname: 'localhost',
+                port: port,
+                path: '/',
+                method: 'GET',
+                timeout: 1000
+            }, (res) => {
+                // Only resolve true for successful HTTP status codes
+                resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+            });
+            req.on('error', () => {
+                resolve(false);
+            });
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+            });
+            req.end();
+        });
     }
 }
 exports.ProjectProvider = ProjectProvider;

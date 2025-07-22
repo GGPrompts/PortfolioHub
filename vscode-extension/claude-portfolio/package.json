@@ -79,12 +79,6 @@
     "views": {
       "claude-portfolio": [
         {
-          "id": "claude-portfolio.main",
-          "name": "Portfolio Dashboard",
-          "type": "webview",
-          "contextualTitle": "Portfolio Dashboard"
-        },
-        {
           "id": "claudeProjects",
           "name": "Projects",
           "contextualTitle": "Claude Projects"
@@ -104,7 +98,7 @@
     "viewsWelcome": [
       {
         "view": "claudeProjects",
-        "contents": "Welcome to Claude Portfolio!\n\n[Open Portfolio Dashboard](command:claude-portfolio.showDashboard)\n\n[Refresh Projects](command:claude-portfolio.refreshProjects)"
+        "contents": "Welcome to Claude Portfolio!\n\n[🚀 Open Full Portfolio](command:claude-portfolio.openPortfolio)\n\n[Refresh Projects](command:claude-portfolio.refreshProjects)"
       }
     ],
     "webviewOptions": {
@@ -114,7 +108,7 @@
       "view/title": [
         {
           "command": "claude-portfolio.openPortfolio",
-          "when": "view == claude-portfolio.main",
+          "when": "view == claudeProjects",
           "group": "navigation"
         },
         {

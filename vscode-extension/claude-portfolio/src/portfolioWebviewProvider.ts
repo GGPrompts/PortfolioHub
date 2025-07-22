@@ -192,54 +192,106 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _launchAllProjects(): Promise<void> {
-        const projectData = this._loadProjectData();
-        const projects = projectData.projects || [];
-        
-        // Launch portfolio first
-        const portfolioTerminal = vscode.window.createTerminal('Portfolio');
-        portfolioTerminal.sendText(`cd "${this._portfolioPath}"`);
-        portfolioTerminal.sendText('$env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"; $env:BROWSER = "none"');
-        portfolioTerminal.sendText('npm run dev');
-        
-        // Launch each project in its own terminal
-        for (const project of projects) {
-            await this._launchProject(project);
-            // Small delay to avoid overwhelming the system
-            await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const projectData = this._loadProjectData();
+            const projects = projectData.projects || [];
+            
+            this._showNotification(`Starting ${projects.length + 1} projects...`);
+            
+            // Launch portfolio first
+            const portfolioTerminal = vscode.window.createTerminal('Portfolio');
+            portfolioTerminal.sendText(`cd "${this._portfolioPath}"`);
+            portfolioTerminal.sendText('$env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"; $env:BROWSER = "none"');
+            portfolioTerminal.sendText('npm run dev');
+            
+            // Launch each project in its own terminal
+            let successCount = 0;
+            for (const project of projects) {
+                try {
+                    await this._launchProject(project);
+                    successCount++;
+                    // Small delay to avoid overwhelming the system
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Failed to launch project ${project.id}:`, error);
+                    this._showNotification(`Failed to launch ${project.title}: ${error}`, 'error');
+                }
+            }
+            
+            // Show portfolio terminal
+            portfolioTerminal.show();
+            this._showNotification(`✅ Successfully launched ${successCount + 1} of ${projects.length + 1} projects!`);
+        } catch (error) {
+            this._showNotification(`❌ Failed to launch projects: ${error}`, 'error');
         }
-        
-        // Show portfolio terminal
-        portfolioTerminal.show();
-        this._showNotification(`Launched ${projects.length + 1} projects in VS Code terminals!`);
     }
 
     private async _launchSelectedProjects(projectIds: string[]): Promise<void> {
-        const projectData = this._loadProjectData();
-        const projects = (projectData.projects || []).filter((p: any) => projectIds.includes(p.id));
-        
-        for (const project of projects) {
-            await this._launchProject(project);
-            await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const projectData = this._loadProjectData();
+            const projects = (projectData.projects || []).filter((p: any) => projectIds.includes(p.id));
+            
+            if (projects.length === 0) {
+                this._showNotification('❌ No projects found to launch', 'warning');
+                return;
+            }
+            
+            this._showNotification(`Starting ${projects.length} selected projects...`);
+            
+            let successCount = 0;
+            for (const project of projects) {
+                try {
+                    await this._launchProject(project);
+                    successCount++;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Failed to launch project ${project.id}:`, error);
+                    this._showNotification(`Failed to launch ${project.title}: ${error}`, 'error');
+                }
+            }
+            
+            this._showNotification(`✅ Successfully launched ${successCount} of ${projects.length} selected projects!`);
+        } catch (error) {
+            this._showNotification(`❌ Failed to launch selected projects: ${error}`, 'error');
         }
-        
-        this._showNotification(`Launched ${projects.length} selected projects in VS Code terminals!`);
     }
 
     private async _launchProject(project: any): Promise<void> {
         const projectPath = path.join(this._portfolioPath, 'projects', project.path || project.id);
+        
+        // Check if project directory exists
+        if (!fs.existsSync(projectPath)) {
+            throw new Error(`Project directory not found: ${projectPath}`);
+        }
+        
         const terminal = vscode.window.createTerminal(project.title || project.id);
         
+        // Change to project directory
         terminal.sendText(`cd "${projectPath}"`);
         
-        // Set environment variables
-        if (project.localPort) {
-            terminal.sendText(`$env:PORT = "${project.localPort}"`);
+        // Check if package.json exists (for npm projects)
+        const packageJsonPath = path.join(projectPath, 'package.json');
+        const hasPackageJson = fs.existsSync(packageJsonPath);
+        
+        if (hasPackageJson) {
+            // Set environment variables for Node.js projects
+            if (project.localPort) {
+                terminal.sendText(`$env:PORT = "${project.localPort}"`);
+            }
+            terminal.sendText('$env:BROWSER = "none"; $env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"');
+            
+            // Check if node_modules exists
+            const nodeModulesPath = path.join(projectPath, 'node_modules');
+            if (!fs.existsSync(nodeModulesPath)) {
+                terminal.sendText('Write-Host "Installing dependencies..." -ForegroundColor Yellow');
+                terminal.sendText('npm install');
+            }
         }
-        terminal.sendText('$env:BROWSER = "none"; $env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"');
         
         // Run the build command
         const command = project.buildCommand || 'npm run dev';
-        terminal.sendText(`Write-Host '${project.title} running at http://localhost:${project.localPort}' -ForegroundColor Green`);
+        const portText = project.localPort ? ` at http://localhost:${project.localPort}` : '';
+        terminal.sendText(`Write-Host 'Starting ${project.title}${portText}' -ForegroundColor Green`);
         terminal.sendText(command);
     }
 
@@ -261,12 +313,33 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         // Get the local path to portfolio assets
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
         
-        // Get URIs for the CSS and JS files
-        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-gcHwfFpK.css'));
-        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-DV13vJNQ.js'));
-
         // Load project data from manifest
         const projectData = this._loadProjectData();
+
+        // Read the actual index.html file and parse asset names
+        let htmlContent = '';
+        let cssUri: string = '';
+        let jsUri: string = '';
+        
+        try {
+            const indexHtmlPath = vscode.Uri.joinPath(portfolioPath, 'index.html');
+            const htmlBuffer = fs.readFileSync(indexHtmlPath.fsPath);
+            htmlContent = htmlBuffer.toString();
+            
+            // Extract asset filenames from HTML
+            const cssMatch = htmlContent.match(/href="\/assets\/(index-[^"]+\.css)"/);
+            const jsMatch = htmlContent.match(/src="\/assets\/(index-[^"]+\.js)"/);
+            
+            if (cssMatch && jsMatch) {
+                cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, cssMatch[1])).toString();
+                jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, jsMatch[1])).toString();
+            }
+        } catch (error) {
+            console.error('Failed to load portfolio HTML:', error);
+            // Fallback to hardcoded names
+            cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-gcHwfFpK.css')).toString();
+            jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-DV13vJNQ.js')).toString();
+        }
 
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
@@ -319,6 +392,17 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             // Main postMessage method for communication
             postMessage: (message) => {
                 vscode.postMessage(message);
+            },
+            
+            // Project management functions  
+            launchAllProjects: () => {
+                console.log('Launching all projects in VS Code terminals...');
+                vscode.postMessage({ type: 'projects:launchAll' });
+            },
+            
+            launchSelectedProjects: (projects) => {
+                console.log('Launching selected projects:', projects);
+                vscode.postMessage({ type: 'projects:launchSelected', projects });
             },
             
             // VS Code API wrappers

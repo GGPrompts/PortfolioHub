@@ -83,6 +83,12 @@ class PortfolioWebviewProvider {
                 case 'notification:show':
                     this._showNotification(message.text, message.level);
                     break;
+                case 'projects:launchAll':
+                    await this._launchAllProjects();
+                    break;
+                case 'projects:launchSelected':
+                    await this._launchSelectedProjects(message.projects);
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -184,6 +190,47 @@ class PortfolioWebviewProvider {
                 vscode.window.showInformationMessage(text);
         }
     }
+    async _launchAllProjects() {
+        const projectData = this._loadProjectData();
+        const projects = projectData.projects || [];
+        // Launch portfolio first
+        const portfolioTerminal = vscode.window.createTerminal('Portfolio');
+        portfolioTerminal.sendText(`cd "${this._portfolioPath}"`);
+        portfolioTerminal.sendText('$env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"; $env:BROWSER = "none"');
+        portfolioTerminal.sendText('npm run dev');
+        // Launch each project in its own terminal
+        for (const project of projects) {
+            await this._launchProject(project);
+            // Small delay to avoid overwhelming the system
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        // Show portfolio terminal
+        portfolioTerminal.show();
+        this._showNotification(`Launched ${projects.length + 1} projects in VS Code terminals!`);
+    }
+    async _launchSelectedProjects(projectIds) {
+        const projectData = this._loadProjectData();
+        const projects = (projectData.projects || []).filter((p) => projectIds.includes(p.id));
+        for (const project of projects) {
+            await this._launchProject(project);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        this._showNotification(`Launched ${projects.length} selected projects in VS Code terminals!`);
+    }
+    async _launchProject(project) {
+        const projectPath = path.join(this._portfolioPath, 'projects', project.path || project.id);
+        const terminal = vscode.window.createTerminal(project.title || project.id);
+        terminal.sendText(`cd "${projectPath}"`);
+        // Set environment variables
+        if (project.localPort) {
+            terminal.sendText(`$env:PORT = "${project.localPort}"`);
+        }
+        terminal.sendText('$env:BROWSER = "none"; $env:OPEN_BROWSER = "false"; $env:REACT_APP_OPEN_BROWSER = "false"');
+        // Run the build command
+        const command = project.buildCommand || 'npm run dev';
+        terminal.sendText(`Write-Host '${project.title} running at http://localhost:${project.localPort}' -ForegroundColor Green`);
+        terminal.sendText(command);
+    }
     _loadProjectData() {
         try {
             const manifestPath = path.join(this._portfolioPath, 'projects', 'manifest.json');
@@ -203,7 +250,7 @@ class PortfolioWebviewProvider {
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
         // Get URIs for the CSS and JS files
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-gcHwfFpK.css'));
-        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-D-2IQqQ1.js'));
+        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-DV13vJNQ.js'));
         // Load project data from manifest
         const projectData = this._loadProjectData();
         // Use a nonce to only allow specific scripts to be run
@@ -252,6 +299,11 @@ class PortfolioWebviewProvider {
             portfolioPath: '${this._portfolioPath.replace(/\\/g, '\\\\')}',
             isVSCodeWebview: true,
             projectData: ${JSON.stringify(projectData)},
+            
+            // Main postMessage method for communication
+            postMessage: (message) => {
+                vscode.postMessage(message);
+            },
             
             // VS Code API wrappers
             executeCommand: (command, name) => {

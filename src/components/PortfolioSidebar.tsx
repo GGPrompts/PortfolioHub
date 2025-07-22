@@ -7,7 +7,7 @@ import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
 import styles from './PortfolioSidebar.module.css'
-import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard } from '../utils/vsCodeIntegration'
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects } from '../utils/vsCodeIntegration'
 
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
@@ -1030,20 +1030,28 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               <button 
                 className={styles.actionBtn}
                 onClick={async () => {
-                  const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
-                  await executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
+                  if (isVSCodeEnvironment()) {
+                    await launchAllProjects()
+                  } else {
+                    const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
+                    await executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
+                  }
                 }}
-                title="Copy command to start all projects"
+                title={isVSCodeEnvironment() ? "Launch all projects in VS Code terminals" : "Copy command to start all projects"}
               >
                 <SvgIcon name="play" size={16} /> All
               </button>
               <button 
                 className={styles.actionBtn}
-                onClick={() => {
-                  copyScriptToClipboard(generateLaunchScript(Array.from(selectedProjects)), 'launch')
+                onClick={async () => {
+                  if (isVSCodeEnvironment()) {
+                    await launchSelectedProjects(Array.from(selectedProjects))
+                  } else {
+                    copyScriptToClipboard(generateLaunchScript(Array.from(selectedProjects)), 'launch')
+                  }
                 }}
                 disabled={selectedProjects.size === 0}
-                title="Copy command to start selected projects"
+                title={isVSCodeEnvironment() ? "Launch selected projects in VS Code terminals" : "Copy command to start selected projects"}
               >
                 <SvgIcon name="play" size={16} /> Selected ({selectedProjects.size})
               </button>

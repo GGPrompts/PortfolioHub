@@ -131,3 +131,32 @@ export const copyToClipboard = async (text: string): Promise<void> => {
     showNotification('Failed to copy to clipboard', 'warning');
   }
 };
+
+// Launch all projects in VS Code terminals
+export const launchAllProjects = async (): Promise<void> => {
+  if (isVSCodeEnvironment()) {
+    (window as any).vsCodePortfolio.postMessage({
+      type: 'projects:launchAll'
+    });
+  } else {
+    // Fallback to PowerShell script
+    const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1';
+    await copyToClipboard(command);
+    console.log('Launch all command copied to clipboard');
+  }
+};
+
+// Launch selected projects in VS Code terminals
+export const launchSelectedProjects = async (projectIds: string[]): Promise<void> => {
+  if (isVSCodeEnvironment()) {
+    (window as any).vsCodePortfolio.postMessage({
+      type: 'projects:launchSelected',
+      projects: projectIds
+    });
+  } else {
+    // Fallback - copy individual commands
+    const commands = projectIds.map(id => `# Launch ${id}`).join('\n');
+    await copyToClipboard(commands);
+    console.log('Launch selected commands copied to clipboard');
+  }
+};

@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { usePortfolioStore } from './store/portfolioStore'
+import { setPortCheckingEnabled } from './utils/portManager'
+
+// TypeScript declaration for VS Code integration
+declare global {
+  interface Window {
+    vsCodePortfolio?: {
+      projectData?: { projects: any[] }
+      isVSCodeWebview?: boolean
+      portfolioPath?: string
+      [key: string]: any
+    }
+  }
+}
 import PortfolioSidebar from './components/PortfolioSidebar'
 import { RightSidebar } from './components/RightSidebar'
 import ProjectGrid from './components/ProjectGrid'
@@ -27,10 +40,26 @@ export default function App() {
   const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
+  const [portCheckingDisabled, setPortCheckingDisabled] = useState(false)
 
   // Load projects from manifest
   useEffect(() => {
     console.log('Loading manifest...')
+    
+    // Check if running in VS Code webview with injected data
+    if (window.vsCodePortfolio?.projectData) {
+      console.log('Using VS Code injected data:', window.vsCodePortfolio.projectData)
+      const data = window.vsCodePortfolio.projectData
+      if (data.projects) {
+        setProjects(data.projects)
+        console.log('Projects set from VS Code:', data.projects.length)
+      } else {
+        console.error('No projects array in VS Code injected data')
+      }
+      return
+    }
+    
+    // Fallback to fetching manifest.json for web version
     fetch('/projects/manifest.json')
       .then(res => {
         console.log('Manifest response:', res.status)
@@ -48,6 +77,11 @@ export default function App() {
       })
       .catch(err => console.error('Failed to load projects:', err))
   }, [setProjects])
+
+  // Handle port checking toggle
+  useEffect(() => {
+    setPortCheckingEnabled(!portCheckingDisabled)
+  }, [portCheckingDisabled])
 
   // Handle window resize for responsive detection
   useEffect(() => {
@@ -224,6 +258,13 @@ export default function App() {
                     title="Refresh project status"
                   >
                     <SvgIcon name="refreshCw" size={16} />
+                  </button>
+                  <button 
+                    className={`refresh-icon-btn ${portCheckingDisabled ? 'disabled' : ''}`}
+                    onClick={() => setPortCheckingDisabled(!portCheckingDisabled)}
+                    title={portCheckingDisabled ? "Enable port checking" : "Disable port checking"}
+                  >
+                    <SvgIcon name={portCheckingDisabled ? "wifiOff" : "wifi"} size={16} />
                   </button>
                   {/* View Mode Toggle Buttons */}
                   <div className="view-mode-toggle">

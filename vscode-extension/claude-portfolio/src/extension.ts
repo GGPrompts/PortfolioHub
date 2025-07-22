@@ -3,6 +3,7 @@ import { ProjectProvider } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
 import { CommandsProvider } from './commandsProvider';
 import { CheatSheetProvider } from './cheatSheetProvider';
+import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -13,9 +14,15 @@ function getProjectPath(portfolioPath: string, project: any): string {
     }
     
     if (project.path) {
+        // Handle both relative and absolute project paths
         if (project.path.startsWith('projects/')) {
+            // Path already includes projects/ prefix
             return path.join(portfolioPath, project.path);
+        } else if (path.isAbsolute(project.path)) {
+            // Absolute path
+            return project.path;
         } else {
+            // Relative path without projects/ prefix
             return path.join(portfolioPath, 'projects', project.path);
         }
     } else if (project.id) {
@@ -38,11 +45,17 @@ export function activate(context: vscode.ExtensionContext) {
         const projectProvider = new ProjectProvider(portfolioPath);
         const commandsProvider = new CommandsProvider();
         const cheatSheetProvider = new CheatSheetProvider();
+        const portfolioWebviewProvider = new PortfolioWebviewProvider(context.extensionUri, portfolioPath);
 
         // Register tree data providers
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
         vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
         vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
+
+        // Register portfolio webview provider
+        context.subscriptions.push(
+            vscode.window.registerWebviewViewProvider(PortfolioWebviewProvider.viewType, portfolioWebviewProvider)
+        );
 
         // Register commands
         const openProjectCommand = vscode.commands.registerCommand('claude-portfolio.openProject', (treeItem) => {
@@ -69,6 +82,26 @@ export function activate(context: vscode.ExtensionContext) {
 
         const showDashboardCommand = vscode.commands.registerCommand('claude-portfolio.showDashboard', () => {
             DashboardPanel.createOrShow(context.extensionUri, portfolioPath);
+        });
+
+        const openPortfolioCommand = vscode.commands.registerCommand('claude-portfolio.openPortfolio', () => {
+            // Create a full-screen portfolio webview panel
+            const panel = vscode.window.createWebviewPanel(
+                'claudePortfolioFull',
+                'Claude Portfolio',
+                vscode.ViewColumn.One,
+                {
+                    enableScripts: true,
+                    retainContextWhenHidden: true,
+                    localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'portfolio-dist')]
+                }
+            );
+
+            // Use the same HTML generation logic
+            panel.webview.html = portfolioWebviewProvider._getHtmlForWebview(panel.webview);
+
+            // Set up the same message handling
+            portfolioWebviewProvider._setupMessageHandling(panel.webview);
         });
 
         const runProjectCommand = vscode.commands.registerCommand('claude-portfolio.runProject', async (treeItem) => {
@@ -136,7 +169,22 @@ export function activate(context: vscode.ExtensionContext) {
             projectProvider.refresh();
         });
 
-        // Quick pick palette for projects
+        // Copy cheat command to clipboard
+        const copyCheatCommand = vscode.commands.registerCommand('claude-portfolio.copyCheatCommand', async (command: string) => {
+            try {
+                await vscode.env.clipboard.writeText(command);
+                vscode.window.showInformationMessage(`Copied to clipboard: ${command}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to copy command: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        // Test command (keep for verification)
+        const testCommand = vscode.commands.registerCommand('claude-portfolio.test', () => {
+            vscode.window.showInformationMessage('Claude Portfolio extension is working!');
+        });
+
+        // Add missing quick open command to package.json
         const quickOpenCommand = vscode.commands.registerCommand('claude-portfolio.quickOpen', async () => {
             try {
                 const projects = await projectProvider.getProjects();
@@ -161,21 +209,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
-        // Copy cheat command to clipboard
-        const copyCheatCommand = vscode.commands.registerCommand('claude-portfolio.copyCheatCommand', async (command: string) => {
-            try {
-                await vscode.env.clipboard.writeText(command);
-                vscode.window.showInformationMessage(`Copied to clipboard: ${command}`);
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to copy command: ${error instanceof Error ? error.message : String(error)}`);
-            }
-        });
-
-        // Test command (keep for verification)
-        const testCommand = vscode.commands.registerCommand('claude-portfolio.test', () => {
-            vscode.window.showInformationMessage('Claude Portfolio extension is working!');
-        });
-
         // Status bar item
         const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
         statusBarItem.text = "$(folder-library) Claude Portfolio";
@@ -187,13 +220,14 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
             openProjectCommand,
             showDashboardCommand,
+            openPortfolioCommand,
             runProjectCommand,
             openInBrowserCommand,
             openInExternalBrowserCommand,
             refreshProjectsCommand,
-            quickOpenCommand,
             copyCheatCommand,
             testCommand,
+            quickOpenCommand,
             statusBarItem
         );
 

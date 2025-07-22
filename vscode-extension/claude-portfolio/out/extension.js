@@ -40,6 +40,7 @@ const projectProvider_1 = require("./projectProvider");
 const dashboardPanel_1 = require("./dashboardPanel");
 const commandsProvider_1 = require("./commandsProvider");
 const cheatSheetProvider_1 = require("./cheatSheetProvider");
+const portfolioWebviewProvider_1 = require("./portfolioWebviewProvider");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 // Helper function to get project path consistently
@@ -80,10 +81,13 @@ function activate(context) {
         const projectProvider = new projectProvider_1.ProjectProvider(portfolioPath);
         const commandsProvider = new commandsProvider_1.CommandsProvider();
         const cheatSheetProvider = new cheatSheetProvider_1.CheatSheetProvider();
+        const portfolioWebviewProvider = new portfolioWebviewProvider_1.PortfolioWebviewProvider(context.extensionUri, portfolioPath);
         // Register tree data providers
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
         vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
         vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
+        // Register portfolio webview provider
+        context.subscriptions.push(vscode.window.registerWebviewViewProvider(portfolioWebviewProvider_1.PortfolioWebviewProvider.viewType, portfolioWebviewProvider));
         // Register commands
         const openProjectCommand = vscode.commands.registerCommand('claude-portfolio.openProject', (treeItem) => {
             try {
@@ -106,6 +110,18 @@ function activate(context) {
         });
         const showDashboardCommand = vscode.commands.registerCommand('claude-portfolio.showDashboard', () => {
             dashboardPanel_1.DashboardPanel.createOrShow(context.extensionUri, portfolioPath);
+        });
+        const openPortfolioCommand = vscode.commands.registerCommand('claude-portfolio.openPortfolio', () => {
+            // Create a full-screen portfolio webview panel
+            const panel = vscode.window.createWebviewPanel('claudePortfolioFull', 'Claude Portfolio', vscode.ViewColumn.One, {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'portfolio-dist')]
+            });
+            // Use the same HTML generation logic
+            panel.webview.html = portfolioWebviewProvider._getHtmlForWebview(panel.webview);
+            // Set up the same message handling
+            portfolioWebviewProvider._setupMessageHandling(panel.webview);
         });
         const runProjectCommand = vscode.commands.registerCommand('claude-portfolio.runProject', async (treeItem) => {
             try {
@@ -214,7 +230,7 @@ function activate(context) {
         statusBarItem.command = 'claude-portfolio.showDashboard';
         statusBarItem.show();
         // Push all disposables
-        context.subscriptions.push(openProjectCommand, showDashboardCommand, runProjectCommand, openInBrowserCommand, openInExternalBrowserCommand, refreshProjectsCommand, copyCheatCommand, testCommand, quickOpenCommand, statusBarItem);
+        context.subscriptions.push(openProjectCommand, showDashboardCommand, openPortfolioCommand, runProjectCommand, openInBrowserCommand, openInExternalBrowserCommand, refreshProjectsCommand, copyCheatCommand, testCommand, quickOpenCommand, statusBarItem);
         console.log('Claude Portfolio extension fully activated!');
     }
     catch (error) {

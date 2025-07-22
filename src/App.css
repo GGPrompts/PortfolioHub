@@ -236,6 +236,18 @@ body {
   animation: spin 0.5s ease-in-out;
 }
 
+.refresh-icon-btn.disabled {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+}
+
+.refresh-icon-btn.disabled:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+}
+
 /* Eye toggle button - same styling as refresh but without spin animation */
 .eye-toggle-btn {
   background: rgba(0, 255, 136, 0.1);

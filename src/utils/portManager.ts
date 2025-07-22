@@ -24,8 +24,20 @@ export const DEFAULT_PORTS = {
 // Fallback ports if defaults are taken (excluding portfolio port 5173)
 const FALLBACK_PORTS = [3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177];
 
+// Global flag to disable port checking (can be set by user preference)
+export let portCheckingEnabled = true;
+
+export function setPortCheckingEnabled(enabled: boolean) {
+  portCheckingEnabled = enabled;
+}
+
 // Silent port checking to avoid console errors
 export async function checkPort(port: number): Promise<boolean> {
+  // Skip port checking if disabled
+  if (!portCheckingEnabled) {
+    return false;
+  }
+  
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1000);

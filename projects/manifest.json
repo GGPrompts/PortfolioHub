@@ -7,7 +7,8 @@
       "displayType": "external",
       "localPort": 3005,
       "buildCommand": "npm start",
-      "path": "3d-matrix-cards",
+      "path": "../Projects/3d-matrix-cards-updated",
+      "requires3D": true,
       "thumbnail": "thumbnails/3d-matrix-cards.png",
       "tags": [
         "3D",
@@ -36,7 +37,7 @@
       "displayType": "external",
       "localPort": 3002,
       "buildCommand": "npm start",
-      "path": "matrix-cards",
+      "path": "../Projects/matrix-cards-react",
       "thumbnail": "thumbnails/matrix-cards.png",
       "tags": [
         "React",
@@ -64,7 +65,7 @@
       "displayType": "external",
       "localPort": 3000,
       "buildCommand": "npm start",
-      "path": "sleak-card",
+      "path": "../Projects/sleak-card-updated",
       "thumbnail": "thumbnails/sleak-card.png",
       "tags": [
         "React",
@@ -93,7 +94,7 @@
       "displayType": "external",
       "localPort": 9323,
       "buildCommand": "npm run dev",
-      "path": "ggprompts",
+      "path": "../Projects/ggprompts",
       "repository": "https://github.com/GGPrompts/ggprompts",
       "thumbnail": "thumbnails/ggprompts.png",
       "tags": [
@@ -125,6 +126,7 @@
       "displayType": "external",
       "localPort": 3001,
       "buildCommand": "npm run dev",
+      "path": "../Projects/ggprompts-style-guide",
       "repository": "https://github.com/GGPrompts/ggprompts-style-guide",
       "thumbnail": "thumbnails/ggprompts-style-guide.png",
       "tags": [
@@ -155,7 +157,9 @@
       "displayType": "external",
       "localPort": 3004,
       "buildCommand": "npm run dev",
+      "path": "../Projects/3d-file-system",
       "repository": "https://github.com/GGPrompts/3d-file-system",
+      "requires3D": true,
       "thumbnail": "thumbnails/3d-file-system.png",
       "tags": [
         "3D",
@@ -193,7 +197,7 @@
       "displayType": "external",
       "localPort": 3006,
       "buildCommand": "npm run dev",
-      "path": "ggprompts-professional",
+      "path": "../Projects/ggprompts-professional",
       "repository": "https://github.com/GGPrompts/ggprompts-professional",
       "thumbnail": "thumbnails/ggprompts-professional.png",
       "tags": [
@@ -231,7 +235,7 @@
       ],
       "thumbnail": "thumbnails/testproject.png",
       "description": "React test app 2d",
-      "path": "testproject",
+      "path": "../Projects/testproject",
       "tech": [
         "React",
         "Vite",

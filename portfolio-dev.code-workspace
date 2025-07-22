@@ -5,44 +5,36 @@
 			"path": "D:\\ClaudeWindows\\claude-dev-portfolio"
 		},
 		{
-			"name": "Projects",
-			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\projects"
-		},
-		{
-			"name": "Scripts",
-			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\scripts"
-		},
-		{
 			"name": "3D Matrix Cards",
-			"path": "projects/3d-matrix-cards"
+			"path": "D:\\ClaudeWindows\\Projects\\3d-matrix-cards-updated"
 		},
 		{
-			"name": "GGPrompts Professional",
-			"path": "projects/ggprompts-professional"
+			"name": "Matrix Cards React",
+			"path": "D:\\ClaudeWindows\\Projects\\matrix-cards-react"
 		},
 		{
-			"name": "3D File System Viewer",
-			"path": "projects/3d-file-system"
-		},
-		{
-			"name": "GGPrompts Style Guide",
-			"path": "projects/ggprompts-style-guide"
+			"name": "Sleak Card Updated",
+			"path": "D:\\ClaudeWindows\\Projects\\sleak-card-updated"
 		},
 		{
 			"name": "GGPrompts",
-			"path": "projects/ggprompts"
+			"path": "D:\\ClaudeWindows\\Projects\\ggprompts"
 		},
 		{
-			"name": "Sleak Card Component",
-			"path": "projects/sleak-card"
+			"name": "GGPrompts Style Guide",
+			"path": "D:\\ClaudeWindows\\Projects\\ggprompts-style-guide"
 		},
 		{
-			"name": "Testproject",
-			"path": "projects/testproject"
+			"name": "3D File System",
+			"path": "D:\\ClaudeWindows\\Projects\\3d-file-system"
 		},
 		{
-			"name": "Matrix Cards",
-			"path": "projects/matrix-cards"
+			"name": "GGPrompts Professional",
+			"path": "D:\\ClaudeWindows\\Projects\\ggprompts-professional"
+		},
+		{
+			"name": "Test Project",
+			"path": "D:\\ClaudeWindows\\Projects\\testproject"
 		}
 	],
 	"settings": {
@@ -50,8 +42,11 @@
 		"terminal.integrated.cwd": "D:\\ClaudeWindows\\claude-dev-portfolio",
 		"files.autoSave": "afterDelay",
 		"editor.fontSize": 14,
+		"editor.fontFamily": "Consolas, 'Courier New', monospace",
 		"editor.tabSize": 2,
 		"editor.insertSpaces": true,
+		"editor.formatOnSave": true,
+		"editor.wordWrap": "on",
 		"files.exclude": {
 			"**/node_modules": true,
 			"**/dist": true,
@@ -69,6 +64,13 @@
 			"source.fixAll.eslint": "explicit"
 		},
 		"workbench.startupEditor": "none",
+		"workbench.editor.restoreViewState": false,
+		"workbench.editor.enablePreview": false,
+		"workbench.editor.closeOnFileDelete": true,
+		"window.restoreWindows": "one",
+		"window.restoreFullscreen": false,
+		"workbench.editor.restoreViewState": false,
+		"files.hotExit": "off",
 		"explorer.confirmDelete": false,
 		"git.enableSmartCommit": true,
 		"git.confirmSync": false,
@@ -95,7 +97,15 @@
 		// Explorer Settings
 		"explorer.openEditors.visible": 1,
 		"explorer.decorations.badges": true,
-		"explorer.decorations.colors": true
+		"explorer.decorations.colors": true,
+		
+		// Claude Portfolio Settings
+		"claude-portfolio.autoOpen": true,
+		"claude-portfolio.startPortfolioServer": true,
+		
+		// UI & Theme Settings
+		"workbench.colorTheme": "Default Dark Modern",
+		"terminal.integrated.cursorBlinking": false
 	},
 	"extensions": {
 		"recommendations": [

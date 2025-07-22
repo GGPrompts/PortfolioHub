@@ -163,7 +163,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "3D Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/projects/3d-matrix-cards").Path
+        Path = (Resolve-Path "$rootPath/../Projects/3d-matrix-cards-updated").Path
         Port = 3005
         EnvVars = @{
             PORT = "3005"
@@ -172,7 +172,7 @@ $projects = @{
         Command = "npm start"
     }
     "Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/projects/matrix-cards").Path
+        Path = (Resolve-Path "$rootPath/../Projects/matrix-cards-react").Path
         Port = 3002
         EnvVars = @{
             PORT = "3002"
@@ -182,7 +182,7 @@ $projects = @{
         Command = "npm start"
     }
     "Sleak Card" = @{
-        Path = (Resolve-Path "$rootPath/projects/sleak-card").Path
+        Path = (Resolve-Path "$rootPath/../Projects/sleak-card-updated").Path
         Port = 3003
         EnvVars = @{
             PORT = "3003"
@@ -192,7 +192,7 @@ $projects = @{
         Command = "npm start"
     }
     "GGPrompts" = @{
-        Path = (Resolve-Path "$rootPath/projects/ggprompts").Path
+        Path = (Resolve-Path "$rootPath/../Projects/ggprompts").Path
         Port = 9323
         EnvVars = @{
             BROWSER = "none"
@@ -201,7 +201,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "GGPrompts Style Guide" = @{
-        Path = (Resolve-Path "$rootPath/projects/ggprompts-style-guide").Path
+        Path = (Resolve-Path "$rootPath/../Projects/ggprompts-style-guide").Path
         Port = 3001
         EnvVars = @{
             BROWSER = "none"
@@ -210,7 +210,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "3D File System" = @{
-        Path = (Resolve-Path "$rootPath/projects/3d-file-system").Path
+        Path = (Resolve-Path "$rootPath/../Projects/3d-file-system").Path
         Port = 3004
         EnvVars = @{
             PORT = "3004"

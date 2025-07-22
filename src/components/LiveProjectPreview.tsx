@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
-import { executeCommand, openInBrowser, openInExternalBrowser, openInVSCode, showNotification, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import { executeCommand, openInBrowser, openInExternalBrowser, openInVSCode, showNotification, isVSCodeEnvironment, openLivePreview } from '../utils/vsCodeIntegration'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -59,6 +59,36 @@ export default function LiveProjectPreview({
   // Use global view mode if provided, otherwise use local view mode
   const viewMode = globalViewMode || localViewMode
 
+  // Helper function to get correct project path
+  const getProjectPath = (): string => {
+    if (isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath) {
+      // In VS Code, use proper path resolution
+      const portfolioPath = window.vsCodePortfolio.portfolioPath
+      if (project.path) {
+        if (project.path.startsWith('../Projects/')) {
+          // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name
+          return project.path.replace('../', portfolioPath.replace('claude-dev-portfolio', ''))
+        } else if (project.path.startsWith('projects/')) {
+          // Legacy structure: projects/project-name
+          return `${portfolioPath}\\${project.path}`
+        } else {
+          // Other relative paths
+          return `${portfolioPath}\\${project.path}`
+        }
+      } else {
+        // Fallback to project ID
+        return `${portfolioPath}\\projects\\${project.id}`
+      }
+    } else {
+      // Web fallback - construct based on project path
+      if (project.path && project.path.startsWith('../Projects/')) {
+        return `D:\\ClaudeWindows\\${project.path.replace('../', '')}`
+      } else {
+        return `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      }
+    }
+  }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,10 +105,7 @@ export default function LiveProjectPreview({
 
   // Helper functions for project actions
   const handleRunProject = async () => {
-    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
-      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
-      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
-      
+    const projectPath = getProjectPath()
     const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
     await executeCommand(command, `Run ${project.title}`)
     showNotification(`Starting ${project.title}...`, 'info')
@@ -120,9 +147,7 @@ export default function LiveProjectPreview({
   const handleViewInIDE = () => {
     // In VS Code environment, add project to workspace
     if (isVSCodeEnvironment()) {
-      const projectPath = window.vsCodePortfolio?.portfolioPath 
-        ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
-        : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      const projectPath = getProjectPath()
       
       // Use the VS Code API to add project to workspace
       if (window.vsCodePortfolio?.addProjectToWorkspace) {
@@ -138,15 +163,12 @@ export default function LiveProjectPreview({
       }
     } else {
       // Fallback to original behavior for web version
-      const projectPath = `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
       onProjectClick(project)
     }
   }
 
   const handleAIAssistant = async (assistant: 'claude' | 'gemini' | 'copilot') => {
-    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
-      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
-      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+    const projectPath = getProjectPath()
 
     if (isVSCodeEnvironment()) {
       // In VS Code, open terminal and run the appropriate command
@@ -473,8 +495,8 @@ export default function LiveProjectPreview({
               position: 'relative'
             }}>
               {isVSCodeEnvironment() ? (
-                // VS Code fallback UI - no iframe due to CSP restrictions
-                <div className={styles.vsCodePreviewFallback} style={{
+                // VS Code Live Preview UI
+                <div className={styles.vsCodeLivePreview} style={{
                   width: '100%',
                   height: '100%',
                   display: 'flex',
@@ -484,30 +506,55 @@ export default function LiveProjectPreview({
                   backgroundColor: '#1e1e1e',
                   color: '#cccccc',
                   textAlign: 'center',
-                  padding: '20px'
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '2px dashed #0e639c'
                 }}>
-                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🖼️</div>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#e7e7e7' }}>Live Preview Not Available in VS Code</h3>
-                  <p style={{ margin: '0 0 20px 0', opacity: 0.8 }}>Due to security restrictions, live previews cannot be displayed in VS Code webviews</p>
-                  <button
-                    onClick={() => openInBrowser(previewUrl)}
-                    style={{
-                      backgroundColor: '#0e639c',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <SvgIcon name="externalLink" size={16} />
-                    Open in Browser
-                  </button>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#e7e7e7' }}>Launch Live Preview</h3>
+                  <p style={{ margin: '0 0 20px 0', opacity: 0.8 }}>Open {project.title} in VS Code Live Preview panel</p>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <button
+                      onClick={() => openLivePreview(previewUrl, project.title, project.id)}
+                      style={{
+                        backgroundColor: '#0e639c',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <SvgIcon name="monitor" size={16} />
+                      Open Live Preview
+                    </button>
+                    <button
+                      onClick={() => openInBrowser(previewUrl)}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: '#cccccc',
+                        border: '1px solid #555',
+                        padding: '12px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <SvgIcon name="externalLink" size={16} />
+                      Simple Browser
+                    </button>
+                  </div>
+                  <p style={{ margin: '20px 0 0 0', opacity: 0.6, fontSize: '12px' }}>
+                    Live Preview opens in a separate VS Code panel with full functionality
+                  </p>
                 </div>
               ) : (
                 // Regular iframe for web mode

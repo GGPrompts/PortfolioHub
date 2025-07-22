@@ -49,7 +49,8 @@
       "Bash(npm run:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git worktree:*)"
+      "Bash(git worktree:*)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

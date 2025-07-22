@@ -9,9 +9,88 @@
 
 ## Essential Development Guidelines
 
+### ⚠️ **SECURITY & PERFORMANCE REQUIREMENTS**
+
+**🛡️ ALL COMMANDS MUST BE SECURE - NEVER bypass these protections:**
+
+#### Command Execution Security
+```typescript
+// ✅ SECURE: Always use SecureCommandRunner
+import { VSCodeSecurityService } from './securityService';
+
+// For VS Code extension commands
+const success = await VSCodeSecurityService.executeSecureCommand(
+    command, 
+    'Terminal Name', 
+    workspaceRoot
+);
+
+// For React app commands  
+import { SecureCommandRunner } from '../services/securityService';
+if (SecureCommandRunner.validateCommand(command)) {
+    // Safe to execute
+} else {
+    // Block dangerous command
+    console.error('Command blocked:', command);
+}
+
+// ❌ NEVER DO: Direct terminal.sendText() without validation
+terminal.sendText(userInput); // DANGEROUS!
+```
+
+#### Memory Leak Prevention
+```typescript
+// ✅ SECURE: Always cleanup intervals
+useEffect(() => {
+    const interval = setInterval(checkStatus, 5000);
+    return () => clearInterval(interval); // CRITICAL!
+}, []);
+
+// ✅ SECURE: Use React Query for data fetching
+const { data, isLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: fetchProjects,
+    staleTime: 30000, // 30s cache
+});
+
+// ❌ NEVER DO: Intervals without cleanup
+useEffect(() => {
+    setInterval(checkStatus, 5000); // MEMORY LEAK!
+}, []);
+```
+
+#### Path Validation Requirements
+```typescript
+// ✅ SECURE: Always validate paths
+const sanitizedPath = SecureCommandRunner.sanitizePath(
+    userPath, 
+    workspaceRoot
+);
+
+// ❌ NEVER DO: Direct path usage
+cd "${userProvidedPath}"; // PATH TRAVERSAL RISK!
+```
+
+#### 🚨 **QUICK SECURITY CHECKLIST**
+Before adding any new command execution:
+
+- [ ] **Command Validation**: Using `SecureCommandRunner.validateCommand()`?
+- [ ] **Path Sanitization**: Using `SecureCommandRunner.sanitizePath()`?
+- [ ] **Workspace Trust**: VS Code commands check `requireWorkspaceTrust()`?
+- [ ] **Interval Cleanup**: All `setInterval` have `clearInterval` in cleanup?
+- [ ] **React Query**: Using for data fetching instead of manual polling?
+- [ ] **No Direct terminal.sendText()**: All commands go through security layer?
+
+#### 📚 **Security Services Available**
+- `src/services/securityService.ts` - React app security
+- `vscode-extension/claude-portfolio/src/securityService.ts` - VS Code extension security  
+- `src/hooks/useProjectData.ts` - React Query data management
+- `src/utils/optimizedPortManager.ts` - Cached port checking
+
 ### Current Status
 This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with a clean, professional interface and comprehensive development tools.
 
+**Security Status**: ✅ **HARDENED** - All command injection vulnerabilities fixed
 **Portfolio Status**: ✅ **VS Code Extension Integration COMPLETED** - See [COMPLETED_FEATURES.md](COMPLETED_FEATURES.md) for details
 **Architecture**: Dual-React system (web + VS Code extension) - See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
 
@@ -183,6 +262,26 @@ When adding new projects to `manifest.json`:
 ```
 
 ## Troubleshooting
+
+### ⚠️ Security Issues
+**Problem**: Command blocked by security validation
+**Solution**:
+- Check if command is in `ALLOWED_COMMANDS` list in `securityService.ts`
+- Verify command doesn't contain dangerous patterns (`;`, `|`, `..`, etc.)
+- For npm commands, ensure script name is in `ALLOWED_NPM_SCRIPTS`
+- For PowerShell scripts, ensure they're in `scripts/` directory and end with `.ps1`
+
+**Problem**: VS Code workspace trust required
+**Solution**:
+- Trust the workspace using VS Code's trust dialog
+- All command execution requires trusted workspace for security
+- Commands will be blocked in untrusted workspaces
+
+**Problem**: Memory leaks or performance issues
+**Solution**:
+- Check for intervals without cleanup: `useEffect(() => { setInterval(...); return () => clearInterval(...); })`
+- Use React Query instead of manual polling: `const { data } = useQuery(...)`
+- Check `optimizedPortManager.getCacheStats()` for cache performance
 
 ### Common Issues
 1. **Port Conflicts**: Use `netstat -ano | findstr :PORT` to check port usage

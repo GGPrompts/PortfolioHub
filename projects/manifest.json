@@ -226,33 +226,6 @@
         "Real-time notifications system",
         "Client-side filtering and infinite scroll"
       ]
-    },
-    {
-      "tags": [
-        "React",
-        "TypeScript",
-        "New"
-      ],
-      "thumbnail": "thumbnails/testproject.png",
-      "description": "React test app 2d",
-      "path": "../Projects/testproject",
-      "tech": [
-        "React",
-        "Vite",
-        "TypeScript"
-      ],
-      "devJournal": "projects/dev-journals/testproject.md",
-      "title": "Testproject",
-      "id": "testproject",
-      "displayType": "external",
-      "features": [
-        "React 18 with TypeScript",
-        "Portfolio integration",
-        "Modern development setup"
-      ],
-      "localPort": 3009,
-      "status": "active",
-      "buildCommand": "npm run dev"
     }
   ]
 }

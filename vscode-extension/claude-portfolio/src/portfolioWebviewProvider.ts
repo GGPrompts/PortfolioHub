@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { VSCodeSecurityService } from './securityService';
 
 export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'claude-portfolio.main';
@@ -165,14 +166,29 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _updateGitRepo(projectPath: string): Promise<void> {
-        const fullPath = path.isAbsolute(projectPath) 
-            ? projectPath 
-            : path.join(this._portfolioPath, projectPath);
+        try {
+            const fullPath = path.isAbsolute(projectPath) 
+                ? projectPath 
+                : path.join(this._portfolioPath, projectPath);
 
-        const terminal = vscode.window.createTerminal('Git Update');
-        terminal.sendText(`cd "${fullPath}"`);
-        terminal.sendText('git pull');
-        terminal.show();
+            // Use secure project command execution with broader workspace root
+            const workspaceRoot = path.join(this._portfolioPath, '..');  // D:\ClaudeWindows
+            const success = await VSCodeSecurityService.executeProjectCommand(
+                fullPath,
+                'git pull',
+                'Git Update',
+                workspaceRoot
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage(`Git pull completed for ${path.basename(fullPath)}`);
+            } else {
+                vscode.window.showErrorMessage(`Failed to execute git pull for ${path.basename(fullPath)}`);
+            }
+        } catch (error) {
+            console.error('Git update failed:', error);
+            vscode.window.showErrorMessage(`Git update failed: ${error}`);
+        }
     }
 
     private async _openInVSCode(projectPath: string): Promise<void> {

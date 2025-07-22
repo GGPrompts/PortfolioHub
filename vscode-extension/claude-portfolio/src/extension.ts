@@ -5,32 +5,54 @@ import { CommandsProvider } from './commandsProvider';
 import { CheatSheetProvider } from './cheatSheetProvider';
 import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
 import { PortfolioTaskProvider } from './taskProvider';
+import { VSCodeSecurityService } from './securityService';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Helper function to get project path consistently
+// Helper function to get project path consistently - WITH SECURITY VALIDATION
 function getProjectPath(portfolioPath: string, project: any): string {
     if (!project) {
         throw new Error('Project is null or undefined');
     }
     
+    const workspaceRoot = path.join(portfolioPath, '..');  // D:\ClaudeWindows
+    let projectPath: string;
+    
     if (project.path) {
-        // Handle both relative and absolute project paths
-        if (project.path.startsWith('projects/')) {
-            // Path already includes projects/ prefix
-            return path.join(portfolioPath, project.path);
-        } else if (path.isAbsolute(project.path)) {
+        // Handle different project path formats
+        if (path.isAbsolute(project.path)) {
             // Absolute path
-            return project.path;
+            projectPath = project.path;
+        } else if (project.path.startsWith('projects/')) {
+            // Legacy path format: projects/project-name
+            projectPath = path.join(portfolioPath, project.path);
+        } else if (project.path.startsWith('../Projects/')) {
+            // New optimized structure: ../Projects/project-name
+            projectPath = path.resolve(portfolioPath, project.path);
         } else {
-            // Relative path without projects/ prefix
-            return path.join(portfolioPath, 'projects', project.path);
+            // Other relative paths - resolve from portfolio root
+            projectPath = path.resolve(portfolioPath, project.path);
         }
     } else if (project.id) {
-        // Fallback to using the project ID as folder name
-        return path.join(portfolioPath, 'projects', project.id);
+        // Fallback to using the project ID as folder name in legacy location
+        projectPath = path.join(portfolioPath, 'projects', project.id);
     } else {
         throw new Error(`Project has neither path nor id: ${JSON.stringify(project)}`);
+    }
+    
+    // SECURITY: Validate the resolved path is within allowed workspace
+    try {
+        const normalized = path.normalize(projectPath);
+        const resolved = path.resolve(normalized);
+        const workspaceAbsolute = path.resolve(workspaceRoot);
+        
+        if (!resolved.startsWith(workspaceAbsolute)) {
+            throw new Error(`Project path traversal detected: ${project.path || project.id} resolves outside workspace`);
+        }
+        
+        return resolved;
+    } catch (error) {
+        throw new Error(`Project path validation failed for ${project.id}: ${error}`);
     }
 }
 
@@ -142,18 +164,20 @@ export function activate(context: vscode.ExtensionContext) {
                 const projectPath = getProjectPath(portfolioPath, project);
                 
                 // Create a new terminal
-                const terminal = vscode.window.createTerminal({
-                    name: `Run ${project.title}`,
-                    cwd: projectPath
-                });
+                // Run the appropriate command based on project - securely
+                const command = project.buildCommand || 'npm run dev';
+                // Use broader workspace root to allow external projects
+                const workspaceRoot = path.join(portfolioPath, '..');  // D:\ClaudeWindows
+                const success = await VSCodeSecurityService.executeProjectCommand(
+                    projectPath,
+                    command,
+                    `Run ${project.title}`,
+                    workspaceRoot
+                );
                 
-                terminal.show();
-                
-                // Run the appropriate command based on project
-                if (project.buildCommand) {
-                    terminal.sendText(project.buildCommand);
-                } else {
-                    terminal.sendText('npm run dev');
+                if (!success) {
+                    vscode.window.showErrorMessage(`Failed to execute secure command for ${project.title}`);
+                    return;
                 }
                 
                 vscode.window.showInformationMessage(`Starting ${project.title} on port ${project.localPort}`);
@@ -320,106 +344,146 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem.show();
 
         // Development Commands
-        const buildReactCommand = vscode.commands.registerCommand('claude-portfolio.buildReact', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Build React App',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('npm run build');
-            vscode.window.showInformationMessage('Building React app...');
+        const buildReactCommand = vscode.commands.registerCommand('claude-portfolio.buildReact', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run build',
+                'Build React App',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Building React app...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute build command');
+            }
         });
 
-        const startDevCommand = vscode.commands.registerCommand('claude-portfolio.startDev', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Portfolio Dev Server',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('npm run dev');
-            vscode.window.showInformationMessage('Starting portfolio dev server...');
+        const startDevCommand = vscode.commands.registerCommand('claude-portfolio.startDev', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run dev',
+                'Portfolio Dev Server',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Starting portfolio dev server...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute dev server command');
+            }
         });
 
-        const npmInstallCommand = vscode.commands.registerCommand('claude-portfolio.npmInstall', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'NPM Install',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('npm install');
-            vscode.window.showInformationMessage('Installing dependencies...');
+        const npmInstallCommand = vscode.commands.registerCommand('claude-portfolio.npmInstall', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm install',
+                'NPM Install',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Installing dependencies...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute npm install command');
+            }
         });
 
-        const killAllServersCommand = vscode.commands.registerCommand('claude-portfolio.killAllServers', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Kill All Servers',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('.\\scripts\\kill-all-servers.ps1');
-            vscode.window.showInformationMessage('Killing all dev servers...');
+        const killAllServersCommand = vscode.commands.registerCommand('claude-portfolio.killAllServers', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                '.\\scripts\\kill-all-servers.ps1',
+                'Kill All Servers',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Killing all dev servers...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute kill all command');
+            }
         });
 
-        const startAllProjectsCommand = vscode.commands.registerCommand('claude-portfolio.startAllProjects', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Start All Projects',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('.\\scripts\\start-all-enhanced.ps1');
-            vscode.window.showInformationMessage('Starting all projects...');
+        const startAllProjectsCommand = vscode.commands.registerCommand('claude-portfolio.startAllProjects', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                '.\\scripts\\start-all-enhanced.ps1',
+                'Start All Projects',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Starting all projects...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute start all command');
+            }
         });
 
         // Extension Commands
-        const reinstallExtensionCommand = vscode.commands.registerCommand('claude-portfolio.reinstallExtension', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Reinstall Extension',
-                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
-            });
-            terminal.show();
-            terminal.sendText('npm run compile && npx vsce package && code --install-extension .\\claude-portfolio-0.0.1.vsix --force');
-            vscode.window.showInformationMessage('Rebuilding and reinstalling extension...');
+        const reinstallExtensionCommand = vscode.commands.registerCommand('claude-portfolio.reinstallExtension', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run compile && npx vsce package && code --install-extension .\\claude-portfolio-0.0.1.vsix --force',
+                'Reinstall Extension',
+                path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Rebuilding and reinstalling extension...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute extension reinstall command');
+            }
         });
 
-        const buildExtensionCommand = vscode.commands.registerCommand('claude-portfolio.buildExtension', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Build Extension',
-                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
-            });
-            terminal.show();
-            terminal.sendText('npm run compile');
-            vscode.window.showInformationMessage('Compiling extension TypeScript...');
+        const buildExtensionCommand = vscode.commands.registerCommand('claude-portfolio.buildExtension', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run compile',
+                'Build Extension',
+                path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Compiling extension TypeScript...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute extension build command');
+            }
         });
 
-        const packageExtensionCommand = vscode.commands.registerCommand('claude-portfolio.packageExtension', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Package Extension',
-                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
-            });
-            terminal.show();
-            terminal.sendText('npx vsce package');
-            vscode.window.showInformationMessage('Creating VSIX package...');
+        const packageExtensionCommand = vscode.commands.registerCommand('claude-portfolio.packageExtension', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npx vsce package',
+                'Package Extension',
+                path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Creating VSIX package...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute extension package command');
+            }
         });
 
-        const watchExtensionCommand = vscode.commands.registerCommand('claude-portfolio.watchExtension', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Watch Extension',
-                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
-            });
-            terminal.show();
-            terminal.sendText('npm run watch');
-            vscode.window.showInformationMessage('Watching extension for changes...');
+        const watchExtensionCommand = vscode.commands.registerCommand('claude-portfolio.watchExtension', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run watch',
+                'Watch Extension',
+                path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Watching extension for changes...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute extension watch command');
+            }
         });
 
         // AI Assistant Commands
-        const openClaudeCommand = vscode.commands.registerCommand('claude-portfolio.openClaude', () => {
-            const terminal = vscode.window.createTerminal({
-                name: 'Claude',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('claude');
-            vscode.window.showInformationMessage('Starting Claude Code...');
+        const openClaudeCommand = vscode.commands.registerCommand('claude-portfolio.openClaude', async () => {
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'claude',
+                'Claude',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Starting Claude Code...');
+            } else {
+                vscode.window.showErrorMessage('Failed to execute Claude command');
+            }
         });
 
         // AI Assistant Dropdown Command
@@ -465,21 +529,38 @@ export function activate(context: vscode.ExtensionContext) {
                             cwd: projectPath
                         });
                         terminal.show();
-                        terminal.sendText(`echo "GitHub Copilot Chat: Press Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open"`);
-                        terminal.sendText(`echo "Project: ${project.title}"`);
-                        terminal.sendText(`echo "Path: ${projectPath}"`);
+                        // Use secure echo commands
+                        const commands = [
+                            `echo "GitHub Copilot Chat: Press Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open"`,
+                            `echo "Project: ${project.title}"`,
+                            `echo "Path: ${projectPath}"`
+                        ];
+                        
+                        for (const cmd of commands) {
+                            if (VSCodeSecurityService.validateCommand(cmd)) {
+                                terminal.sendText(cmd);
+                            } else {
+                                console.warn(`Copilot echo command blocked: ${cmd}`);
+                            }
+                        }
                         
                         vscode.window.showInformationMessage('Use Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open GitHub Copilot Chat');
                     } else {
-                        // For Claude and Gemini, run the command
-                        const terminal = vscode.window.createTerminal({
-                            name: `${selected.value === 'claude' ? 'Claude' : 'Gemini'} - ${project.title}`,
-                            cwd: projectPath
-                        });
-                        terminal.show();
-                        terminal.sendText(`cd "${projectPath}" && ${selected.value}`);
+                        // For Claude and Gemini, run the command securely
+                        // Use broader workspace root to allow external projects
+                        const workspaceRoot = path.join(portfolioPath, '..');  // D:\ClaudeWindows
+                        const success = await VSCodeSecurityService.executeProjectCommand(
+                            projectPath, 
+                            selected.value, 
+                            `${selected.value === 'claude' ? 'Claude' : 'Gemini'} - ${project.title}`,
+                            workspaceRoot
+                        );
                         
-                        vscode.window.showInformationMessage(`Starting ${selected.value === 'claude' ? 'Claude Code' : 'Gemini CLI'} for ${project.title}...`);
+                        if (success) {
+                            vscode.window.showInformationMessage(`Starting ${selected.value === 'claude' ? 'Claude Code' : 'Gemini CLI'} for ${project.title}...`);
+                        } else {
+                            vscode.window.showErrorMessage(`Failed to execute secure command for ${project.title}`);
+                        }
                     }
                 }
             } catch (error) {

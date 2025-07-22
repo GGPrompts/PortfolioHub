@@ -31,6 +31,9 @@ class ProjectLauncher {
     
     // Start checking project status
     this.startStatusCheck()
+    
+    // Setup cleanup on page unload
+    ProjectLauncher.setupCleanup()
   }
 
   private saveStatus() {
@@ -155,6 +158,16 @@ class ProjectLauncher {
   cleanup() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval)
+      this.checkInterval = null
+    }
+  }
+
+  // Add beforeunload cleanup
+  private static setupCleanup() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        ProjectLauncher.getInstance().cleanup()
+      })
     }
   }
 }

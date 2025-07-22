@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { VSCodeSecurityService } from './securityService';
 
 export class PortfolioTaskProvider implements vscode.TaskProvider {
     static taskType = 'portfolio';
@@ -275,9 +276,35 @@ export class PortfolioTaskProvider implements vscode.TaskProvider {
         env: { [key: string]: string } = {},
         group?: vscode.TaskGroup
     ): vscode.Task {
+        // SECURITY: Validate command before creating task
+        if (!VSCodeSecurityService.validateCommand(command)) {
+            throw new Error(`Task command blocked by security validation: ${command}`);
+        }
+
+        // SECURITY: Validate and sanitize working directory path
+        const workspaceRoot = path.join(this.portfolioPath, '..');  // D:\ClaudeWindows
+        let sanitizedCwd: string;
+        try {
+            // Use synchronous path validation since tasks are created synchronously
+            const normalized = path.normalize(cwd);
+            const resolved = path.resolve(workspaceRoot, normalized);
+            const workspaceAbsolute = path.resolve(workspaceRoot);
+            
+            if (!resolved.startsWith(workspaceAbsolute)) {
+                throw new Error(`Task path traversal detected: ${cwd} resolves outside workspace`);
+            }
+            sanitizedCwd = resolved;
+        } catch (error) {
+            throw new Error(`Task path validation failed: ${error}`);
+        }
+
         const execution = new vscode.ShellExecution(command, {
-            cwd,
-            env: { ...process.env, ...env }
+            cwd: sanitizedCwd,
+            env: Object.fromEntries(
+                Object.entries({ ...process.env, ...env })
+                    .filter(([, value]) => value !== undefined)
+                    .map(([key, value]) => [key, String(value)])
+            )
         });
         
         const task = new vscode.Task(

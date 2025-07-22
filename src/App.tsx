@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { usePortfolioStore } from './store/portfolioStore'
+import { useProjectData } from './hooks/useProjectData'
 import { setPortCheckingEnabled } from './utils/portManager'
 
 // TypeScript declaration for VS Code integration
@@ -25,8 +27,31 @@ import ThreeDEye from './components/ThreeDEye'
 import { getRunningProjects, getProjectPort } from './utils/portManager'
 import './App.css'
 
-export default function App() {
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000, // 30 seconds
+      refetchInterval: 60000, // 1 minute background refresh
+      retry: 1, // Only retry once on failure
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+    },
+  },
+})
+
+function PortfolioApp() {
   const { projects, setProjects, selectedProject, selectProject, sidebarState } = usePortfolioStore()
+  
+  // Use React Query for project data management
+  const { 
+    projects: queryProjects, 
+    projectStatus,
+    isLoading: isLoadingProjects,
+    refreshProjectData,
+    getProjectStatus,
+    getRunningProjects
+  } = useProjectData()
+  
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [showGrid, setShowGrid] = useState(true)
@@ -34,8 +59,6 @@ export default function App() {
   const [isNarrowScreen, setIsNarrowScreen] = useState(window.innerWidth <= 1400)
   const [refreshKey, setRefreshKey] = useState(0)
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<string | null>(null)
-  const [runningStatus, setRunningStatus] = useState<{ [key: string]: boolean }>({})
-  const [projectPorts, setProjectPorts] = useState<{ [key: string]: number | null }>({})
   const [sidebarWidth, setSidebarWidth] = useState(0)
   const [rightSidebarWidth, setRightSidebarWidth] = useState(0)
   const [globalViewMode, setGlobalViewMode] = useState<'mobile' | 'desktop'>('desktop')
@@ -43,72 +66,13 @@ export default function App() {
   const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
   const [portCheckingDisabled, setPortCheckingDisabled] = useState(false)
 
-  // Load projects from manifest
-  const loadProjectData = useCallback(() => {
-    console.log('Loading manifest...')
-    
-    // Check if running in VS Code webview with injected data
-    if (window.vsCodePortfolio?.projectData) {
-      const data = window.vsCodePortfolio.projectData
-      const updateTime = new Date(window.vsCodePortfolio.lastUpdated || 0).toLocaleTimeString()
-      console.log('🔄 Using VS Code injected data (updated at:', updateTime, '):', data)
-      
-      if (data.projects) {
-        const statusSummary = data.projects.map((p: any) => `${p.id}: ${p.status || 'no-status'}`).join(', ')
-        console.log('📊 VS Code Project statuses:', statusSummary)
-        setProjects(data.projects)
-        console.log('✅ Projects set from VS Code:', data.projects.length, 'projects')
-      } else {
-        console.error('❌ No projects array in VS Code injected data')
-      }
-      return
-    }
-    
-    // Fallback to fetching manifest.json for web version
-    fetch('/projects/manifest.json')
-      .then(res => {
-        console.log('Manifest response:', res.status)
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-        return res.json()
-      })
-      .then(data => {
-        console.log('Manifest data:', data)
-        if (data.projects) {
-          setProjects(data.projects)
-          console.log('Projects set:', data.projects.length)
-        } else {
-          console.error('No projects array in manifest')
-        }
-      })
-      .catch(err => console.error('Failed to load projects:', err))
-  }, [setProjects])
-
+  // Sync React Query projects with portfolio store
   useEffect(() => {
-    loadProjectData()
-    
-    // In VS Code webview, listen for project data updates
-    if (window.vsCodePortfolio?.isVSCodeWebview) {
-      let lastDataHash = '';
-      
-      const checkForDataUpdates = () => {
-        const currentData = window.vsCodePortfolio?.projectData
-        if (currentData?.projects) {
-          // Create a simple hash of the project statuses
-          const statusHash = currentData.projects.map((p: any) => `${p.id}:${p.status}`).join('|')
-          
-          if (lastDataHash && statusHash !== lastDataHash) {
-            console.log('VS Code project status changed, reloading...', statusHash)
-            loadProjectData()
-          }
-          lastDataHash = statusHash
-        }
-      }
-      
-      // Check for updates every 3 seconds
-      const updateInterval = setInterval(checkForDataUpdates, 3000)
-      return () => clearInterval(updateInterval)
+    if (queryProjects.length > 0) {
+      setProjects(queryProjects)
+      console.log(`📦 Synced ${queryProjects.length} projects from React Query to store`)
     }
-  }, [loadProjectData, projects.length])
+  }, [queryProjects, setProjects])
 
   // Handle port checking toggle
   useEffect(() => {
@@ -138,49 +102,6 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isDropdownOpen])
 
-  // Check running status for projects
-  useEffect(() => {
-    const checkRunningStatus = async () => {
-      const newRunningStatus: { [key: string]: boolean } = {}
-      const newPortStatus: { [key: string]: number | null } = {}
-      
-      // Use VS Code project data when available
-      if (window.vsCodePortfolio?.isVSCodeWebview && window.vsCodePortfolio.projectData?.projects) {
-        const vsCodeProjects = window.vsCodePortfolio.projectData.projects
-        for (const project of projects) {
-          if (project.displayType === 'external') {
-            const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-            newRunningStatus[project.id] = vsCodeProject?.status === 'active' || false
-            newPortStatus[project.id] = vsCodeProject?.localPort || project.localPort || null
-          }
-        }
-      } else {
-        // Use traditional port checking for web version
-        const running = await getRunningProjects()
-        for (const project of projects) {
-          if (project.displayType === 'external') {
-            const isRunning = running.has(project.id)
-            const port = await getProjectPort(project)
-            newRunningStatus[project.id] = isRunning
-            newPortStatus[project.id] = port
-          }
-        }
-      }
-      
-      setRunningStatus(newRunningStatus)
-      setProjectPorts(newPortStatus)
-    }
-    
-    if (projects.length > 0) {
-      checkRunningStatus()
-      
-      // Don't use interval polling in VS Code webview - rely on injected data
-      if (!window.vsCodePortfolio?.isVSCodeWebview) {
-        const interval = setInterval(checkRunningStatus, 5000)
-        return () => clearInterval(interval)
-      }
-    }
-  }, [projects])
   
   // Core project display logic
   const showProject = useCallback(async (project: any) => {
@@ -397,5 +318,14 @@ export default function App() {
         />
       )}
     </div>
+  )
+}
+
+// Export App with React Query provider
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PortfolioApp />
+    </QueryClientProvider>
   )
 }

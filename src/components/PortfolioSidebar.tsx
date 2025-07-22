@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useSpring, animated } from '@react-spring/web'
 import { usePortfolioStore } from '../store/portfolioStore'
-import { checkPort } from '../utils/portManager'
+import { useProjectData } from '../hooks/useProjectData'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
 import styles from './PortfolioSidebar.module.css'
-import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects } from '../utils/vsCodeIntegration'
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects, launchProjectsEnhanced, executeScript } from '../utils/vsCodeIntegration'
 
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
@@ -47,11 +47,19 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     collapseAllProjects
   } = usePortfolioStore()
   
+  // Use React Query for project data management
+  const { 
+    projectStatus, 
+    isLoadingStatus,
+    refreshProjectStatus,
+    getProjectStatus,
+    runningProjectsCount,
+    totalProjects
+  } = useProjectData()
 
   
   const [journalContent, setJournalContent] = useState<string>('')
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
-  const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
   const [searchQuery, setSearchQuery] = useState('')
   const [journalMode, setJournalMode] = useState<'full-width' | 'with-projects'>('with-projects')
   
@@ -75,35 +83,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const [showNotesList, setShowNotesList] = useState(true)
   const [toSortNotes, setToSortNotes] = useState<any[]>([])
   
-  // Refresh function for status updates
-  const refreshProjectStatus = async () => {
-    const newStatuses = new Map<string, boolean>()
-    
-    // Check if we're in VS Code webview and use injected data
-    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.projectData) {
-      const vsCodeProjects = (window as any).vsCodePortfolio.projectData.projects || []
-      
-      for (const project of projects) {
-        const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-        const isRunning = vsCodeProject?.status === 'active' || false
-        newStatuses.set(project.id, isRunning)
-      }
-    } else {
-      // Fallback to web-based port checking
-      await Promise.all(
-        projects.map(async (project) => {
-          if (project.localPort) {
-            const isRunning = await checkPort(project.localPort)
-            newStatuses.set(project.id, isRunning)
-          } else {
-            newStatuses.set(project.id, false)
-          }
-        })
-      )
-    }
-    
-    setProjectStatuses(newStatuses)
-  }
   
   // Project wizard state
   const [showProjectWizard, setShowProjectWizard] = useState(false)
@@ -240,48 +219,6 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   
 
 
-  // Check project statuses - use VS Code data if available, fallback to port checking
-  useEffect(() => {
-    const checkStatuses = async () => {
-      const statuses = new Map<string, boolean>()
-      
-      // Check if we're in VS Code webview and use injected data
-      if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.projectData) {
-        const vsCodeProjects = (window as any).vsCodePortfolio.projectData.projects || []
-        
-        // Map VS Code project data to sidebar status
-        for (const project of projects) {
-          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-          const isRunning = vsCodeProject?.status === 'active' || false
-          statuses.set(project.id, isRunning)
-        }
-      } else {
-        // Fallback to port checking for web browser
-        await Promise.all(
-          projects.map(async (project) => {
-            if (project.localPort) {
-              const isRunning = await checkPort(project.localPort)
-              statuses.set(project.id, isRunning)
-            } else {
-              statuses.set(project.id, false)
-            }
-          })
-        )
-      }
-      
-      setProjectStatuses(statuses)
-    }
-
-    // Initial status check
-    checkStatuses()
-    
-    // Set up refresh interval
-    const interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
-    
-    return () => {
-      clearInterval(interval)
-    }
-  }, [projects])
   
   // Helper functions for DEV NOTES system
   const handleSaveToToSort = async () => {
@@ -649,6 +586,36 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     setSelectedProjects(new Set())
   }
 
+  // Helper function to get correct project path for scripts
+  const getProjectPath = (project: any): string => {
+    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath) {
+      // In VS Code, use proper path resolution
+      const portfolioPath = (window as any).vsCodePortfolio.portfolioPath
+      if (project.path) {
+        if (project.path.startsWith('../Projects/')) {
+          // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name
+          return project.path.replace('../', portfolioPath.replace('claude-dev-portfolio', ''))
+        } else if (project.path.startsWith('projects/')) {
+          // Legacy structure: projects/project-name
+          return `${portfolioPath}\\${project.path}`
+        } else {
+          // Other relative paths
+          return `${portfolioPath}\\${project.path}`
+        }
+      } else {
+        // Fallback to project ID
+        return `${portfolioPath}\\projects\\${project.id}`
+      }
+    } else {
+      // Web fallback - construct based on project path
+      if (project.path && project.path.startsWith('../Projects/')) {
+        return `D:\\ClaudeWindows\\${project.path.replace('../', '')}`
+      } else {
+        return `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      }
+    }
+  }
+
   const generateLaunchScript = (selectedProjectIds: string[]) => {
     if (selectedProjectIds.length === 0) return ''
     
@@ -658,8 +625,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     script += `# Portfolio\nStart-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd 'D:\\ClaudeWindows\\claude-dev-portfolio'; npm run dev" -WindowStyle Normal\n\n`
     
     selectedProjectsList.forEach(project => {
+      const projectPath = getProjectPath(project)
       script += `# ${project.title}\n`
-      script += `Start-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd 'D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}'; npm run dev" -WindowStyle Normal\n\n`
+      script += `Start-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd '${projectPath}'; ${project.buildCommand || 'npm run dev'}" -WindowStyle Normal\n\n`
     })
     
     return script
@@ -770,7 +738,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
           <div className={styles.statusHeader}>
             <div className={styles.statusInfo}>
               <span className={styles.statusText}>
-                {Object.values(projectStatuses).filter(Boolean).length} / {projects.length} projects running
+                {runningProjectsCount} / {totalProjects} projects running
               </span>
               <span className={styles.lastUpdated}>
                 Last updated: {new Date().toLocaleTimeString()}
@@ -814,7 +782,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
           {/* Project List with Collapsible Dropdowns - Separated by Status */}
           <div className={styles.projectList}>
             {/* Online Projects Section */}
-            {filteredProjects.some(p => projectStatuses.get(p.id) || false) && (
+            {filteredProjects.some(p => getProjectStatus(p.id)) && (
               <>
                 <div className={styles.statusSectionHeader} onClick={() => setOnlineSectionCollapsed(!onlineSectionCollapsed)}>
                   <button className={`${styles.sectionCollapseToggle} ${onlineSectionCollapsed ? styles.collapsed : ''}`}>
@@ -823,11 +791,11 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                   <span className={styles.statusIndicator}>🟢</span>
                   <span className={styles.statusLabel}>ONLINE</span>
                   <span className={styles.projectCount}>
-                    ({filteredProjects.filter(p => projectStatuses.get(p.id) || false).length})
+                    ({filteredProjects.filter(p => getProjectStatus(p.id)).length})
                   </span>
                 </div>
-                {!onlineSectionCollapsed && filteredProjects.filter(p => projectStatuses.get(p.id) || false).map(project => {
-                  const isRunning = projectStatuses.get(project.id) || false
+                {!onlineSectionCollapsed && filteredProjects.filter(p => getProjectStatus(p.id)).map(project => {
+                  const isRunning = getProjectStatus(project.id)
                   const isExpanded = expandedProjects.has(project.id)
                   
                   return (
@@ -858,7 +826,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                           className={styles.projectTitle}
                           onClick={async (e) => {
                             e.stopPropagation()
-                            const isRunning = projectStatuses.get(project.id) || false
+                            const isRunning = getProjectStatus(project.id)
                             if (isRunning && project.localPort) {
                               // Open in new tab/browser if project is running
                               const url = `http://localhost:${project.localPort}`
@@ -974,7 +942,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
             )}
 
             {/* Offline Projects Section */}
-            {filteredProjects.some(p => !(projectStatuses.get(p.id) || false)) && (
+            {filteredProjects.some(p => !getProjectStatus(p.id)) && (
               <>
                 <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`} onClick={() => setOfflineSectionCollapsed(!offlineSectionCollapsed)}>
                   <button className={`${styles.sectionCollapseToggle} ${offlineSectionCollapsed ? styles.collapsed : ''}`}>
@@ -983,11 +951,11 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                   <span className={styles.statusIndicator}>🔴</span>
                   <span className={styles.statusLabel}>OFFLINE</span>
                   <span className={styles.projectCount}>
-                    ({filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).length})
+                    ({filteredProjects.filter(p => !getProjectStatus(p.id)).length})
                   </span>
                 </div>
-                {!offlineSectionCollapsed && filteredProjects.filter(p => !(projectStatuses.get(p.id) || false)).map(project => {
-                  const isRunning = projectStatuses.get(project.id) || false
+                {!offlineSectionCollapsed && filteredProjects.filter(p => !getProjectStatus(p.id)).map(project => {
+                  const isRunning = getProjectStatus(project.id)
                   const isExpanded = expandedProjects.has(project.id)
                   
                   return (
@@ -1018,7 +986,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                           className={styles.projectTitle}
                           onClick={async (e) => {
                             e.stopPropagation()
-                            const isRunning = projectStatuses.get(project.id) || false
+                            const isRunning = getProjectStatus(project.id)
                             if (isRunning && project.localPort) {
                               // Open in new tab/browser if project is running
                               const url = `http://localhost:${project.localPort}`
@@ -1161,6 +1129,19 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               >
                 <SvgIcon name="play" size={16} /> All
               </button>
+              
+              {/* Enhanced Script Button - Only show in VS Code */}
+              {isVSCodeEnvironment() && (
+                <button
+                  className={`${styles.actionBtn} ${styles.scriptBtn}`}
+                  onClick={async () => {
+                    await executeScript('scripts\\start-all-enhanced.ps1')
+                  }}
+                  title="Run the full enhanced PowerShell script with comprehensive port checking"
+                >
+                  <SvgIcon name="terminal" size={16} /> Script
+                </button>
+              )}
               <button 
                 className={styles.actionBtn}
                 onClick={async () => {
@@ -1175,6 +1156,34 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               >
                 <SvgIcon name="play" size={16} /> Selected ({selectedProjects.size})
               </button>
+              
+              {/* Enhanced Launch Button - Only show in VS Code */}
+              {isVSCodeEnvironment() && (
+                <button 
+                  className={`${styles.actionBtn} ${styles.enhancedBtn}`}
+                  onClick={async () => {
+                    await launchProjectsEnhanced(Array.from(selectedProjects), false)
+                  }}
+                  disabled={selectedProjects.size === 0}
+                  title="Launch selected projects with enhanced port checking and smart restart detection"
+                >
+                  <SvgIcon name="zap" size={16} /> Enhanced ({selectedProjects.size})
+                </button>
+              )}
+              
+              {/* Force Enhanced Launch Button - Only show in VS Code */}
+              {isVSCodeEnvironment() && (
+                <button 
+                  className={`${styles.actionBtn} ${styles.forceBtn}`}
+                  onClick={async () => {
+                    await launchProjectsEnhanced(Array.from(selectedProjects), true)
+                  }}
+                  disabled={selectedProjects.size === 0}
+                  title="Force restart all selected projects (stops existing servers first)"
+                >
+                  <SvgIcon name="rotateCcw" size={16} /> Force ({selectedProjects.size})
+                </button>
+              )}
             </div>
             
             {/* Kill Commands Group */}

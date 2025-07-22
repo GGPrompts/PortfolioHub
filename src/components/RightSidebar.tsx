@@ -27,6 +27,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
   const [activeTabs, setActiveTabs] = useState<string[]>([]);
   const [sidebarWidth, setSidebarWidth] = useState(800);
   const [isDragging, setIsDragging] = useState(false);
+  const [isOverlayMode, setIsOverlayMode] = useState(false);
   
   const sidebarRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef<number>(0);
@@ -38,11 +39,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
     return sum + (tab ? tab.width : 0);
   }, 0);
 
-  // Spring animation for sidebar
-  const sidebarSpring = useSpring({
+  // Enhanced spring animation for sidebar with overlay mode detection
+  // Use immediate updates during drag, spring animations when not dragging
+  const sharedSpring = useSpring({
     width: activeTabs.length > 0 ? sidebarWidth : 0,
-    config: { tension: 300, friction: 30 }
+    rightOffset: activeTabs.length > 0 ? sidebarWidth : 0,
+    config: { tension: 300, friction: 30, precision: 0.1 },
+    immediate: isDragging // Skip animation during drag for instant feedback
   });
+  
+  // Extract individual values for cleaner usage
+  const sidebarSpring = { width: sharedSpring.width };
+  const tabSpring = { rightOffset: sharedSpring.rightOffset };
+  
+  // Update overlay mode when width changes
+  React.useEffect(() => {
+    const newOverlayMode = sidebarWidth > 1200 && activeTabs.length > 0;
+    setIsOverlayMode(newOverlayMode);
+  }, [sidebarWidth, activeTabs]);
 
   // Toggle tab functionality - only one panel active at a time
   const toggleTab = (tabId: string) => {
@@ -66,10 +80,21 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
     return tabIndex * 50; // 50px spacing between tabs
   };
 
-  // Drag functionality - Fixed event handling order
+  // Enhanced drag functionality with overlay mode
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const deltaX = dragStartX.current - e.clientX; // Reversed for right sidebar
-    const newWidth = Math.max(300, Math.min(1200, startWidth.current + deltaX));
+    
+    // Calculate viewport width to determine maximum expansion
+    const viewportWidth = window.innerWidth;
+    const maxOverlayWidth = Math.min(viewportWidth - 100, 1800); // Leave 100px margin from left edge
+    
+    // Allow expansion up to near full width
+    const newWidth = Math.max(300, Math.min(maxOverlayWidth, startWidth.current + deltaX));
+    
+    // Update overlay mode state
+    const newOverlayMode = newWidth > 1200;
+    setIsOverlayMode(newOverlayMode);
+    
     setSidebarWidth(newWidth);
   }, []);
 
@@ -105,30 +130,30 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
 
   return (
     <div className={`${styles.rightSidebarContainer} ${className}`}>
-      {/* Tabs positioned on the right edge */}
+      {/* Tabs positioned on the right edge with synchronized animation */}
       {Object.values(tabs).map((tab, index) => {
         const isActive = activeTabs.includes(tab.id);
 
         return (
-          <div
+          <animated.div
             key={tab.id}
             className={`${styles.tab} ${isActive ? styles.activeTab : ''}`}
             style={{
-              right: isActive ? `${sidebarWidth}px` : '0px',
+              right: isActive ? (isDragging ? `${sidebarWidth}px` : tabSpring.rightOffset) : '0px',
               top: `${20 + (index * 50)}px`, // Vertical spacing: 20px base + 50px per tab
             }}
             onClick={() => toggleTab(tab.id)}
             title={tab.label} // Keep hover text
           >
             <SvgIcon name={tab.icon} className={styles.tabIcon} />
-          </div>
+          </animated.div>
         );
       })}
 
-      {/* Animated sidebar panel */}
+      {/* Animated sidebar panel with overlay mode class */}
       <animated.div
         ref={sidebarRef}
-        className={styles.sidebar}
+        className={`${styles.sidebar} ${isOverlayMode ? styles.overlayMode : ''}`}
         style={sidebarSpring}
       >
         {/* Drag handle */}
@@ -161,14 +186,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
             <div className={styles.previewPanel}>
               <div className={styles.panelHeader}>
                 <SvgIcon name="monitor" className={styles.headerIcon} />
-                <h3>Live Preview</h3>
+                <h3>Live Preview{isOverlayMode ? ' - Overlay Mode' : ''}</h3>
+                {isOverlayMode && (
+                  <div className={styles.overlayIndicator}>
+                    <SvgIcon name="maximize2" size={16} />
+                    <span>Full View</span>
+                  </div>
+                )}
               </div>
               <div className={styles.previewContent}>
                 <div className={styles.previewPlaceholder}>
                   <SvgIcon name="monitor" size={48} />
-                  <h4>Live Preview Panel</h4>
+                  <h4>{isOverlayMode ? 'Full-Width Live Preview' : 'Live Preview Panel'}</h4>
                   <p>Project previews will be embedded here when you click "Start Server" in the main portfolio view.</p>
-                  <p>This replaces the need for separate browser tabs!</p>
+                  {isOverlayMode ? (
+                    <p><strong>Overlay Mode Active:</strong> This panel is now covering the main content area for maximum preview space!</p>
+                  ) : (
+                    <p>This replaces the need for separate browser tabs! Drag the left edge to expand further.</p>
+                  )}
                 </div>
               </div>
             </div>

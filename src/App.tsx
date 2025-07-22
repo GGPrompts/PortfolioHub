@@ -262,9 +262,20 @@ export default function App() {
                   <button 
                     className={`refresh-icon-btn ${portCheckingDisabled ? 'disabled' : ''}`}
                     onClick={() => setPortCheckingDisabled(!portCheckingDisabled)}
-                    title={portCheckingDisabled ? "Enable port checking" : "Disable port checking"}
+                    title={
+                      window.vsCodePortfolio?.isVSCodeWebview 
+                        ? (portCheckingDisabled ? "Enable live previews" : "Disable live previews")
+                        : (portCheckingDisabled ? "Enable port checking" : "Disable port checking")
+                    }
                   >
-                    <SvgIcon name={portCheckingDisabled ? "wifiOff" : "wifi"} size={16} />
+                    <SvgIcon 
+                      name={
+                        window.vsCodePortfolio?.isVSCodeWebview 
+                          ? (portCheckingDisabled ? "eyeOff" : "eye")
+                          : (portCheckingDisabled ? "wifiOff" : "wifi")
+                      } 
+                      size={16} 
+                    />
                   </button>
                   {/* View Mode Toggle Buttons */}
                   <div className="view-mode-toggle">

@@ -86,8 +86,8 @@ function activate(context) {
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
         vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
         vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
-        // Register portfolio webview provider
-        context.subscriptions.push(vscode.window.registerWebviewViewProvider(portfolioWebviewProvider_1.PortfolioWebviewProvider.viewType, portfolioWebviewProvider));
+        // Keep the webview provider for full portfolio functionality
+        // (Not registering as sidebar view, only for full-screen use)
         // Register commands
         const openProjectCommand = vscode.commands.registerCommand('claude-portfolio.openProject', (treeItem) => {
             try {
@@ -226,8 +226,8 @@ function activate(context) {
         // Status bar item
         const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
         statusBarItem.text = "$(folder-library) Claude Portfolio";
-        statusBarItem.tooltip = "Open Claude Portfolio Dashboard";
-        statusBarItem.command = 'claude-portfolio.showDashboard';
+        statusBarItem.tooltip = "Open Full Claude Portfolio";
+        statusBarItem.command = 'claude-portfolio.openPortfolio';
         statusBarItem.show();
         // Push all disposables
         context.subscriptions.push(openProjectCommand, showDashboardCommand, openPortfolioCommand, runProjectCommand, openInBrowserCommand, openInExternalBrowserCommand, refreshProjectsCommand, copyCheatCommand, testCommand, quickOpenCommand, statusBarItem);

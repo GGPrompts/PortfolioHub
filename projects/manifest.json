@@ -9,8 +9,18 @@
       "buildCommand": "npm start",
       "path": "3d-matrix-cards",
       "thumbnail": "thumbnails/3d-matrix-cards.png",
-      "tags": ["3D", "Animation", "Interactive", "WebGL"],
-      "tech": ["Three.js", "JavaScript", "CSS", "Express"],
+      "tags": [
+        "3D",
+        "Animation",
+        "Interactive",
+        "WebGL"
+      ],
+      "tech": [
+        "Three.js",
+        "JavaScript",
+        "CSS",
+        "Express"
+      ],
       "devJournal": "projects/dev-journals/3d-matrix-cards.md",
       "features": [
         "Multiple 3D layouts (Grid, Sphere, Helix, Table)",
@@ -28,8 +38,17 @@
       "buildCommand": "npm start",
       "path": "matrix-cards",
       "thumbnail": "thumbnails/matrix-cards.png",
-      "tags": ["React", "Cards", "UI Components", "Cyberpunk"],
-      "tech": ["React", "CSS Modules", "Three.js (planned)"],
+      "tags": [
+        "React",
+        "Cards",
+        "UI Components",
+        "Cyberpunk"
+      ],
+      "tech": [
+        "React",
+        "CSS Modules",
+        "Three.js (planned)"
+      ],
       "devJournal": "projects/dev-journals/matrix-cards.md",
       "features": [
         "Matrix & Neon Glass card styles",
@@ -43,12 +62,21 @@
       "title": "Sleak Card Component",
       "description": "Modern React card system with water effects, flip animations, and multiple color variants. Mobile-optimized with playing card proportions.",
       "displayType": "external",
-      "localPort": 3003,
+      "localPort": 3000,
       "buildCommand": "npm start",
       "path": "sleak-card",
       "thumbnail": "thumbnails/sleak-card.png",
-      "tags": ["React", "Cards", "UI Components", "Animations"],
-      "tech": ["React 19", "CSS Modules", "Water Effects"],
+      "tags": [
+        "React",
+        "Cards",
+        "UI Components",
+        "Animations"
+      ],
+      "tech": [
+        "React 19",
+        "CSS Modules",
+        "Water Effects"
+      ],
       "devJournal": "projects/dev-journals/sleak-card.md",
       "features": [
         "7 color variants + glow effects",
@@ -68,8 +96,19 @@
       "path": "ggprompts",
       "repository": "https://github.com/GGPrompts/ggprompts",
       "thumbnail": "thumbnails/ggprompts.png",
-      "tags": ["React", "Full-Stack", "Real-time", "Database"],
-      "tech": ["React", "Vite", "Supabase", "PostgreSQL", "TanStack Query"],
+      "tags": [
+        "React",
+        "Full-Stack",
+        "Real-time",
+        "Database"
+      ],
+      "tech": [
+        "React",
+        "Vite",
+        "Supabase",
+        "PostgreSQL",
+        "TanStack Query"
+      ],
       "devJournal": "projects/dev-journals/ggprompts.md",
       "features": [
         "Real-time collaboration",
@@ -88,8 +127,18 @@
       "buildCommand": "npm run dev",
       "repository": "https://github.com/GGPrompts/ggprompts-style-guide",
       "thumbnail": "thumbnails/ggprompts-style-guide.png",
-      "tags": ["Design System", "Documentation", "React", "Components"],
-      "tech": ["React", "Vite", "CSS Modules", "TypeScript"],
+      "tags": [
+        "Design System",
+        "Documentation",
+        "React",
+        "Components"
+      ],
+      "tech": [
+        "React",
+        "Vite",
+        "CSS Modules",
+        "TypeScript"
+      ],
       "devJournal": "projects/dev-journals/ggprompts-style-guide.md",
       "features": [
         "Component library with live examples",
@@ -108,8 +157,21 @@
       "buildCommand": "npm run dev",
       "repository": "https://github.com/GGPrompts/3d-file-system",
       "thumbnail": "thumbnails/3d-file-system.png",
-      "tags": ["3D", "File System", "Terminal", "Interactive", "Next.js"],
-      "tech": ["Next.js 14", "React Three Fiber", "TypeScript", "Three.js", "Zustand", "React Spring"],
+      "tags": [
+        "3D",
+        "File System",
+        "Terminal",
+        "Interactive",
+        "Next.js"
+      ],
+      "tech": [
+        "Next.js 14",
+        "React Three Fiber",
+        "TypeScript",
+        "Three.js",
+        "Zustand",
+        "React Spring"
+      ],
       "devJournal": "projects/dev-journals/3d-file-system.md",
       "features": [
         "Expandable terminal sidebar (3-state: 48px → 256px → 816px)",
@@ -134,8 +196,20 @@
       "path": "ggprompts-professional",
       "repository": "https://github.com/GGPrompts/ggprompts-professional",
       "thumbnail": "thumbnails/ggprompts-professional.png",
-      "tags": ["React", "Full-Stack", "Authentication", "Database", "Kanban"],
-      "tech": ["React 19", "TypeScript", "Vite", "Supabase", "Tailwind CSS"],
+      "tags": [
+        "React",
+        "Full-Stack",
+        "Authentication",
+        "Database",
+        "Kanban"
+      ],
+      "tech": [
+        "React 19",
+        "TypeScript",
+        "Vite",
+        "Supabase",
+        "Tailwind CSS"
+      ],
       "devJournal": "projects/dev-journals/ggprompts-professional.md",
       "features": [
         "Professional UI with dual theme support",
@@ -148,6 +222,33 @@
         "Real-time notifications system",
         "Client-side filtering and infinite scroll"
       ]
+    },
+    {
+      "tags": [
+        "React",
+        "TypeScript",
+        "New"
+      ],
+      "thumbnail": "thumbnails/testproject.png",
+      "description": "React test app 2d",
+      "path": "testproject",
+      "tech": [
+        "React",
+        "Vite",
+        "TypeScript"
+      ],
+      "devJournal": "projects/dev-journals/testproject.md",
+      "title": "Testproject",
+      "id": "testproject",
+      "displayType": "external",
+      "features": [
+        "React 18 with TypeScript",
+        "Portfolio integration",
+        "Modern development setup"
+      ],
+      "localPort": 3009,
+      "status": "active",
+      "buildCommand": "npm run dev"
     }
   ]
 }

@@ -14,11 +14,13 @@ export const PORTFOLIO_PORT = 5173;
 export const DEFAULT_PORTS = {
   '3d-matrix-cards': 3005,
   'matrix-cards': 3002,
-  'sleak-card': 3003,
+  'sleak-card': 3000,
   'ggprompts': 9323,
   'ggprompts-style-guide': 3001,
   '3d-file-system': 3004,
-  'ggprompts-professional': 3006
+  'ggprompts-professional': 3006,
+  'testproject': 3009
+
 };
 
 // Fallback ports if defaults are taken (excluding portfolio port 5173)

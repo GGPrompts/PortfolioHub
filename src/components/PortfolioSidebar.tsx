@@ -47,6 +47,10 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     collapseAllProjects
   } = usePortfolioStore()
   
+  // Add mount debugging
+  console.log('🔷 SIDEBAR: Component mounted/rendered at', new Date().toLocaleTimeString())
+  console.log('🔷 SIDEBAR: Projects available:', projects.length, 'projects')
+  
   const [journalContent, setJournalContent] = useState<string>('')
   const [isLoadingJournal, setIsLoadingJournal] = useState(false)
   const [projectStatuses, setProjectStatuses] = useState<Map<string, boolean>>(new Map())
@@ -249,60 +253,217 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     }
   }, [sidebarState, selectedProject])
   
+  // Sidebar-specific logging utilities
+  const sidebarLog = {
+    info: (...args: any[]) => console.log('🔷 SIDEBAR:', ...args),
+    error: (...args: any[]) => console.error('🔷 SIDEBAR ERROR:', ...args),
+    debug: (...args: any[]) => console.log('🔷 SIDEBAR DEBUG:', ...args),
+    group: (title: string) => console.group('🔷 SIDEBAR: ' + title),
+    groupEnd: () => console.groupEnd()
+  }
+
   // Check project statuses - use VS Code data if available, fallback to port checking
   useEffect(() => {
-    console.log('🔧 Sidebar: Setting up status checking useEffect')
+    sidebarLog.info('Setting up status checking useEffect')
+    
+    // Debug VS Code context detection with retry mechanism
+    const checkVSCodeContext = () => {
+      const hasVSCode = typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview
+      sidebarLog.info('VS Code Context Debug:', {
+        windowExists: typeof window !== 'undefined',
+        vsCodePortfolioExists: !!(window as any).vsCodePortfolio,
+        isVSCodeWebview: hasVSCode,
+        projectData: !!(window as any).vsCodePortfolio?.projectData,
+        allKeys: (window as any).vsCodePortfolio ? Object.keys((window as any).vsCodePortfolio) : [],
+        dataTimestamp: (window as any).vsCodePortfolio?.lastUpdated
+      })
+      
+      // Log actual project statuses from VS Code data
+      const vsCodeProjects = (window as any).vsCodePortfolio?.projectData?.projects
+      if (vsCodeProjects) {
+        const statusSummary = vsCodeProjects.map((p: any) => `${p.id}: ${p.status} (port: ${p.actualPort || p.localPort})`).join(', ')
+        sidebarLog.info('🔍 ACTUAL VS Code Project Statuses:', statusSummary)
+      }
+      return hasVSCode
+    }
+    
     const checkStatuses = async () => {
       const statuses = new Map<string, boolean>()
       
       // Check if we're in VS Code webview and use injected data
-      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-        const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+      const isVSCode = checkVSCodeContext()
+      if (isVSCode) {
+        const vsCodeData = (window as any).vsCodePortfolio
+        const vsCodeProjects = vsCodeData.projectData?.projects || []
         
-        // Only log for ggprompts to reduce spam
+        // Debug VS Code data timestamp and freshness
+        const dataTimestamp = vsCodeData.lastUpdated
+        const dataAge = dataTimestamp ? Date.now() - dataTimestamp : 0
+        
+        sidebarLog.debug('VS Code Data Check:', {
+          projectCount: vsCodeProjects.length,
+          dataTimestamp: dataTimestamp ? new Date(dataTimestamp).toLocaleTimeString() : 'No timestamp',
+          currentTime: new Date().toLocaleTimeString(),
+          dataAge: dataTimestamp ? `${dataAge}ms ago` : 'Unknown age',
+          isDataFresh: dataAge < 30000 // Fresh if less than 30 seconds old
+        })
+        
+        // If data is too old (more than 30 seconds), wait briefly and retry
+        if (dataAge > 30000 && dataTimestamp > 0) {
+          sidebarLog.info('🔄 Data seems stale, waiting for VS Code refresh...')
+          setTimeout(checkStatuses, 2000) // Retry in 2 seconds
+          return
+        }
+        
+        // Log key project status for debugging
         const ggpromptsProject = vsCodeProjects.find((p: any) => p.id === 'ggprompts')
         if (ggpromptsProject) {
-          console.log('🟢 GGPROMPTS STATUS CHECK:', {
+          sidebarLog.info('🎯 GGPROMPTS STATUS:', {
             id: ggpromptsProject.id,
             status: ggpromptsProject.status,
             port: ggpromptsProject.localPort,
-            timestamp: new Date().toLocaleTimeString()
+            isActive: ggpromptsProject.status === 'active'
           })
+        } else {
+          sidebarLog.error('❌ GGPROMPTS NOT FOUND. Available:', vsCodeProjects.map((p: any) => `${p.id}:${p.status}`))
         }
         
+        // Map VS Code project data to sidebar status
         for (const project of projects) {
           const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
           const isRunning = vsCodeProject?.status === 'active' || false
           statuses.set(project.id, isRunning)
-        }
-      } else {
-        // Fallback to port checking for web browser
-        for (const project of projects) {
-          if (project.localPort) {
-            const isRunning = await checkPort(project.localPort)
-            statuses.set(project.id, isRunning)
+          
+          // Extra debug for problematic projects
+          if (project.id === 'ggprompts') {
+            sidebarLog.info('📋 GGPROMPTS MAPPING:', {
+              manifestProject: { id: project.id, port: project.localPort },
+              vsCodeProject: vsCodeProject ? { id: vsCodeProject.id, status: vsCodeProject.status, port: vsCodeProject.localPort } : null,
+              finalStatus: isRunning ? 'ONLINE' : 'OFFLINE'
+            })
           }
         }
+      } else {
+        sidebarLog.info('🌐 Web mode - using port checking fallback')
+        // Fallback to port checking for web browser
+        await Promise.all(
+          projects.map(async (project) => {
+            if (project.localPort) {
+              const isRunning = await checkPort(project.localPort)
+              statuses.set(project.id, isRunning)
+            } else {
+              statuses.set(project.id, false)
+            }
+          })
+        )
       }
+      
+      // Log final status map
+      const statusSummary = Array.from(statuses.entries()).reduce((acc, [id, running]) => {
+        acc[id] = running ? 'ONLINE' : 'OFFLINE'
+        return acc
+      }, {} as Record<string, string>)
+      sidebarLog.info('📊 Final Status Summary:', statusSummary)
       
       setProjectStatuses(statuses)
     }
+
+    // Add debug function to window for manual testing
+    if (typeof window !== 'undefined') {
+      (window as any).debugSidebarStatus = () => {
+        console.clear()
+        sidebarLog.group('🔍 SIDEBAR DEBUG REPORT')
+        sidebarLog.info('VS Code Context:', !!(window as any).vsCodePortfolio?.isVSCodeWebview)
+        
+        if ((window as any).vsCodePortfolio?.isVSCodeWebview) {
+          const vsCodeData = (window as any).vsCodePortfolio
+          sidebarLog.info('VS Code Portfolio Data:', vsCodeData.projectData)
+          sidebarLog.info('Data Timestamp:', vsCodeData.lastUpdated ? new Date(vsCodeData.lastUpdated).toLocaleTimeString() : 'None')
+          
+          const vsCodeProjects = vsCodeData.projectData?.projects || []
+          sidebarLog.info('Available Projects Full Data:', vsCodeProjects)
+          sidebarLog.info('Project Status Summary:', vsCodeProjects.map((p: any) => ({ 
+            id: p.id, 
+            status: p.status, 
+            localPort: p.localPort, 
+            actualPort: p.actualPort,
+            isActive: p.status === 'active'
+          })))
+          
+          const ggpromptsProject = vsCodeProjects.find((p: any) => p.id === 'ggprompts')
+          sidebarLog.info('GGPrompts Project Found:', ggpromptsProject || 'NOT FOUND')
+          
+          // Check for typos in project ID
+          const ggpromptsVariations = vsCodeProjects.filter((p: any) => p.id.includes('ggprompt'))
+          if (ggpromptsVariations.length > 0) {
+            sidebarLog.info('🔍 Found GGPrompts variations:', ggpromptsVariations)
+          }
+        }
+        
+        sidebarLog.info('Current React State - Project Statuses:', Array.from(projectStatuses.entries()))
+        sidebarLog.info('Manifest Projects:', projects.map(p => ({ id: p.id, port: p.localPort, title: p.title })))
+        sidebarLog.groupEnd()
+        
+        // Also trigger a manual status check
+        sidebarLog.info('⚡ Triggering manual status refresh...')
+        checkStatuses()
+      }
+    }
     
-    checkStatuses()
+    // Initial status check with delay to ensure VS Code data is available
+    const performInitialCheck = async () => {
+      // Small delay to ensure VS Code data is properly injected
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await checkStatuses()
+    }
+    performInitialCheck()
     
-    // Only set up interval in web context - VS Code extension handles refreshing
+    // Set up refresh mechanism based on environment
     let interval: NodeJS.Timeout | null = null
-    if (typeof window !== 'undefined' && !(window as any).vsCodePortfolio?.isVSCodeWebview) {
-      interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
-      console.log('⏰ Sidebar: Status check interval created (WEB MODE)')
+    let dataWatcher: NodeJS.Timeout | null = null
+    
+    const isVSCodeWebview = typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview
+    
+    if (!isVSCodeWebview) {
+      // Web mode - use traditional interval
+      interval = setInterval(checkStatuses, 5000)
+      sidebarLog.info('⏰ Status check interval created (WEB MODE - 5s)')
     } else {
-      console.log('🖥️ Sidebar: VS Code mode - using extension refresh cycle (NO INTERVAL)')
+      sidebarLog.info('🖥️ VS Code mode - setting up data watcher')
+      
+      // VS Code mode - watch for data updates and also poll as backup
+      let lastKnownTimestamp = (window as any).vsCodePortfolio?.lastUpdated
+      
+      const handleVSCodeDataUpdate = () => {
+        sidebarLog.info('🔄 VS Code data changed, refreshing status...')
+        checkStatuses()
+      }
+      
+      // Primary mechanism: Watch for data timestamp changes
+      dataWatcher = setInterval(() => {
+        const currentTimestamp = (window as any).vsCodePortfolio?.lastUpdated
+        if (currentTimestamp && currentTimestamp !== lastKnownTimestamp) {
+          lastKnownTimestamp = currentTimestamp
+          sidebarLog.debug('📡 Detected VS Code data update:', new Date(currentTimestamp).toLocaleTimeString())
+          handleVSCodeDataUpdate()
+        }
+      }, 1000) // Check for updates every second
+      
+      // Backup mechanism: Periodic refresh in case we miss data updates
+      interval = setInterval(() => {
+        sidebarLog.debug('🕐 Backup status check (VS Code mode)')
+        checkStatuses()
+      }, 10000) // Backup check every 10 seconds
     }
     
     return () => {
       if (interval) {
         clearInterval(interval)
-        console.log('🛑 Sidebar: Status check interval cleared')
+        sidebarLog.info('🛑 Status check interval cleared')
+      }
+      if (dataWatcher) {
+        clearInterval(dataWatcher)
+        sidebarLog.info('🛑 VS Code data watcher cleared')
       }
     }
   }, [projects])
@@ -880,8 +1041,24 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                         />
                         <span 
                           className={styles.projectTitle}
-                          onClick={() => {
-                            selectProject(project)
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            const isRunning = projectStatuses.get(project.id) || false
+                            if (isRunning && project.localPort) {
+                              // Open in new tab/browser if project is running
+                              const url = `http://localhost:${project.localPort}`
+                              console.log(`🔗 Opening ${project.title} from sidebar:`, url)
+                              if (isVSCodeEnvironment()) {
+                                const { openInBrowser, showNotification } = await import('../utils/vsCodeIntegration')
+                                openInBrowser(url)
+                                showNotification(`Opening ${project.title} in browser`, 'info')
+                              } else {
+                                window.open(url, '_blank')
+                              }
+                            } else {
+                              // Fallback to showing project info if not running
+                              selectProject(project)
+                            }
                           }}
                         >
                           {project.title}
@@ -899,14 +1076,28 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                         <>
                           <button
                             className={styles.dropdownItem}
-                            onClick={() => window.open(`http://localhost:${project.localPort}`, '_blank')}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
+                              const url = `http://localhost:${project.localPort}`
+                              console.log(`🔗 Opening ${project.title} in new tab:`, url)
+                              if (isVSCodeEnvironment()) {
+                                const { openInBrowser, showNotification } = await import('../utils/vsCodeIntegration')
+                                openInBrowser(url)
+                                showNotification(`Opening ${project.title} in browser`, 'info')
+                              } else {
+                                window.open(url, '_blank')
+                              }
+                            }}
                             disabled={!isRunning}
                           >
                             🔗 Open in new tab
                           </button>
                           <button
                             className={styles.dropdownItem}
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
                               const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
                               await executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
                             }}
@@ -916,7 +1107,21 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                           </button>
                           <button
                             className={styles.dropdownItem}
-                            onClick={() => alert(`To kill ${project.title}, close its terminal window`)}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
+                              if (project.localPort) {
+                                const command = `taskkill /F /FI "PID eq (Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess)"`
+                                await executeOrCopyCommand(command, `${project.title} kill command ready!`, `Kill ${project.title}`)
+                              } else {
+                                if (isVSCodeEnvironment()) {
+                                  const { showNotification } = await import('../utils/vsCodeIntegration')
+                                  showNotification(`${project.title} has no port configured`, 'warning')
+                                } else {
+                                  alert(`${project.title} has no port configured`)
+                                }
+                              }
+                            }}
                             disabled={!isRunning}
                           >
                             ⏹️ Kill server
@@ -996,8 +1201,24 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                         />
                         <span 
                           className={styles.projectTitle}
-                          onClick={() => {
-                            selectProject(project)
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            const isRunning = projectStatuses.get(project.id) || false
+                            if (isRunning && project.localPort) {
+                              // Open in new tab/browser if project is running
+                              const url = `http://localhost:${project.localPort}`
+                              console.log(`🔗 Opening ${project.title} from sidebar:`, url)
+                              if (isVSCodeEnvironment()) {
+                                const { openInBrowser, showNotification } = await import('../utils/vsCodeIntegration')
+                                openInBrowser(url)
+                                showNotification(`Opening ${project.title} in browser`, 'info')
+                              } else {
+                                window.open(url, '_blank')
+                              }
+                            } else {
+                              // Fallback to showing project info if not running
+                              selectProject(project)
+                            }
                           }}
                         >
                           {project.title}
@@ -1015,14 +1236,28 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                             <>
                               <button
                                 className={styles.dropdownItem}
-                                onClick={() => window.open(`http://localhost:${project.localPort}`, '_blank')}
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  e.preventDefault()
+                                  const url = `http://localhost:${project.localPort}`
+                                  console.log(`🔗 Opening ${project.title} in new tab:`, url)
+                                  if (isVSCodeEnvironment()) {
+                                    const { openInBrowser, showNotification } = await import('../utils/vsCodeIntegration')
+                                    openInBrowser(url)
+                                    showNotification(`Opening ${project.title} in browser`, 'info')
+                                  } else {
+                                    window.open(url, '_blank')
+                                  }
+                                }}
                                 disabled={!isRunning}
                               >
                                 🔗 Open in new tab
                               </button>
                               <button
                                 className={styles.dropdownItem}
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  e.preventDefault()
                                   const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
                                   await executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
                                 }}
@@ -1032,7 +1267,21 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                               </button>
                               <button
                                 className={styles.dropdownItem}
-                                onClick={() => alert(`To kill ${project.title}, close its terminal window`)}
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  e.preventDefault()
+                                  if (project.localPort) {
+                                    const command = `taskkill /F /FI "PID eq (Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess)"`
+                                    await executeOrCopyCommand(command, `${project.title} kill command ready!`, `Kill ${project.title}`)
+                                  } else {
+                                    if (isVSCodeEnvironment()) {
+                                      const { showNotification } = await import('../utils/vsCodeIntegration')
+                                      showNotification(`${project.title} has no port configured`, 'warning')
+                                    } else {
+                                      alert(`${project.title} has no port configured`)
+                                    }
+                                  }
+                                }}
                                 disabled={!isRunning}
                               >
                                 ⏹️ Kill server

@@ -30,9 +30,18 @@ export default function LiveProjectPreview({
     const vsCodeProjects = window.vsCodePortfolio.projectData?.projects || []
     const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
     
+    if (vsCodeProject) {
+      console.log(`🎯 LivePreview ${project.id} VS Code data:`, {
+        status: vsCodeProject.status,
+        localPort: vsCodeProject.localPort,
+        actualPort: vsCodeProject.actualPort,
+        isActive: vsCodeProject.status === 'active'
+      })
+    }
+    
     return {
       isRunning: vsCodeProject?.status === 'active' || false,
-      port: vsCodeProject?.localPort || project.localPort || null
+      port: vsCodeProject?.actualPort || vsCodeProject?.localPort || project.localPort || null
     }
   }
   
@@ -89,6 +98,7 @@ export default function LiveProjectPreview({
   const handleViewInNewTab = () => {
     if (actualPort) {
       const url = `http://localhost:${actualPort}`
+      console.log(`🌐 Opening ${project.id} in new tab:`, { url, isVSCode: isVSCodeEnvironment() })
       openInBrowser(url)
     } else {
       showNotification('Project is not running', 'warning')
@@ -96,11 +106,19 @@ export default function LiveProjectPreview({
   }
 
   const handleViewInIDE = () => {
-    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
-      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
-      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
-      
-    onProjectClick(project)
+    // In VS Code environment, open in Simple Browser like the tree view does
+    if (isVSCodeEnvironment() && actualIsRunning && actualPort) {
+      const url = `http://localhost:${actualPort}`
+      console.log(`🌐 Opening ${project.id} in VS Code Simple Browser:`, { url, port: actualPort })
+      openInBrowser(url)
+      showNotification(`Opening ${project.title} in Simple Browser`, 'info')
+    } else if (!actualIsRunning) {
+      showNotification('Project is not running. Start it first.', 'warning')
+    } else {
+      // Fallback to original behavior for web version
+      const projectPath = `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      onProjectClick(project)
+    }
   }
 
   const handleAIAssistant = async (assistant: 'claude' | 'gemini' | 'copilot') => {
@@ -128,11 +146,6 @@ export default function LiveProjectPreview({
 
   // Build preview URL with proper viewport hints
   const getPreviewUrl = () => {
-    // In VS Code webview, disable iframe previews completely
-    if (window.vsCodePortfolio?.isVSCodeWebview) {
-      return null
-    }
-    
     if (!actualPort) return null
     
     const baseUrl = `http://localhost:${actualPort}`
@@ -254,8 +267,19 @@ export default function LiveProjectPreview({
 
   // Auto-enable live preview when project starts running and global previews are enabled
   useEffect(() => {
+    const isVSCode = window.vsCodePortfolio?.isVSCodeWebview
+    console.log(`🖼️ LivePreview ${project.id} state check:`, {
+      actualIsRunning,
+      actualPort,
+      showLivePreview,
+      livePreviewsEnabled,
+      isVSCode,
+      willEnable: actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled
+    })
+    
     if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled) {
       setIsRefreshing(true)
+      console.log(`✅ Enabling live preview for ${project.id} on port ${actualPort}`)
       // Small delay to let the server fully start
       setTimeout(() => {
         setShowLivePreview(true)
@@ -263,11 +287,14 @@ export default function LiveProjectPreview({
       }, 2000)
     }
     if (!actualIsRunning || !livePreviewsEnabled) {
+      if (showLivePreview) {
+        console.log(`❌ Disabling live preview for ${project.id}`)
+      }
       setShowLivePreview(false)
       setPreviewLoaded(false)
       setIsRefreshing(false)
     }
-  }, [actualIsRunning, actualPort, livePreviewsEnabled])
+  }, [actualIsRunning, actualPort, livePreviewsEnabled, project.id, showLivePreview])
 
   // Force iframe reload when zoom mode or view mode changes (URL changes)
   useEffect(() => {
@@ -390,7 +417,7 @@ export default function LiveProjectPreview({
                 className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
-                sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+                sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
                 title={`${project.title} Preview`}
                 width={scaleConfig.width}
                 height={scaleConfig.height}

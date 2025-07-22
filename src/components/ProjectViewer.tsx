@@ -11,6 +11,12 @@ interface ProjectViewerProps {
 }
 
 export default function ProjectViewer({ project, onClose, isInline = false }: ProjectViewerProps) {
+  console.log(`🔍 ProjectViewer rendered for project: ${project.id}`, { 
+    isInline, 
+    displayType: project.displayType,
+    localPort: project.localPort
+  })
+  
   const { setProjectLoading, isProjectLoading } = usePortfolioStore()
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -22,11 +28,46 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
 
     // Check if external project is running and get actual port
     if (project.displayType === 'external') {
-      getProjectPort(project).then(port => {
-        setActualPort(port)
-        setIsRunning(port !== null)
-        setProjectLoading(false)
-      })
+      // First check if we're in VS Code webview and use injected data
+      if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+        const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+        
+        if (vsCodeProject) {
+          console.log(`🎯 ProjectViewer ${project.id} using VS Code data:`, {
+            status: vsCodeProject.status,
+            localPort: vsCodeProject.localPort,
+            actualPort: vsCodeProject.actualPort,
+            isActive: vsCodeProject.status === 'active'
+          })
+          
+          const running = vsCodeProject.status === 'active'
+          const port = vsCodeProject.actualPort || vsCodeProject.localPort || project.localPort
+          
+          console.log(`🎯 ProjectViewer ${project.id} final values:`, {
+            running,
+            port,
+            willShowRunning: running && port,
+            url: running && port ? `http://localhost:${port}` : 'none'
+          })
+          
+          setIsRunning(running)
+          setActualPort(running ? port : null)
+          setProjectLoading(false)
+        } else {
+          console.warn(`❌ ProjectViewer: ${project.id} not found in VS Code data`)
+          setIsRunning(false)
+          setActualPort(null)
+          setProjectLoading(false)
+        }
+      } else {
+        // Fallback to port manager for web browser
+        getProjectPort(project).then(port => {
+          setActualPort(port)
+          setIsRunning(port !== null)
+          setProjectLoading(false)
+        })
+      }
     } else {
       setTimeout(() => setProjectLoading(false), 500)
     }
@@ -43,18 +84,36 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
 
   const openExternal = async () => {
     if (project.demoUrl) {
-      window.open(project.demoUrl, '_blank', 'noopener,noreferrer')
+      if (isVSCodeEnvironment()) {
+        // Use VS Code integration for opening URLs
+        const vsCode = (window as any).vsCodePortfolio
+        vsCode.openInBrowser(project.demoUrl)
+      } else {
+        window.open(project.demoUrl, '_blank', 'noopener,noreferrer')
+      }
     } else if (isRunning && actualPort) {
-      window.open(`http://localhost:${actualPort}`, '_blank', 'noopener,noreferrer')
+      const url = `http://localhost:${actualPort}`
+      if (isVSCodeEnvironment()) {
+        // Use VS Code integration to open in browser
+        const vsCode = (window as any).vsCodePortfolio
+        vsCode.openInBrowser(url)
+        showNotification(`Opening ${project.title} in browser`, 'info')
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
     } else {
-      alert(
-        `${project.title} is not running!\n\n` +
+      const message = `${project.title} is not running!\n\n` +
         `To start it:\n` +
         `1. Open a terminal\n` +
         `2. cd ${getProjectPath(project.id)}\n` +
         `3. ${project.buildCommand || 'npm run dev'}\n\n` +
         `Or use the "Start All Projects" button in the sidebar!`
-      )
+      
+      if (isVSCodeEnvironment()) {
+        showNotification(message, 'warning')
+      } else {
+        alert(message)
+      }
     }
   }
 

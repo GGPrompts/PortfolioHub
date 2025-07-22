@@ -8,6 +8,10 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _cachedProjectData?: any;
 
+    public getCachedProjectData(): any {
+        return this._cachedProjectData;
+    }
+
     constructor(
         private readonly _extensionUri: vscode.Uri,
         private readonly _portfolioPath: string
@@ -183,7 +187,15 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _openInBrowser(url: string): Promise<void> {
-        await vscode.env.openExternal(vscode.Uri.parse(url));
+        try {
+            // Use VS Code Simple Browser for better integration
+            await vscode.commands.executeCommand('simpleBrowser.show', url);
+            console.log(`🌐 Opened ${url} in VS Code Simple Browser`);
+        } catch (error) {
+            console.log(`Simple Browser not available, falling back to external browser for ${url}`);
+            // Fallback to external browser if Simple Browser is not available
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+        }
     }
 
     private async _openFolder(folderPath: string): Promise<void> {
@@ -349,6 +361,11 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             if (manifest.projects && manifest.projects.length > 0) {
                 // Update project statuses with real-time port checking
                 await this._updateProjectStatuses(manifest.projects);
+                
+                // Remove thumbnail references for VS Code webview to prevent ERR_ACCESS_DENIED
+                manifest.projects.forEach((project: any) => {
+                    delete project.thumbnail;
+                });
             }
             return manifest;
         } catch (error) {
@@ -358,40 +375,139 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _updateProjectStatuses(projects: any[]): Promise<void> {
+        console.log('🔍 Starting port status checks for', projects.length, 'projects');
         const statusPromises = projects.map(async (project) => {
             if (project.localPort) {
                 try {
-                    const isRunning = await this._checkPortStatus(project.localPort);
-                    project.status = isRunning ? 'active' : 'inactive';
+                    console.log(`🔍 Checking ${project.id} on default port ${project.localPort}`);
+                    // First check the default port
+                    const defaultPortRunning = await this._checkPortStatus(project.localPort);
+                    console.log(`🔍 ${project.id} port ${project.localPort} status:`, defaultPortRunning);
+                    
+                    if (defaultPortRunning) {
+                        project.status = 'active';
+                        project.actualPort = project.localPort;
+                        console.log(`✅ ${project.id} ACTIVE on default port ${project.localPort}`);
+                        return;
+                    }
+
+                    // No alternative port scanning - be strict about configured ports
+                    project.status = 'inactive';
+                    project.actualPort = null;
+                    console.log(`❌ ${project.id} INACTIVE - configured port ${project.localPort} not responding`);
                 } catch (error) {
                     project.status = 'inactive';
+                    project.actualPort = null;
+                    console.log(`❌ ${project.id} ERROR:`, error);
                 }
             } else {
                 project.status = 'inactive';
+                project.actualPort = null;
+                console.log(`❌ ${project.id} INACTIVE - no port configured`);
             }
         });
         await Promise.all(statusPromises);
+        
+        const finalStatuses = projects.map(p => `${p.id}: ${p.status} (${p.actualPort || 'no port'})`).join(', ');
+        console.log('📊 Final project statuses:', finalStatuses);
+    }
+
+    private async _findProjectActualPort(project: any): Promise<number | null> {
+        // Define port ranges to scan based on project type
+        let portsToCheck: number[] = [];
+        
+        if (project.id === 'ggprompts') {
+            // GGPrompts often uses 9323-9330 range
+            portsToCheck = [9323, 9324, 9325, 9326, 9327, 9328, 9329, 9330];
+        } else if (project.localPort < 4000) {
+            // Regular React apps typically use 3000-3099 range
+            portsToCheck = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010];
+        } else if (project.localPort >= 5000) {
+            // Vite/Next.js apps typically use 5173-5179 range
+            portsToCheck = [5173, 5174, 5175, 5176, 5177, 5178, 5179];
+        }
+
+        // Remove the default port since we already checked it
+        portsToCheck = portsToCheck.filter(port => port !== project.localPort);
+
+        // Check each port in the range
+        for (const port of portsToCheck) {
+            try {
+                const isRunning = await this._checkPortStatus(port);
+                if (isRunning) {
+                    // Verify this is actually our project by checking if it serves the expected content
+                    const isOurProject = await this._verifyProjectOnPort(project, port);
+                    if (isOurProject) {
+                        return port;
+                    }
+                }
+            } catch (error) {
+                // Continue checking other ports
+                continue;
+            }
+        }
+
+        return null;
+    }
+
+    private async _verifyProjectOnPort(project: any, port: number): Promise<boolean> {
+        try {
+            // Make a simple HEAD request to verify this is our project
+            const req = require('http').request({
+                hostname: 'localhost',
+                port: port,
+                path: '/',
+                method: 'HEAD',
+                timeout: 1000
+            }, (res: any) => {
+                // Any successful response indicates the project is running
+                return res.statusCode < 500;
+            });
+
+            return new Promise((resolve) => {
+                req.on('response', (res: any) => {
+                    resolve(res.statusCode < 500);
+                });
+
+                req.on('error', () => {
+                    resolve(false);
+                });
+
+                req.on('timeout', () => {
+                    req.destroy();
+                    resolve(false);
+                });
+
+                req.end();
+            });
+        } catch (error) {
+            return false;
+        }
     }
 
     private _checkPortStatus(port: number): Promise<boolean> {
         return new Promise((resolve) => {
-            // Use favicon.ico check like the webapp for consistency
+            // Use same settings as projectProvider for consistency
             const req = require('http').request({
                 hostname: 'localhost',
                 port: port,
-                path: '/favicon.ico',
+                path: '/favicon.ico',  // Match projectProvider.ts
                 method: 'GET',
-                timeout: 2000
+                timeout: 2000  // Match projectProvider.ts timeout
             }, (res: any) => {
-                // Accept any response (even 404) as indication server is running
-                resolve(res.statusCode !== undefined);
+                // Accept any response (even 404) as indication server is running - match projectProvider logic
+                const isRunning = res.statusCode !== undefined;
+                console.log(`🔍 Port ${port} responded with status ${res.statusCode} - ${isRunning ? 'ACTIVE' : 'INACTIVE'}`);
+                resolve(isRunning);
             });
 
-            req.on('error', () => {
+            req.on('error', (err: any) => {
+                console.log(`🔍 Port ${port} error: ${err.code || err.message} - INACTIVE`);
                 resolve(false);
             });
 
             req.on('timeout', () => {
+                console.log(`🔍 Port ${port} timeout - INACTIVE`);
                 req.destroy();
                 resolve(false);
             });
@@ -430,10 +546,13 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             }
         } catch (error) {
             console.error('Failed to load portfolio HTML:', error);
+            console.error('Using hardcoded fallback asset names');
             // Fallback to hardcoded names (updated to current build)
-            cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-DKQU7oiL.css')).toString();
-            jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-DXCA9X0j.js')).toString();
+            cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-BrNvLEXu.css')).toString();
+            jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-Cr0I3TKJ.js')).toString();
         }
+        
+        console.log('🔧 Asset URIs:', { cssUri, jsUri });
 
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
@@ -443,7 +562,7 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; connect-src 'self' http://localhost:* ws://localhost:*; img-src ${webview.cspSource} data: http: https:; font-src ${webview.cspSource};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; img-src ${webview.cspSource} data: http: https: http://localhost:*; font-src ${webview.cspSource}; frame-src http://localhost:* https://localhost:*; child-src http://localhost:* https://localhost:*;">
     <title>Claude Portfolio</title>
     <link rel="stylesheet" type="text/css" href="${cssUri}">
     <style>
@@ -473,9 +592,11 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         const vscode = acquireVsCodeApi();
         
         // Debug logging
-        console.log('VS Code Portfolio Webview Loading...');
-        console.log('Portfolio Path:', '${this._portfolioPath.replace(/\\/g, '\\\\')}');
-        console.log('Project Data:', ${JSON.stringify(projectData)});
+        console.log('🔧 VS Code Portfolio Webview Loading...');
+        console.log('🔧 Portfolio Path:', '${this._portfolioPath.replace(/\\/g, '\\\\')}');
+        console.log('🔧 Project Data Injection:', ${JSON.stringify(projectData)});
+        console.log('🔧 Data timestamp:', ${Date.now()});
+        console.log('🔧 Project statuses being injected:', ${JSON.stringify(projectData?.projects?.map((p: any) => ({ id: p.id, status: p.status, actualPort: p.actualPort, localPort: p.localPort })) || [])});
         
         // Global portfolio configuration for VS Code
         window.vsCodePortfolio = {
@@ -533,6 +654,11 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 vscode.postMessage({ type: 'notification:show', text, level });
             }
         };
+        
+        // Verify data injection worked
+        console.log('🔧 Verification - window.vsCodePortfolio exists:', !!window.vsCodePortfolio);
+        console.log('🔧 Verification - isVSCodeWebview:', window.vsCodePortfolio?.isVSCodeWebview);
+        console.log('🔧 Verification - project count:', window.vsCodePortfolio?.projectData?.projects?.length);
         
         // Override clipboard operations for VS Code integration
         const originalClipboard = navigator.clipboard;

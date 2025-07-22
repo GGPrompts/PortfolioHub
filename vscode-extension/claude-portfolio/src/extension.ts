@@ -67,6 +67,8 @@ export function activate(context: vscode.ExtensionContext) {
         const refreshInterval = setInterval(() => {
             console.log('🔄 Refreshing project status...');
             projectProvider.refresh();
+            // Also refresh webview data when project status changes
+            portfolioWebviewProvider.refreshProjectData();
         }, 5000);
         context.subscriptions.push({ dispose: () => clearInterval(refreshInterval) });
 
@@ -156,15 +158,66 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 // Extract project data from tree item
                 const project = treeItem?.project || treeItem;
-                if (project?.localPort) {
-                    const url = `http://localhost:${project.localPort}`;
-                    // Use VS Code's simple browser instead of external browser
-                    await vscode.commands.executeCommand('simpleBrowser.show', url);
-                    vscode.window.showInformationMessage(`Opened ${project.title} in VS Code browser`);
+                
+                // Get the actual running port from our port detection system
+                let portToUse = project?.localPort;
+                let isRunning = false;
+                
+                if (project?.id) {
+                    // Refresh project data to get latest status
+                    await portfolioWebviewProvider.refreshProjectData();
+                    
+                    // Get updated project data with actual ports
+                    const projectData = portfolioWebviewProvider.getCachedProjectData();
+                    const updatedProject = projectData?.projects?.find((p: any) => p.id === project.id);
+                    
+                    if (updatedProject) {
+                        portToUse = updatedProject.actualPort || updatedProject.localPort || project.localPort;
+                        isRunning = updatedProject.status === 'active';
+                        
+                        console.log(`🌐 Opening browser for ${project.id}:`, {
+                            defaultPort: project.localPort,
+                            actualPort: updatedProject.actualPort,
+                            finalPort: portToUse,
+                            isRunning
+                        });
+                    }
+                }
+                
+                if (portToUse && isRunning) {
+                    const url = `http://localhost:${portToUse}`;
+                    
+                    try {
+                        // Try VS Code Simple Browser with better configuration for React apps
+                        console.log(`🌐 Opening ${project.title} in VS Code Simple Browser: ${url}`);
+                        
+                        await vscode.commands.executeCommand('simpleBrowser.show', url, {
+                            viewColumn: vscode.ViewColumn.Beside,
+                            preserveFocus: false,
+                            // Additional options that might help with React apps
+                            enableScripts: true,
+                            enableCommands: false,
+                            allowMultipleInstances: true
+                        });
+                        
+                        vscode.window.showInformationMessage(`Opened ${project.title} in VS Code browser (port ${portToUse})`);
+                        console.log(`✅ VS Code Simple Browser opened for ${project.title}`);
+                        
+                    } catch (simpleBrowserError) {
+                        console.log('❌ VS Code Simple Browser failed:', simpleBrowserError);
+                        
+                        // Fallback to external browser
+                        console.log('🔄 Falling back to external Chrome');
+                        await vscode.env.openExternal(vscode.Uri.parse(url));
+                        vscode.window.showInformationMessage(`Opened ${project.title} in external Chrome (Simple Browser failed)`);
+                    }
+                } else if (!isRunning) {
+                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
                 } else {
                     vscode.window.showErrorMessage('No port information found for this project');
                 }
             } catch (error) {
+                console.error('Error in openProjectInBrowser:', error);
                 vscode.window.showErrorMessage(`Error opening browser: ${error instanceof Error ? error.message : String(error)}`);
             }
         });
@@ -173,11 +226,32 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 // Extract project data from tree item
                 const project = treeItem?.project || treeItem;
-                if (project?.localPort) {
-                    const url = `http://localhost:${project.localPort}`;
+                
+                // Get the actual running port from our port detection system
+                let portToUse = project?.localPort;
+                let isRunning = false;
+                
+                if (project?.id) {
+                    // Refresh project data to get latest status
+                    await portfolioWebviewProvider.refreshProjectData();
+                    
+                    // Get updated project data with actual ports
+                    const projectData = portfolioWebviewProvider.getCachedProjectData();
+                    const updatedProject = projectData?.projects?.find((p: any) => p.id === project.id);
+                    
+                    if (updatedProject) {
+                        portToUse = updatedProject.actualPort || updatedProject.localPort || project.localPort;
+                        isRunning = updatedProject.status === 'active';
+                    }
+                }
+                
+                if (portToUse && isRunning) {
+                    const url = `http://localhost:${portToUse}`;
                     // Use external browser
                     vscode.env.openExternal(vscode.Uri.parse(url));
-                    vscode.window.showInformationMessage(`Opened ${project.title} in external browser`);
+                    vscode.window.showInformationMessage(`Opened ${project.title} in external browser (port ${portToUse})`);
+                } else if (!isRunning) {
+                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
                 } else {
                     vscode.window.showErrorMessage('No port information found for this project');
                 }

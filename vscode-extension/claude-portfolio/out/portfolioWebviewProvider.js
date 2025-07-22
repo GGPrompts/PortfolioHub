@@ -223,11 +223,12 @@ class PortfolioWebviewProvider {
             padding: 0;
             width: 100% !important;
             height: 100vh !important;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         #root {
             width: 100% !important;
-            height: 100% !important;
+            min-height: 100% !important;
         }
         /* Ensure VS Code integration */
         .vscode-webview-integration {

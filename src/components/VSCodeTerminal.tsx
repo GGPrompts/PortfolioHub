@@ -63,12 +63,20 @@ export const VSCodeTerminal: React.FC<VSCodeTerminalProps> = ({
     const paths = `D:\\ClaudeWindows\\claude-dev-portfolio
 D:\\ClaudeWindows\\claude-dev-portfolio\\projects  
 D:\\ClaudeWindows\\claude-dev-portfolio\\scripts`;
-    navigator.clipboard.writeText(paths);
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      ;(window as any).vsCodePortfolio.showNotification(`Folder paths: ${paths}`);
+    } else {
+      navigator.clipboard.writeText(paths);
+    }
     alert(`Folder paths copied!\n\nTo create a multi-root workspace:\n1. Press Ctrl+Shift+P\n2. Type "Add Folder to Workspace"\n3. Add each folder one by one\n4. Save as workspace: File → Save Workspace As...`);
   };
 
   const copyWorkspacePath = () => {
-    navigator.clipboard.writeText(workspacePath);
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      ;(window as any).vsCodePortfolio.showNotification(`Workspace path: ${workspacePath}`);
+    } else {
+      navigator.clipboard.writeText(workspacePath);
+    }
     alert(`Workspace path copied!\n\n${workspacePath}\n\nIf the file dialog doesn't show .code-workspace files:\n1. Change file filter to "All Files (*.*)" \n2. Or manually type the filename\n3. Or use "Add Folder to Workspace" instead`);
   };
 

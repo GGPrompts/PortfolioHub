@@ -11,6 +11,22 @@
 		{
 			"name": "Scripts",
 			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\scripts"
+		},
+		{
+			"name": "3D Matrix Cards",
+			"path": "projects/3d-matrix-cards"
+		},
+		{
+			"name": "GGPrompts Professional",
+			"path": "projects/ggprompts-professional"
+		},
+		{
+			"name": "3D File System Viewer",
+			"path": "projects/3d-file-system"
+		},
+		{
+			"name": "GGPrompts Style Guide",
+			"path": "projects/ggprompts-style-guide"
 		}
 	],
 	"settings": {

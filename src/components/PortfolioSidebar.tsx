@@ -14,6 +14,23 @@ interface PortfolioSidebarProps {
   layoutStrategy?: 'push' | 'overlay'
 }
 
+// Helper function to check if we're in VS Code and execute commands directly
+const executeOrCopyCommand = (command: string, successMessage: string, commandName?: string) => {
+  if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+    // Execute directly in VS Code terminal
+    ;(window as any).vsCodePortfolio.executeCommand(command, commandName || 'Portfolio Command')
+    ;(window as any).vsCodePortfolio.showNotification(successMessage)
+  } else {
+    // Fallback to clipboard for web version
+    navigator.clipboard.writeText(command).then(() => {
+      alert(successMessage + ' (copied to clipboard)')
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      alert('Command ready, but clipboard copy failed.')
+    })
+  }
+}
+
 export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layoutStrategy = 'push' }: PortfolioSidebarProps) {
   const { 
     sidebarState, 
@@ -263,7 +280,32 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     content += `---\n*Note saved to to-sort folder for later organization*\n`
     
     try {
-      // Try to save the file directly using File System Access API
+      // Check if we're in VS Code and use the VS Code API
+      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        const filePath = `notes/to-sort/${fileName}`
+        ;(window as any).vsCodePortfolio.saveFile(filePath, content)
+        
+        // Add the note to local state
+        const newNote = {
+          id: `note-${Date.now()}`,
+          title: currentNote.split('\n')[0].slice(0, 50) + (currentNote.length > 50 ? '...' : ''),
+          date: new Date().toLocaleDateString(),
+          preview: currentNote.slice(0, 150) + (currentNote.length > 150 ? '...' : ''),
+          content: content,
+          project: targetProject ? targetProject.id : 'General',
+          saved: true,
+          filePath: fileName
+        }
+        
+        setToSortNotes(prev => [newNote, ...prev])
+        setCurrentNote('')
+        setClaudeInstructions('')
+        setSelectedNoteProject('')
+        
+        return
+      }
+      
+      // Try to save the file directly using File System Access API for web version
       if ('showSaveFilePicker' in window) {
         try {
           const fileHandle = await (window as any).showSaveFilePicker({
@@ -383,15 +425,25 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     promptText += `6. Update CLAUDE.md files with relevant instructions\n\n`
     promptText += `Provide a plan and execute the organization.`
     
-    navigator.clipboard.writeText(promptText).then(() => {
-      const totalNotes = toSortNotes.length
-      const savedCount = savedNotes.length
-      const unsavedCount = unsavedNotes.length
-      alert(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
-    }).catch(err => {
-      console.error('Failed to copy to clipboard:', err)
-      alert('Organization prompt ready, but clipboard copy failed.')
-    })
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      // In VS Code, copy to clipboard and show notification
+      navigator.clipboard.writeText(promptText).then(() => {
+        const totalNotes = toSortNotes.length
+        const savedCount = savedNotes.length
+        const unsavedCount = unsavedNotes.length
+        ;(window as any).vsCodePortfolio.showNotification(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
+      })
+    } else {
+      navigator.clipboard.writeText(promptText).then(() => {
+        const totalNotes = toSortNotes.length
+        const savedCount = savedNotes.length
+        const unsavedCount = unsavedNotes.length
+        alert(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
+      }).catch(err => {
+        console.error('Failed to copy to clipboard:', err)
+        alert('Organization prompt ready, but clipboard copy failed.')
+      })
+    }
   }
 
   const handleNewNote = () => {
@@ -610,9 +662,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   }
 
   const copyScriptToClipboard = (script: string, type: 'launch' | 'kill') => {
-    navigator.clipboard.writeText(script).then(() => {
-      console.log(`${type} script copied to clipboard`)
-    })
+    const commandName = type === 'launch' ? 'Launch Selected Projects' : 'Kill Selected Projects'
+    executeOrCopyCommand(script, `${type} script ready!`, commandName)
   }
   
   
@@ -799,8 +850,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                             className={styles.dropdownItem}
                             onClick={() => {
                               const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
-                              navigator.clipboard.writeText(command)
-                              alert(`Start command copied!`)
+                              executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
                             }}
                             disabled={isRunning}
                           >
@@ -980,8 +1030,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                 className={styles.actionBtn}
                 onClick={() => {
                   const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
-                  navigator.clipboard.writeText(command)
-                  alert('Start all command copied!')
+                  executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
                 }}
                 title="Copy command to start all projects"
               >
@@ -1006,8 +1055,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                 className={styles.actionBtn}
                 onClick={() => {
                   const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-                  navigator.clipboard.writeText(command)
-                  alert('Kill all command copied!')
+                  executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
                 }}
                 title="Copy command to kill all projects"
               >

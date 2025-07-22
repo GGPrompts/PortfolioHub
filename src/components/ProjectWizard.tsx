@@ -126,13 +126,17 @@ My initial idea:
 
 What specific functionality are you envisioning? What problem does this solve or what experience does it create?`
 
-    navigator.clipboard.writeText(prompt).then(() => {
-      alert('Claude prompt copied to clipboard! Paste this in a Claude chat to get AI suggestions for your project.')
-    }).catch(() => {
-      alert('Failed to copy to clipboard. Please manually copy the prompt from the browser console.')
-      console.log('Claude Prompt:', prompt)
-    })
-  }
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      ;(window as any).vsCodePortfolio.showNotification('Claude prompt ready for implementation guidance!');
+      navigator.clipboard.writeText(prompt);
+    } else {
+      navigator.clipboard.writeText(prompt).then(() => {
+        alert('Claude prompt copied to clipboard! Paste this in a Claude chat to get AI suggestions for your project.');
+      }).catch(() => {
+        alert('Failed to copy to clipboard. Please manually copy the prompt from the browser console.');
+        console.log('Claude Prompt:', prompt);
+      });
+    }
 
   const createProject = async () => {
     if (!validateStep(6)) return
@@ -153,7 +157,11 @@ What specific functionality are you envisioning? What problem does this solve or
       const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.ps1 ${scriptArgs}`
       
       // Copy command to clipboard for user to execute
-      await navigator.clipboard.writeText(command)
+      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        ;(window as any).vsCodePortfolio.executeCommand(command, 'Create Project');
+      } else {
+        await navigator.clipboard.writeText(command);
+      }
       
       // Show success with more detailed instructions
       setSuccess(`✅ Project creation command ready!
@@ -452,7 +460,12 @@ cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.
                             formData.description ? `-Description "${formData.description}"` : '',
                             `-Port ${formData.port}`
                           ].filter(Boolean).join(' ')
-                          navigator.clipboard.writeText(`cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.ps1 ${scriptArgs}`)
+                          const createCommand = `cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.ps1 ${scriptArgs}`;
+                          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+                            ;(window as any).vsCodePortfolio.executeCommand(createCommand, 'Create Project');
+                          } else {
+                            navigator.clipboard.writeText(createCommand);
+                          }
                           alert('Command copied again! Open PowerShell manually.')
                         }
                       }}
@@ -568,4 +581,4 @@ cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.
   )
 }
 
-export default ProjectWizard
+export default ProjectWizard;

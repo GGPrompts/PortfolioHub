@@ -56,19 +56,32 @@ export default function GitUpdateButton({
       // Simulate update process
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // Show instructions in a modal or copy to clipboard
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(instructions)
+      // Check if we're in VS Code and execute commands directly
+      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        // Execute git update directly in VS Code terminal
+        const projectPath = type === 'project' ? `projects/${projectId}` : '.'
+        ;(window as any).vsCodePortfolio.updateGitRepo(projectPath)
+        
         setUpdateStatus('success')
         setLastUpdate(new Date().toLocaleTimeString())
         
-        // Show toast notification
-        showNotification('Update commands copied to clipboard!', 'success')
+        // Show notification
+        ;(window as any).vsCodePortfolio.showNotification(`Git update started for ${projectName || 'portfolio'}!`)
       } else {
-        // Fallback: show instructions in alert
-        alert(`Update commands:\n\n${instructions}`)
-        setUpdateStatus('success')
-        setLastUpdate(new Date().toLocaleTimeString())
+        // Fallback for web version - copy to clipboard
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(instructions)
+          setUpdateStatus('success')
+          setLastUpdate(new Date().toLocaleTimeString())
+          
+          // Show toast notification
+          showNotification('Update commands copied to clipboard!', 'success')
+        } else {
+          // Fallback: show instructions in alert
+          alert(`Update commands:\n\n${instructions}`)
+          setUpdateStatus('success')
+          setLastUpdate(new Date().toLocaleTimeString())
+        }
       }
       
     } catch (error) {

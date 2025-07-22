@@ -34,7 +34,16 @@
       "Bash(npm install:*)",
       "Bash(tailscale:*)",
       "Bash(code --version)",
-      "Bash(code serve-web --help)"
+      "Bash(code serve-web --help)",
+      "mcp__ide__getDiagnostics",
+      "Bash(code:*)",
+      "Bash(touch:*)",
+      "Bash(npm run compile:*)",
+      "Bash(echo:*)",
+      "Bash(npx vsce:*)",
+      "Bash(find:*)",
+      "Bash(vsce package:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

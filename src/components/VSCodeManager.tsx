@@ -184,7 +184,11 @@ export const VSCodeManager: React.FC = () => {
       } else {
         // Fallback to clipboard method
         const windowsPath = workspacePath.replace(/\//g, '\\');
-        navigator.clipboard.writeText(windowsPath);
+        if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+          ;(window as any).vsCodePortfolio.showNotification(`Workspace path: ${windowsPath}`);
+        } else {
+          navigator.clipboard.writeText(windowsPath);
+        }
         alert(`Workspace path copied: ${windowsPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`);
         return;
       }
@@ -208,7 +212,11 @@ export const VSCodeManager: React.FC = () => {
         } else {
           // Fallback to clipboard method
           const folderPath = projectPath.replace(/\//g, '\\');
-          navigator.clipboard.writeText(folderPath);
+          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+            ;(window as any).vsCodePortfolio.openFolder(folderPath);
+          } else {
+            navigator.clipboard.writeText(folderPath);
+          }
           alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`);
           return;
         }
@@ -229,7 +237,11 @@ export const VSCodeManager: React.FC = () => {
         return;
       } else {
         // Fallback to clipboard method
-        navigator.clipboard.writeText(terminalCommand);
+        if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+          ;(window as any).vsCodePortfolio.executeCommand(terminalCommand, 'VS Code Command');
+        } else {
+          navigator.clipboard.writeText(terminalCommand);
+        }
         alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`);
         return;
       }
@@ -247,7 +259,11 @@ export const VSCodeManager: React.FC = () => {
         // Fallback to clipboard method
         const commandName = getCommandDisplayName(command);
         try {
-          await navigator.clipboard.writeText(commandName);
+          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+            ;(window as any).vsCodePortfolio.showNotification(`Command: ${commandName}`);
+          } else {
+            await navigator.clipboard.writeText(commandName);
+          }
           alert(`📋 Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
         } catch (clipboardError) {
           console.error('Clipboard access failed:', clipboardError);
@@ -274,7 +290,11 @@ export const VSCodeManager: React.FC = () => {
 
   const copyToClipboard = async (text: string, description: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        ;(window as any).vsCodePortfolio.showNotification(`Copied: ${text}`);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
       alert(`Copied: ${text}\n\n${description}`);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
@@ -419,11 +439,16 @@ Write-Host "Starting VS Code Server from: $(Get-Location)"
 # Start VS Code Server (profile will be set via window.newWindowProfile setting)
 code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms`;
     
-    navigator.clipboard.writeText(commands).then(() => {
-      alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`);
-    }).catch(() => {
-      alert(`To start VS Code Server:\n\n${commands}`);
-    });
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      ;(window as any).vsCodePortfolio.executeCommand(commands, 'PowerShell Commands');
+      ;(window as any).vsCodePortfolio.showNotification('PowerShell commands executed!');
+    } else {
+      navigator.clipboard.writeText(commands).then(() => {
+        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`);
+      }).catch(() => {
+        alert(`To start VS Code Server:\n\n${commands}`);
+      });
+    }
   };
 
   const activeInstance = instances.find(instance => instance.id === activeInstanceId);

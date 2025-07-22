@@ -213,9 +213,13 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                         className={styles.secondaryBtn}
                         onClick={() => {
                           const command = `cd ${getProjectPath(project.id)}; ${project.buildCommand || 'npm run dev'}`
-                          navigator.clipboard.writeText(command).then(() => {
-                            alert('Start command copied to clipboard!')
-                          })
+                          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+                            ;(window as any).vsCodePortfolio.executeCommand(command, `Start ${project.title}`);
+                          } else {
+                            navigator.clipboard.writeText(command).then(() => {
+                              alert('Start command copied to clipboard!');
+                            });
+                          }
                         }}
                         title="Copy start command to clipboard"
                       >

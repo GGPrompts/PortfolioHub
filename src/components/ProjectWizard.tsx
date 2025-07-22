@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { usePortfolioStore } from '../store/portfolioStore'
 import SvgIcon from './SvgIcon'
 import styles from './ProjectWizard.module.css'
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard } from '../utils/vsCodeIntegration'
 
 interface ProjectWizardProps {
   onCancel: () => void
@@ -98,7 +99,7 @@ const ProjectWizard: React.FC<ProjectWizardProps> = ({ onCancel, onSuccess }) =>
     }
   }
 
-  const generateClaudePrompt = () => {
+  const generateClaudePrompt = async () => {
     const projectTypeSpecific = formData.projectType === '3d' 
       ? `This will be a Three.js 3D experience using ${formData.controlSystem} controls.
 
@@ -126,17 +127,19 @@ My initial idea:
 
 What specific functionality are you envisioning? What problem does this solve or what experience does it create?`
 
-    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-      ;(window as any).vsCodePortfolio.showNotification('Claude prompt ready for implementation guidance!');
-      navigator.clipboard.writeText(prompt);
+    if (isVSCodeEnvironment()) {
+      await copyToClipboard(prompt)
+      showNotification('Claude prompt ready for implementation guidance!')
     } else {
-      navigator.clipboard.writeText(prompt).then(() => {
-        alert('Claude prompt copied to clipboard! Paste this in a Claude chat to get AI suggestions for your project.');
-      }).catch(() => {
-        alert('Failed to copy to clipboard. Please manually copy the prompt from the browser console.');
-        console.log('Claude Prompt:', prompt);
-      });
+      try {
+        await copyToClipboard(prompt)
+        alert('Claude prompt copied to clipboard! Paste this in a Claude chat to get AI suggestions for your project.')
+      } catch (error) {
+        alert('Failed to copy to clipboard. Please manually copy the prompt from the browser console.')
+        console.log('Claude Prompt:', prompt)
+      }
     }
+  }
 
   const createProject = async () => {
     if (!validateStep(6)) return
@@ -157,10 +160,10 @@ What specific functionality are you envisioning? What problem does this solve or
       const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.ps1 ${scriptArgs}`
       
       // Copy command to clipboard for user to execute
-      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-        ;(window as any).vsCodePortfolio.executeCommand(command, 'Create Project');
+      if (isVSCodeEnvironment()) {
+        await executeCommand(command, 'Create Project')
       } else {
-        await navigator.clipboard.writeText(command);
+        await copyToClipboard(command)
       }
       
       // Show success with more detailed instructions
@@ -446,7 +449,7 @@ cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.
                   <div className={styles.successActions}>
                     <button
                       className={styles.successBtn}
-                      onClick={() => {
+                      onClick={async () => {
                         // Try to open PowerShell (Windows only)
                         try {
                           // This only works in certain contexts (like Electron)
@@ -461,10 +464,10 @@ cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.
                             `-Port ${formData.port}`
                           ].filter(Boolean).join(' ')
                           const createCommand = `cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\create-project-enhanced.ps1 ${scriptArgs}`;
-                          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-                            ;(window as any).vsCodePortfolio.executeCommand(createCommand, 'Create Project');
+                          if (isVSCodeEnvironment()) {
+                            await executeCommand(createCommand, 'Create Project')
                           } else {
-                            navigator.clipboard.writeText(createCommand);
+                            await copyToClipboard(createCommand)
                           }
                           alert('Command copied again! Open PowerShell manually.')
                         }

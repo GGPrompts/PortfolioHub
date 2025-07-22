@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styles from './GitUpdateButton.module.css'
+import { isVSCodeEnvironment, updateGitRepo, showNotification, copyToClipboard } from '../utils/vsCodeIntegration'
 
 interface GitUpdateButtonProps {
   type: 'portfolio' | 'project' | 'all'
@@ -49,45 +50,35 @@ export default function GitUpdateButton({
     setUpdateStatus(null)
     
     try {
-      // For now, show instructions to user instead of executing directly
-      // This avoids security issues with executing shell commands from browser
       const instructions = getUpdateInstructions()
       
-      // Simulate update process
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Check if we're in VS Code and execute commands directly
-      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-        // Execute git update directly in VS Code terminal
-        const projectPath = type === 'project' ? `projects/${projectId}` : '.'
-        ;(window as any).vsCodePortfolio.updateGitRepo(projectPath)
+      if (isVSCodeEnvironment()) {
+        // Execute directly in VS Code
+        if (type === 'all') {
+          // For "all" updates, execute the PowerShell script
+          const command = `cd "D:\\ClaudeWindows\\claude-dev-portfolio" && .\\scripts\\update-all.ps1`
+          await updateGitRepo('.')
+          showNotification(`Git update started for all projects!`)
+        } else {
+          const projectPath = type === 'project' ? `projects/${projectId}` : '.'
+          await updateGitRepo(projectPath)
+          showNotification(`Git update started for ${projectName || 'portfolio'}!`)
+        }
         
         setUpdateStatus('success')
         setLastUpdate(new Date().toLocaleTimeString())
-        
-        // Show notification
-        ;(window as any).vsCodePortfolio.showNotification(`Git update started for ${projectName || 'portfolio'}!`)
       } else {
         // Fallback for web version - copy to clipboard
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(instructions)
-          setUpdateStatus('success')
-          setLastUpdate(new Date().toLocaleTimeString())
-          
-          // Show toast notification
-          showNotification('Update commands copied to clipboard!', 'success')
-        } else {
-          // Fallback: show instructions in alert
-          alert(`Update commands:\n\n${instructions}`)
-          setUpdateStatus('success')
-          setLastUpdate(new Date().toLocaleTimeString())
-        }
+        await copyToClipboard(instructions)
+        setUpdateStatus('success')
+        setLastUpdate(new Date().toLocaleTimeString())
+        showLocalNotification('Update commands copied to clipboard!', 'success')
       }
       
     } catch (error) {
       console.error('Update failed:', error)
       setUpdateStatus('error')
-      showNotification('Update failed. Check console for details.', 'error')
+      showLocalNotification('Update failed. Check console for details.', 'error')
     } finally {
       setIsUpdating(false)
     }
@@ -109,7 +100,7 @@ git pull origin main`
     }
   }
 
-  const showNotification = (message: string, type: 'success' | 'error') => {
+  const showLocalNotification = (message: string, type: 'success' | 'error') => {
     // Simple notification - you could integrate with a toast library
     const notification = document.createElement('div')
     notification.className = `git-notification git-notification-${type}`

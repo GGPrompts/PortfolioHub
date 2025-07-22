@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import styles from './NoteCard.module.css'
 import SvgIcon from './SvgIcon'
+import { copyToClipboard as copyText } from '../utils/vsCodeIntegration'
 
 interface NoteCardProps {
   claudeInstructions: string
@@ -179,7 +180,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
   const copyToClipboard = async () => {
     try {
       const prompt = generateClaudePrompt()
-      await navigator.clipboard.writeText(prompt)
+      await copyText(prompt)
       // Could add a toast notification here
       console.log('Claude prompt copied to clipboard!')
     } catch (err) {

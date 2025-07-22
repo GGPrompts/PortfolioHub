@@ -202,8 +202,8 @@ class PortfolioWebviewProvider {
         // Get the local path to portfolio assets
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
         // Get URIs for the CSS and JS files
-        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-D2eoFVKR.css'));
-        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-Bf15L59w.js'));
+        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-gcHwfFpK.css'));
+        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-D-2IQqQ1.js'));
         // Load project data from manifest
         const projectData = this._loadProjectData();
         // Use a nonce to only allow specific scripts to be run

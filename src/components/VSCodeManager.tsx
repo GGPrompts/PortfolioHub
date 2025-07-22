@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { VSCodeTerminal } from './VSCodeTerminal';
 import SvgIcon from './SvgIcon';
 import './VSCodeTerminal.css';
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard as copyText, openFolder, openInVSCode } from '../utils/vsCodeIntegration';
 
 interface VSCodeInstance {
   id: string;
@@ -184,12 +185,13 @@ export const VSCodeManager: React.FC = () => {
       } else {
         // Fallback to clipboard method
         const windowsPath = workspacePath.replace(/\//g, '\\');
-        if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-          ;(window as any).vsCodePortfolio.showNotification(`Workspace path: ${windowsPath}`);
+        if (isVSCodeEnvironment()) {
+          await openInVSCode(windowsPath)
+          showNotification(`Opening workspace: ${windowsPath}`)
         } else {
-          navigator.clipboard.writeText(windowsPath);
+          await copyTextToClipboard(windowsPath)
+          alert(`Workspace path copied: ${windowsPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`)
         }
-        alert(`Workspace path copied: ${windowsPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`);
         return;
       }
     }
@@ -212,12 +214,13 @@ export const VSCodeManager: React.FC = () => {
         } else {
           // Fallback to clipboard method
           const folderPath = projectPath.replace(/\//g, '\\');
-          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-            ;(window as any).vsCodePortfolio.openFolder(folderPath);
+          if (isVSCodeEnvironment()) {
+            await openFolder(folderPath)
+            showNotification(`Opening folder: ${folderPath}`)
           } else {
-            navigator.clipboard.writeText(folderPath);
+            await copyTextToClipboard(folderPath)
+            alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`)
           }
-          alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`);
           return;
         }
       }
@@ -237,12 +240,13 @@ export const VSCodeManager: React.FC = () => {
         return;
       } else {
         // Fallback to clipboard method
-        if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-          ;(window as any).vsCodePortfolio.executeCommand(terminalCommand, 'VS Code Command');
+        if (isVSCodeEnvironment()) {
+          await executeCommand(terminalCommand, 'VS Code Command')
+          showNotification(`Executing command: ${terminalCommand}`)
         } else {
-          navigator.clipboard.writeText(terminalCommand);
+          await copyTextToClipboard(terminalCommand)
+          alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`)
         }
-        alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`);
         return;
       }
     }
@@ -259,10 +263,10 @@ export const VSCodeManager: React.FC = () => {
         // Fallback to clipboard method
         const commandName = getCommandDisplayName(command);
         try {
-          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-            ;(window as any).vsCodePortfolio.showNotification(`Command: ${commandName}`);
+          if (isVSCodeEnvironment()) {
+            showNotification(`Command: ${commandName}`)
           } else {
-            await navigator.clipboard.writeText(commandName);
+            await copyTextToClipboard(commandName)
           }
           alert(`📋 Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
         } catch (clipboardError) {
@@ -288,12 +292,12 @@ export const VSCodeManager: React.FC = () => {
     return commandMap[command] || command;
   };
 
-  const copyToClipboard = async (text: string, description: string) => {
+  const copyTextToClipboard = async (text: string, description: string) => {
     try {
-      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-        ;(window as any).vsCodePortfolio.showNotification(`Copied: ${text}`);
+      if (isVSCodeEnvironment()) {
+        showNotification(`Copied: ${text}`)
       } else {
-        await navigator.clipboard.writeText(text);
+        await copyText(text)
       }
       alert(`Copied: ${text}\n\n${description}`);
     } catch (error) {
@@ -425,7 +429,7 @@ export const VSCodeManager: React.FC = () => {
     return () => clearInterval(interval);
   }, [serverStatus, instances.length, projects]);
 
-  const startVSCodeServer = () => {
+  const startVSCodeServer = async () => {
     // Copy the correct command
     const commands = `# Stop VS Code Server first (if running)
 Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue
@@ -439,15 +443,16 @@ Write-Host "Starting VS Code Server from: $(Get-Location)"
 # Start VS Code Server (profile will be set via window.newWindowProfile setting)
 code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms`;
     
-    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-      ;(window as any).vsCodePortfolio.executeCommand(commands, 'PowerShell Commands');
-      ;(window as any).vsCodePortfolio.showNotification('PowerShell commands executed!');
+    if (isVSCodeEnvironment()) {
+      await executeCommand(commands, 'PowerShell Commands')
+      showNotification('PowerShell commands executed!')
     } else {
-      navigator.clipboard.writeText(commands).then(() => {
-        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`);
-      }).catch(() => {
-        alert(`To start VS Code Server:\n\n${commands}`);
-      });
+      try {
+        await copyText(commands)
+        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`)
+      } catch (error) {
+        alert(`To start VS Code Server:\n\n${commands}`)
+      }
     }
   };
 
@@ -707,15 +712,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="code" /> Claude Code Commands</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('claude', 'Start Claude Code interactive session')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('claude', 'Start Claude Code interactive session')}>
                     <code>claude</code>
                     <span>Start Claude Code interactive session</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('claude mcp list', 'List all configured MCP servers')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('claude mcp list', 'List all configured MCP servers')}>
                     <code>claude mcp list</code>
                     <span>List all configured MCP servers</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('claude commit', 'AI-assisted git commit with generated messages')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('claude commit', 'AI-assisted git commit with generated messages')}>
                     <code>claude commit</code>
                     <span>AI-assisted git commit with generated messages</span>
                   </div>
@@ -725,23 +730,23 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="terminal" /> PowerShell Navigation</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('Set-Location "D:\\ClaudeWindows"', 'Navigate to directory (PowerShell cd equivalent)')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Set-Location "D:\\ClaudeWindows"', 'Navigate to directory (PowerShell cd equivalent)')}>
                     <code>Set-Location "D:\ClaudeWindows"</code>
                     <span>Navigate to directory (PowerShell cd equivalent)</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('Get-ChildItem', 'List directory contents (PowerShell ls equivalent)')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Get-ChildItem', 'List directory contents (PowerShell ls equivalent)')}>
                     <code>Get-ChildItem</code>
                     <span>List directory contents (PowerShell ls equivalent)</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('New-Item -ItemType Directory -Name "folder"', 'Create new directory')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('New-Item -ItemType Directory -Name "folder"', 'Create new directory')}>
                     <code>New-Item -ItemType Directory -Name "folder"</code>
                     <span>Create new directory</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('Remove-Item -Recurse -Force "folder"', 'Delete directory recursively')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Remove-Item -Recurse -Force "folder"', 'Delete directory recursively')}>
                     <code>Remove-Item -Recurse -Force "folder"</code>
                     <span>Delete directory recursively</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('explorer.exe .', 'Open current directory in Windows Explorer')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('explorer.exe .', 'Open current directory in Windows Explorer')}>
                     <code>explorer.exe .</code>
                     <span>Open current directory in Windows Explorer</span>
                   </div>
@@ -860,15 +865,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="github" /> Deep Analysis Prompts</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('think hard about this architecture', 'Prompt for deep architectural analysis')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('think hard about this architecture', 'Prompt for deep architectural analysis')}>
                     <code>"think hard about this architecture"</code>
                     <span>Deep architectural analysis with critical evaluation</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('ultrathink through this complex problem', 'Maximum thinking mode for complex issues')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('ultrathink through this complex problem', 'Maximum thinking mode for complex issues')}>
                     <code>"ultrathink through this complex problem"</code>
                     <span>Maximum depth analysis (31,999 token thinking)</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('analyze the security implications of this code', 'Security-focused code review')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('analyze the security implications of this code', 'Security-focused code review')}>
                     <code>"analyze the security implications"</code>
                     <span>Security-focused analysis and vulnerability assessment</span>
                   </div>
@@ -878,15 +883,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="settings" /> Multi-Agent Coordination</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('deploy 3 sub-agents in parallel to research', 'Use multiple AI agents for complex tasks')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('deploy 3 sub-agents in parallel to research', 'Use multiple AI agents for complex tasks')}>
                     <code>"deploy 3 sub-agents in parallel"</code>
                     <span>Parallel AI agents for complex research tasks</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('/senior-engineer', 'Get expert code review and architecture guidance')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('/senior-engineer', 'Get expert code review and architecture guidance')}>
                     <code>"/senior-engineer"</code>
                     <span>Expert code reviews and architecture guidance</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('/execute optimize React performance', 'Task execution with intelligent routing')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('/execute optimize React performance', 'Task execution with intelligent routing')}>
                     <code>"/execute [task]"</code>
                     <span>Quick task execution with intelligent agent routing</span>
                   </div>
@@ -896,15 +901,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="fileText" /> Code Quality & Review</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('review this code for best practices and potential improvements', 'Comprehensive code review')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('review this code for best practices and potential improvements', 'Comprehensive code review')}>
                     <code>"review this code for best practices"</code>
                     <span>Comprehensive code quality analysis</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('refactor this to be more maintainable and performant', 'Code refactoring suggestions')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('refactor this to be more maintainable and performant', 'Code refactoring suggestions')}>
                     <code>"refactor this to be more maintainable"</code>
                     <span>Refactoring suggestions for better maintainability</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('add comprehensive error handling and logging', 'Error handling improvements')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('add comprehensive error handling and logging', 'Error handling improvements')}>
                     <code>"add comprehensive error handling"</code>
                     <span>Improve error handling and logging strategies</span>
                   </div>
@@ -914,15 +919,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="play" /> Development Workflow</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('create a comprehensive test suite for this component', 'Test generation prompt')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('create a comprehensive test suite for this component', 'Test generation prompt')}>
                     <code>"create comprehensive test suite"</code>
                     <span>Generate thorough test coverage for components</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('document this code with clear examples and usage', 'Documentation generation')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('document this code with clear examples and usage', 'Documentation generation')}>
                     <code>"document this code with examples"</code>
                     <span>Generate clear documentation with usage examples</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('optimize this for performance and bundle size', 'Performance optimization')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('optimize this for performance and bundle size', 'Performance optimization')}>
                     <code>"optimize for performance and bundle size"</code>
                     <span>Performance optimization and bundle size reduction</span>
                   </div>
@@ -932,15 +937,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="helpCircle" /> Problem Solving</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item" onClick={() => copyToClipboard('debug this issue step by step', 'Systematic debugging approach')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('debug this issue step by step', 'Systematic debugging approach')}>
                     <code>"debug this issue step by step"</code>
                     <span>Systematic debugging and troubleshooting</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('suggest alternative approaches to solve this problem', 'Alternative solutions')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('suggest alternative approaches to solve this problem', 'Alternative solutions')}>
                     <code>"suggest alternative approaches"</code>
                     <span>Multiple solution strategies and trade-offs</span>
                   </div>
-                  <div className="cheat-item" onClick={() => copyToClipboard('explain this like I am a senior developer', 'Technical explanation')}>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('explain this like I am a senior developer', 'Technical explanation')}>
                     <code>"explain this like I am a senior developer"</code>
                     <span>Technical explanations with advanced context</span>
                   </div>

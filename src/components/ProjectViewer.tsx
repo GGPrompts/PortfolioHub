@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { usePortfolioStore, Project } from '../store/portfolioStore'
 import { getProjectPort, getProjectUrl, checkPort } from '../utils/portManager'
+import { isVSCodeEnvironment, executeCommand, showNotification } from '../utils/vsCodeIntegration'
 import styles from './ProjectViewer.module.css'
 
 interface ProjectViewerProps {
@@ -211,14 +212,14 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                     {!isRunning && (
                       <button 
                         className={styles.secondaryBtn}
-                        onClick={() => {
+                        onClick={async () => {
                           const command = `cd ${getProjectPath(project.id)}; ${project.buildCommand || 'npm run dev'}`
-                          if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-                            ;(window as any).vsCodePortfolio.executeCommand(command, `Start ${project.title}`);
+                          if (isVSCodeEnvironment()) {
+                            await executeCommand(command, `Start ${project.title}`)
+                            showNotification(`Starting ${project.title}...`)
                           } else {
-                            navigator.clipboard.writeText(command).then(() => {
-                              alert('Start command copied to clipboard!');
-                            });
+                            await executeCommand(command)
+                            alert('Start command copied to clipboard!')
                           }
                         }}
                         title="Copy start command to clipboard"

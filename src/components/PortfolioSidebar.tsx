@@ -7,6 +7,7 @@ import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
 import styles from './PortfolioSidebar.module.css'
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard } from '../utils/vsCodeIntegration'
 
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
@@ -15,19 +16,20 @@ interface PortfolioSidebarProps {
 }
 
 // Helper function to check if we're in VS Code and execute commands directly
-const executeOrCopyCommand = (command: string, successMessage: string, commandName?: string) => {
-  if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+const executeOrCopyCommand = async (command: string, successMessage: string, commandName?: string) => {
+  if (isVSCodeEnvironment()) {
     // Execute directly in VS Code terminal
-    ;(window as any).vsCodePortfolio.executeCommand(command, commandName || 'Portfolio Command')
-    ;(window as any).vsCodePortfolio.showNotification(successMessage)
+    await executeCommand(command, commandName || 'Portfolio Command')
+    showNotification(successMessage)
   } else {
     // Fallback to clipboard for web version
-    navigator.clipboard.writeText(command).then(() => {
+    try {
+      await copyToClipboard(command)
       alert(successMessage + ' (copied to clipboard)')
-    }).catch(err => {
+    } catch (err) {
       console.error('Failed to copy to clipboard:', err)
       alert('Command ready, but clipboard copy failed.')
-    })
+    }
   }
 }
 
@@ -388,7 +390,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     }
   }
 
-  const handleOrganizeNotes = () => {
+  const handleOrganizeNotes = async () => {
     const savedNotes = toSortNotes.filter(note => note.saved)
     const unsavedNotes = toSortNotes.filter(note => !note.saved)
     
@@ -425,24 +427,24 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     promptText += `6. Update CLAUDE.md files with relevant instructions\n\n`
     promptText += `Provide a plan and execute the organization.`
     
-    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+    if (isVSCodeEnvironment()) {
       // In VS Code, copy to clipboard and show notification
-      navigator.clipboard.writeText(promptText).then(() => {
-        const totalNotes = toSortNotes.length
-        const savedCount = savedNotes.length
-        const unsavedCount = unsavedNotes.length
-        ;(window as any).vsCodePortfolio.showNotification(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
-      })
+      await copyToClipboard(promptText)
+      const totalNotes = toSortNotes.length
+      const savedCount = savedNotes.length
+      const unsavedCount = unsavedNotes.length
+      showNotification(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
     } else {
-      navigator.clipboard.writeText(promptText).then(() => {
+      try {
+        await copyToClipboard(promptText)
         const totalNotes = toSortNotes.length
         const savedCount = savedNotes.length
         const unsavedCount = unsavedNotes.length
         alert(`Organization prompt copied! Includes ${totalNotes} notes (${savedCount} saved, ${unsavedCount} unsaved)`)
-      }).catch(err => {
+      } catch (err) {
         console.error('Failed to copy to clipboard:', err)
         alert('Organization prompt ready, but clipboard copy failed.')
-      })
+      }
     }
   }
 
@@ -661,9 +663,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     return script
   }
 
-  const copyScriptToClipboard = (script: string, type: 'launch' | 'kill') => {
+  const copyScriptToClipboard = async (script: string, type: 'launch' | 'kill') => {
     const commandName = type === 'launch' ? 'Launch Selected Projects' : 'Kill Selected Projects'
-    executeOrCopyCommand(script, `${type} script ready!`, commandName)
+    await executeOrCopyCommand(script, `${type} script ready!`, commandName)
   }
   
   
@@ -848,9 +850,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                           </button>
                           <button
                             className={styles.dropdownItem}
-                            onClick={() => {
+                            onClick={async () => {
                               const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
-                              executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
+                              await executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
                             }}
                             disabled={isRunning}
                           >
@@ -964,10 +966,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                               </button>
                               <button
                                 className={styles.dropdownItem}
-                                onClick={() => {
+                                onClick={async () => {
                                   const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.path || project.id}; ${project.buildCommand || 'npm run dev'}`
-                                  navigator.clipboard.writeText(command)
-                                  alert(`Start command copied!`)
+                                  await executeOrCopyCommand(command, `${project.title} start command ready!`, `Start ${project.title}`)
                                 }}
                                 disabled={isRunning}
                               >
@@ -1028,9 +1029,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               <span className={styles.groupLabel}>Run</span>
               <button 
                 className={styles.actionBtn}
-                onClick={() => {
+                onClick={async () => {
                   const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-tabbed.ps1'
-                  executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
+                  await executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
                 }}
                 title="Copy command to start all projects"
               >
@@ -1053,9 +1054,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               <span className={styles.groupLabel}>Kill</span>
               <button 
                 className={styles.actionBtn}
-                onClick={() => {
+                onClick={async () => {
                   const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-                  executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
+                  await executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
                 }}
                 title="Copy command to kill all projects"
               >

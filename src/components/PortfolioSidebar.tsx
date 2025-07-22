@@ -75,28 +75,35 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   
   // Refresh function for status updates
   const refreshProjectStatus = async () => {
-    console.log('🔄 Sidebar: Manual refresh triggered')
+    console.log('🔄 MANUAL REFRESH TRIGGERED at', new Date().toLocaleTimeString())
     const newStatuses = new Map<string, boolean>()
     
     // Check if we're in VS Code webview and use injected data
     if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-      console.log('🖥️ Sidebar REFRESH: Using VS Code data')
       const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+      
+      // Special debugging for ggprompts during manual refresh
+      const ggpromptsProject = vsCodeProjects.find((p: any) => p.id === 'ggprompts')
+      console.log('🔄 MANUAL REFRESH - GGPROMPTS:', {
+        found: !!ggpromptsProject,
+        id: ggpromptsProject?.id,
+        status: ggpromptsProject?.status,
+        port: ggpromptsProject?.localPort,
+        allProjectIds: vsCodeProjects.map((p: any) => p.id),
+        vsCodeDataTimestamp: (window as any).vsCodePortfolio.lastUpdated
+      })
       
       for (const project of projects) {
         const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
         const isRunning = vsCodeProject?.status === 'active' || false
-        console.log(`🔄 Sidebar VS CODE REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
         newStatuses.set(project.id, isRunning)
       }
     } else {
-      console.log('🌐 Sidebar REFRESH: Using web-based port checking')
-      // Fallback to port checking for web browser
+      console.log('🌐 Manual refresh: Using web-based port checking')
       await Promise.all(
         projects.map(async (project) => {
           if (project.localPort) {
             const isRunning = await checkPort(project.localPort)
-            console.log(`🔄 Sidebar WEB REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
             newStatuses.set(project.id, isRunning)
           } else {
             newStatuses.set(project.id, false)
@@ -106,7 +113,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     }
     
     setProjectStatuses(newStatuses)
-    console.log('✅ Sidebar: Manual refresh complete')
+    console.log('✅ Manual refresh complete - GGPrompts status:', newStatuses.get('ggprompts') ? '🟢 ONLINE' : '🔴 OFFLINE')
   }
   
   // Project wizard state
@@ -244,39 +251,60 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   
   // Check project statuses - use VS Code data if available, fallback to port checking
   useEffect(() => {
+    console.log('🔧 Sidebar: Setting up status checking useEffect')
     const checkStatuses = async () => {
-      console.log('🔍 Sidebar: Checking project statuses...')
       const statuses = new Map<string, boolean>()
       
       // Check if we're in VS Code webview and use injected data
       if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-        console.log('🖥️ Sidebar: Using VS Code injected project data')
         const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+        
+        // Only log for ggprompts to reduce spam
+        const ggpromptsProject = vsCodeProjects.find((p: any) => p.id === 'ggprompts')
+        if (ggpromptsProject) {
+          console.log('🟢 GGPROMPTS STATUS CHECK:', {
+            id: ggpromptsProject.id,
+            status: ggpromptsProject.status,
+            port: ggpromptsProject.localPort,
+            timestamp: new Date().toLocaleTimeString()
+          })
+        }
         
         for (const project of projects) {
           const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
           const isRunning = vsCodeProject?.status === 'active' || false
-          console.log(`📊 Sidebar VS CODE: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
           statuses.set(project.id, isRunning)
         }
       } else {
-        console.log('🌐 Sidebar: Using web-based port checking')
         // Fallback to port checking for web browser
         for (const project of projects) {
           if (project.localPort) {
             const isRunning = await checkPort(project.localPort)
-            console.log(`📊 Sidebar WEB: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
             statuses.set(project.id, isRunning)
           }
         }
       }
       
       setProjectStatuses(statuses)
-      console.log('✅ Sidebar: Status update complete')
     }
+    
     checkStatuses()
-    const interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
-    return () => clearInterval(interval)
+    
+    // Only set up interval in web context - VS Code extension handles refreshing
+    let interval: NodeJS.Timeout | null = null
+    if (typeof window !== 'undefined' && !(window as any).vsCodePortfolio?.isVSCodeWebview) {
+      interval = setInterval(checkStatuses, 5000) // Check every 5 seconds
+      console.log('⏰ Sidebar: Status check interval created (WEB MODE)')
+    } else {
+      console.log('🖥️ Sidebar: VS Code mode - using extension refresh cycle (NO INTERVAL)')
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+        console.log('🛑 Sidebar: Status check interval cleared')
+      }
+    }
   }, [projects])
   
   // Helper functions for DEV NOTES system

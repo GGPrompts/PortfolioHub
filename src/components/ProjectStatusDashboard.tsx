@@ -26,35 +26,71 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
 
   const updateProjectStatuses = async () => {
     setLoading(true)
-    const runningProjects = await getRunningProjects()
-    const portStatuses = await getAllPortStatuses()
-    
     const statuses: ProjectStatus[] = []
     
-    for (const project of projects) {
-      if (project.displayType === 'external') {
-        const actualPort = await getProjectPort(project)
-        const isRunning = runningProjects.has(project.id)
-        
-        statuses.push({
-          id: project.id,
-          title: project.title,
-          isRunning,
-          port: actualPort,
-          defaultPort: project.localPort || null,
-          buildCommand: project.buildCommand || 'npm run dev',
-          displayType: project.displayType
-        })
-      } else {
-        statuses.push({
-          id: project.id,
-          title: project.title,
-          isRunning: true, // iframe projects are always "running"
-          port: null,
-          defaultPort: null,
-          buildCommand: 'N/A',
-          displayType: project.displayType
-        })
+    // Check if we're in VS Code webview and use injected data
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      console.log('🖥️ Dashboard: Using VS Code injected project data')
+      const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+      
+      for (const project of projects) {
+        if (project.displayType === 'external') {
+          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+          const isRunning = vsCodeProject?.status === 'active' || false
+          const actualPort = isRunning ? (vsCodeProject?.localPort || project.localPort) : null
+          
+          statuses.push({
+            id: project.id,
+            title: project.title,
+            isRunning,
+            port: actualPort,
+            defaultPort: project.localPort || null,
+            buildCommand: project.buildCommand || 'npm run dev',
+            displayType: project.displayType
+          })
+        } else {
+          statuses.push({
+            id: project.id,
+            title: project.title,
+            isRunning: true, // iframe projects are always "running"
+            port: null,
+            defaultPort: null,
+            buildCommand: 'N/A',
+            displayType: project.displayType
+          })
+        }
+      }
+    } else {
+      // Fallback to web-based port checking
+      console.log('🌐 Dashboard: Using web-based port checking')
+      const runningProjects = await getRunningProjects()
+      const portStatuses = await getAllPortStatuses()
+      
+      for (const project of projects) {
+        if (project.displayType === 'external') {
+          const actualPort = await getProjectPort(project)
+          const isRunning = runningProjects.has(project.id)
+          
+          statuses.push({
+            id: project.id,
+            title: project.title,
+            isRunning,
+            port: actualPort,
+            defaultPort: project.localPort || null,
+            buildCommand: project.buildCommand || 'npm run dev',
+            displayType: project.displayType
+          })
+        } else {
+          statuses.push({
+            id: project.id,
+            title: project.title,
+            isRunning: true, // iframe projects are always "running"
+            port: null,
+            defaultPort: null,
+            buildCommand: 'N/A',
+            displayType: project.displayType
+          })
+        }
       }
     }
     
@@ -66,10 +102,21 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
   useEffect(() => {
     updateProjectStatuses()
     
-    // Update every 5 seconds
-    const interval = setInterval(updateProjectStatuses, 5000)
+    // Only set up interval in web context - VS Code extension handles refreshing
+    let interval: NodeJS.Timeout | null = null
+    if (typeof window !== 'undefined' && !(window as any).vsCodePortfolio?.isVSCodeWebview) {
+      interval = setInterval(updateProjectStatuses, 5000) // Update every 5 seconds
+      console.log('⏰ Dashboard: Status check interval created (WEB MODE)')
+    } else {
+      console.log('🖥️ Dashboard: VS Code mode - using extension refresh cycle (NO INTERVAL)')
+    }
     
-    return () => clearInterval(interval)
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+        console.log('🛑 Dashboard: Status check interval cleared')
+      }
+    }
   }, [projects])
 
   const runningCount = projectStatuses.filter(p => p.isRunning).length

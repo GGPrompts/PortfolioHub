@@ -1,40 +1,94 @@
-## ✅ SOLVED: Native VS Code Extension (January 2025)
+## ✅ COMPLETED: Dual-Architecture Portfolio System (January 2025)
 
-### 🎉 Final Solution: Complete VS Code API Integration
-**Problem**: All previous iframe-based VS Code integration issues and clipboard-based workflows
-**Solution**: Built native VS Code extension with complete API bridge integration
-**Status**: ✅ **FULLY IMPLEMENTED, DEPLOYED & WORKING**
+### 🎉 Final Solution: Two Synchronized React Applications
+**Challenge**: Creating portfolio experiences for both standalone use and integrated VS Code development
+**Solution**: Built dual-architecture system with shared codebase and environment-specific optimizations
+**Status**: ✅ **FULLY IMPLEMENTED, TESTED & WORKING**
 
-### Extension Features:
-- **📁 Activity Bar Integration**: Claude Portfolio icon with 3 panels (Projects, Commands, Cheat Sheet)
-- **🚀 Status Bar Button**: Quick access to portfolio dashboard
-- **⚡ Direct Command Execution**: All portfolio buttons execute directly in VS Code terminals (no clipboard!)
-- **🖥️ Native Terminal Integration**: Creates terminals in correct project directories with proper commands
-- **📂 Workspace Management**: Click project names to add folders to workspace
-- **🔍 Command Palette**: All commands available via Ctrl+Shift+P
-- **🔗 Complete API Bridge**: Unified `vsCodeIntegration.ts` utility replacing ALL clipboard operations
-- **⚙️ Environment Detection**: Automatic detection and fallback to web mode when not in VS Code
+### 🏗️ Architecture Overview:
 
-### Installation: 
-Extension permanently installed at: `claude-portfolio-0.0.1.vsix`
-**Launch**: Simply open VS Code - extension is always available!
+#### 🌐 Web Version (Standalone)
+- **Location**: http://localhost:5173 via `npm run dev`
+- **Purpose**: Portfolio showcase, presentations, team demos
+- **Commands**: Clipboard-based for external PowerShell execution
+- **Previews**: Full iframe support with browser security model
+- **Use Case**: Independent browsing and project showcasing
 
-### Files Created:
-- `vscode-extension/claude-portfolio/` - Complete extension source
-- `launch-vscode-portfolio.ps1` - Quick launch script## Development Workflow Updates
+#### 🔌 VS Code Extension Version (Integrated)
+- **Location**: VS Code Activity Bar → Claude Portfolio icon
+- **Purpose**: Native development environment integration
+- **Commands**: Direct VS Code API execution (terminals, files, workspace)
+- **Previews**: Embedded iframe with enhanced Content Security Policy
+- **Use Case**: Active development workflow within VS Code IDE
 
-### VS Code Extension Workflow (Recommended)
-1. **Install Extension**: Build and install the Claude Portfolio extension
-2. **Open VS Code**: Look for the Claude Portfolio icon in activity bar
-3. **Manage Projects**: Click projects to open, right-click to run
-4. **Use Dashboard**: Click status bar item for beautiful overview
-5. **Quick Commands**: Access common tasks from sidebar
+### 🔗 Shared Infrastructure:
+- **Common Codebase**: Same React components with smart environment detection
+- **Unified State Management**: Synchronized project status and data
+- **Smart Integration**: `vsCodeIntegration.ts` automatically adapts behavior
+- **Consistent Experience**: Feature parity across both versions
 
-### Web Portfolio Workflow (Original)
-1. **Start Portfolio**: `npm run dev` in root directory
-2. **View Projects**: Navigate to http://localhost:5173
-3. **Launch Projects**: Use automation scripts or manual start
-4. **VS Code Integration**: Now legacy - use extension instead## Technical Architecture
+### 📦 Extension Installation:
+- **Current Package**: `claude-portfolio-iframe-fix.vsix`
+- **Auto-Installation**: Extension persists across VS Code sessions
+- **Easy Updates**: `.\reinstall.ps1` script handles complete rebuild/reinstall
+
+## 🆕 Recent Feature Implementations (January 2025)
+
+### ✅ Project Landing Pages
+- **What**: Detailed project information pages with tabbed interface
+- **Trigger**: Click project titles in sidebar when project is offline
+- **Tabs**: Overview, README.md, CLAUDE.md, Commands
+- **Integration**: Works identically in both web and VS Code versions
+- **Components**: `EnhancedProjectViewer` with full VS Code API integration
+
+### ✅ Improved Port Detection  
+- **Problem**: Browser Image-based port checking failed with HTML responses
+- **Solution**: Switched to Fetch API with HEAD requests
+- **Result**: Reliable detection of any HTTP response (even 404s) as evidence of running server
+- **Impact**: Consistent status detection between web and VS Code versions
+
+### ✅ Live Preview Fixes
+- **Problem**: Infinite loading spinners in VS Code webview iframes
+- **Solution**: 
+  - Enhanced Content Security Policy to allow localhost iframe connections
+  - Added 10-second timeout fallback to prevent infinite loading
+  - Environment-specific debugging logs
+- **Result**: Live previews work in both web and VS Code versions
+
+### ✅ Smart Integration Architecture
+- **Core File**: `src/utils/vsCodeIntegration.ts`
+- **Detection**: `isVSCodeEnvironment()` automatically detects context
+- **Fallbacks**: Every VS Code API call has appropriate fallback for web version
+- **Examples**:
+  - `executeCommand()` → Direct terminal execution (VS Code) or clipboard copy (web)
+  - `showNotification()` → VS Code notifications or console logging
+  - `openInBrowser()` → Simple Browser integration or new tab
+
+## Development Workflows
+
+### 🔌 VS Code Extension Workflow (Active Development)
+1. **Launch VS Code**: Extension auto-loads with Claude Portfolio icon in activity bar
+2. **Access Projects**: Three panels - Projects, Commands, Cheat Sheet
+3. **Direct Actions**: 
+   - Click project titles → Add to workspace or view landing page
+   - Right-click projects → Start/Stop/Open in browser
+   - All commands execute directly in VS Code terminals
+4. **Live Previews**: Embedded iframe previews with proper CSP
+5. **Integrated Experience**: No clipboard needed - everything runs natively
+
+### 🌐 Web Portfolio Workflow (Showcase & Demos)
+1. **Start Portfolio**: `npm run dev` → http://localhost:5173
+2. **Browse Projects**: Visual grid with live status indicators  
+3. **Clipboard Integration**: All commands copy to clipboard for manual execution
+4. **Live Previews**: Full browser iframe support with device scaling
+5. **Independent Access**: Perfect for presentations and team showcases
+
+### 🔄 Unified Features (Both Versions)
+- **Project Landing Pages**: Click offline project titles for detailed information
+- **Real-time Status**: Live port detection and running status indicators
+- **Smart Port Management**: Automatic conflict resolution and fallback ports
+- **DEV NOTES System**: Matrix Card note-taking with project-specific context
+- **Responsive Design**: Adaptive layouts for all screen sizes## Technical Architecture
 
 ### Recent Architectural Changes
 

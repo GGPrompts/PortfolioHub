@@ -198,6 +198,156 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private async _createEmbeddedPreview(projectId: string, url: string): Promise<void> {
+        try {
+            // Create embedded preview panel with mobile/desktop toggle
+            const panel = vscode.window.createWebviewPanel(
+                `preview-${projectId}`,
+                `🔍 Preview: ${projectId} (Desktop)`,
+                { 
+                    viewColumn: vscode.ViewColumn.Beside, 
+                    preserveFocus: true 
+                },
+                {
+                    enableScripts: true,
+                    retainContextWhenHidden: true,
+                    portMapping: [
+                        { webviewPort: parseInt(url.split(':')[2]), extensionHostPort: parseInt(url.split(':')[2]) }
+                    ]
+                }
+            );
+
+            let isMobileView = false;
+
+            const getPreviewHTML = (mobile: boolean) => {
+                const viewportMeta = mobile 
+                    ? '<meta name="viewport" content="width=375, initial-scale=1.0">'
+                    : '<meta name="viewport" content="width=1920, initial-scale=1.0">';
+                
+                const containerStyle = mobile
+                    ? 'width: 375px; height: 812px; margin: 20px auto; border: 2px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'
+                    : 'width: 100%; height: 100%;';
+
+                const iframeStyle = mobile
+                    ? 'width: 375px; height: 812px; border: none; transform: scale(0.8); transform-origin: top left;'
+                    : 'width: 100%; height: calc(100vh - 60px); border: none;';
+
+                return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    ${viewportMeta}
+                    <title>Preview: ${projectId} (${mobile ? 'Mobile' : 'Desktop'})</title>
+                    <style>
+                        body, html { 
+                            margin: 0; 
+                            padding: 0; 
+                            width: 100%; 
+                            height: 100%; 
+                            overflow: ${mobile ? 'auto' : 'hidden'};
+                            background: ${mobile ? '#f0f0f0' : '#1e1e1e'};
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        }
+                        .toolbar {
+                            height: 40px;
+                            background: #2d2d30;
+                            color: white;
+                            display: flex;
+                            align-items: center;
+                            padding: 0 20px;
+                            gap: 15px;
+                            border-bottom: 1px solid #3e3e42;
+                        }
+                        .toggle-btn {
+                            background: #0e639c;
+                            color: white;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                        }
+                        .toggle-btn:hover { background: #1177bb; }
+                        .view-info { 
+                            color: #cccccc; 
+                            font-size: 12px;
+                        }
+                        .preview-container {
+                            ${containerStyle}
+                        }
+                        iframe { ${iframeStyle} }
+                        .loading { 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 200px;
+                            color: #ffffff;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="toolbar">
+                        <button class="toggle-btn" onclick="toggleView()">${mobile ? '🖥️ Desktop' : '📱 Mobile'}</button>
+                        <span class="view-info">
+                            ${mobile ? '📱 375×812 Mobile View' : '🖥️ Desktop View'} | ${projectId}
+                        </span>
+                        <button class="toggle-btn" onclick="refreshPreview()">🔄 Refresh</button>
+                    </div>
+                    <div class="preview-container">
+                        <div class="loading" id="loading">Loading ${projectId} preview...</div>
+                        <iframe id="preview" src="${url}" style="display: none;" 
+                                onload="document.getElementById('loading').style.display='none'; this.style.display='block';">
+                        </iframe>
+                    </div>
+                    <script>
+                        const vscode = acquireVsCodeApi();
+                        function toggleView() {
+                            vscode.postMessage({ command: 'toggleView' });
+                        }
+                        function refreshPreview() {
+                            document.getElementById('preview').src = document.getElementById('preview').src;
+                        }
+                    </script>
+                </body>
+                </html>
+            `;
+            };
+
+            // Handle messages from webview
+            panel.webview.onDidReceiveMessage(message => {
+                if (message.command === 'toggleView') {
+                    isMobileView = !isMobileView;
+                    panel.title = `🔍 Preview: ${projectId} (${isMobileView ? 'Mobile' : 'Desktop'})`;
+                    panel.webview.html = getPreviewHTML(isMobileView);
+                }
+            });
+
+            // Set initial HTML
+            panel.webview.html = getPreviewHTML(false);
+
+            console.log(`🔍 Created embedded preview panel for ${projectId} at ${url}`);
+            
+            // Optional: Close panel when project stops running
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(url, { method: 'HEAD', timeout: 1000 });
+                    if (!response.ok) throw new Error('Project not running');
+                } catch {
+                    panel.dispose();
+                    clearInterval(interval);
+                    console.log(`🔍 Closed preview panel for ${projectId} (project stopped)`);
+                }
+            }, 10000);
+
+            panel.onDidDispose(() => clearInterval(interval));
+
+        } catch (error) {
+            console.error(`Failed to create embedded preview for ${projectId}:`, error);
+            vscode.window.showErrorMessage(`Failed to create preview for ${projectId}`);
+        }
+    }
+
     private async _openFolder(folderPath: string): Promise<void> {
         const fullPath = path.isAbsolute(folderPath) 
             ? folderPath 
@@ -562,7 +712,7 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; img-src ${webview.cspSource} data: http: https: http://localhost:*; font-src ${webview.cspSource}; frame-src http://localhost:* https://localhost:*; child-src http://localhost:* https://localhost:*;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-inline'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; img-src ${webview.cspSource} data: http: https: http://localhost:* https://localhost:*; font-src ${webview.cspSource} https:; frame-src http://localhost:* https://localhost:*; child-src http://localhost:* https://localhost:*; frame-ancestors 'self';"
     <title>Claude Portfolio</title>
     <link rel="stylesheet" type="text/css" href="${cssUri}">
     <style>

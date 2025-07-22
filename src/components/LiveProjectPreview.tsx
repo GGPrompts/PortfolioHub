@@ -90,9 +90,13 @@ export default function LiveProjectPreview({
       return
     }
     
-    const command = `taskkill /F /IM node.exe`
-    await executeCommand(command, `Kill ${project.title}`)
-    showNotification(`Stopping ${project.title}...`, 'info')
+    // Use port-specific kill command for precision
+    const command = isVSCodeEnvironment() 
+      ? `$proc = Get-NetTCPConnection -LocalPort ${actualPort} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`
+      : `taskkill /F /PID (Get-NetTCPConnection -LocalPort ${actualPort} | Select-Object -ExpandProperty OwningProcess)`
+    
+    await executeCommand(command, `Kill ${project.title} on port ${actualPort}`)
+    showNotification(`Stopping ${project.title} on port ${actualPort}...`, 'info')
   }
 
   const handleViewInNewTab = () => {
@@ -106,14 +110,24 @@ export default function LiveProjectPreview({
   }
 
   const handleViewInIDE = () => {
-    // In VS Code environment, open in Simple Browser like the tree view does
-    if (isVSCodeEnvironment() && actualIsRunning && actualPort) {
-      const url = `http://localhost:${actualPort}`
-      console.log(`🌐 Opening ${project.id} in VS Code Simple Browser:`, { url, port: actualPort })
-      openInBrowser(url)
-      showNotification(`Opening ${project.title} in Simple Browser`, 'info')
-    } else if (!actualIsRunning) {
-      showNotification('Project is not running. Start it first.', 'warning')
+    // In VS Code environment, add project to workspace
+    if (isVSCodeEnvironment()) {
+      const projectPath = window.vsCodePortfolio?.portfolioPath 
+        ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+        : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      
+      // Use the VS Code API to add project to workspace
+      if (window.vsCodePortfolio?.addProjectToWorkspace) {
+        window.vsCodePortfolio.addProjectToWorkspace(projectPath)
+        showNotification(`Added ${project.title} to VS Code workspace`, 'info')
+      } else {
+        // Fallback to message passing
+        window.vsCodePortfolio?.postMessage?.({
+          type: 'workspace:addProject',
+          project: projectPath
+        })
+        showNotification(`Adding ${project.title} to workspace...`, 'info')
+      }
     } else {
       // Fallback to original behavior for web version
       const projectPath = `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
@@ -126,21 +140,48 @@ export default function LiveProjectPreview({
       ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
       : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
 
-    let command = ''
-    switch (assistant) {
-      case 'claude':
-        command = `cd "${projectPath}" && code . && echo "Opening project with Claude Code..."`
-        break
-      case 'gemini':
-        command = `cd "${projectPath}" && echo "Opening project directory for Gemini integration..."`
-        break
-      case 'copilot':
-        command = `cd "${projectPath}" && code . && echo "Opening project with GitHub Copilot..."`
-        break
+    if (isVSCodeEnvironment()) {
+      // In VS Code, open terminal and run the appropriate command
+      let command = ''
+      let notification = ''
+      
+      switch (assistant) {
+        case 'claude':
+          command = `cd "${projectPath}" && claude`
+          notification = `Starting Claude Code in ${project.title}...`
+          break
+        case 'gemini':
+          command = `cd "${projectPath}" && gemini`
+          notification = `Starting Gemini in ${project.title}...`
+          break
+        case 'copilot':
+          // For Copilot, just navigate to the directory and show instructions
+          command = `cd "${projectPath}" && echo "GitHub Copilot: Press Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open Copilot chat"`
+          notification = `Terminal opened in ${project.title}. Press Ctrl+Alt+I to open Copilot chat.`
+          break
+      }
+      
+      await executeCommand(command, `${assistant.charAt(0).toUpperCase() + assistant.slice(1)} - ${project.title}`)
+      showNotification(notification, 'info')
+    } else {
+      // Web fallback - copy commands
+      let command = ''
+      switch (assistant) {
+        case 'claude':
+          command = `cd "${projectPath}" && claude`
+          break
+        case 'gemini':
+          command = `cd "${projectPath}" && gemini`
+          break
+        case 'copilot':
+          command = `cd "${projectPath}" && code .`
+          break
+      }
+      
+      await navigator.clipboard.writeText(command)
+      alert(`${assistant} command copied to clipboard!`)
     }
     
-    await executeCommand(command, `${assistant.charAt(0).toUpperCase() + assistant.slice(1)} - ${project.title}`)
-    showNotification(`Opening ${project.title} with ${assistant}...`, 'info')
     setShowAIDropdown(false)
   }
 
@@ -307,15 +348,27 @@ export default function LiveProjectPreview({
           iframeRef.current.src = previewUrl || ''
         }
       }, 100)
+      
+      // Timeout fallback - stop spinner after 10 seconds if iframe doesn't load
+      const loadTimeout = setTimeout(() => {
+        const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
+        console.warn(`⚠️ LivePreview ${project.id} timeout - assuming loaded ${isVSCode ? '(VS Code)' : '(Web)'}`)
+        setPreviewLoaded(true)
+        setIsRefreshing(false)
+      }, 10000)
+      
+      return () => clearTimeout(loadTimeout)
     }
-  }, [zoomMode, viewMode, previewUrl])
+  }, [zoomMode, viewMode, previewUrl, project.id])
 
   const handleIframeLoad = () => {
     setPreviewLoaded(true)
     setIsRefreshing(false)
+    const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
+    console.log(`✅ LivePreview ${project.id} iframe loaded successfully ${isVSCode ? '(VS Code)' : '(Web)'}`)
     
-    // Inject appropriate viewport meta tag based on device type
-    if (iframeRef.current) {
+    // Inject appropriate viewport meta tag based on device type (skip for same-origin to avoid CORS issues)
+    if (iframeRef.current && window.location.origin === previewUrl?.split('?')[0]?.replace(/:\d+/, ':' + actualPort)) {
       try {
         const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document
         if (iframeDoc) {
@@ -411,29 +464,69 @@ export default function LiveProjectPreview({
               overflow: 'hidden',
               position: 'relative'
             }}>
-              <iframe
-                ref={iframeRef}
-                src={previewUrl}
-                className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
-                sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
-                title={`${project.title} Preview`}
-                width={scaleConfig.width}
-                height={scaleConfig.height}
-                style={{
-                  width: `${scaleConfig.width}px`,
-                  height: `${scaleConfig.height}px`,
-                  transform: `scale(${scaleConfig.scale})`,
-                  transformOrigin: 'top left',
-                  border: 'none',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  minWidth: `${scaleConfig.width}px`,
-                  minHeight: `${scaleConfig.height}px`
-                }}
-              />
+              {isVSCodeEnvironment() ? (
+                // VS Code fallback UI - no iframe due to CSP restrictions
+                <div className={styles.vsCodePreviewFallback} style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1e1e1e',
+                  color: '#cccccc',
+                  textAlign: 'center',
+                  padding: '20px'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🖼️</div>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#e7e7e7' }}>Live Preview Not Available in VS Code</h3>
+                  <p style={{ margin: '0 0 20px 0', opacity: 0.8 }}>Due to security restrictions, live previews cannot be displayed in VS Code webviews</p>
+                  <button
+                    onClick={() => openInBrowser(previewUrl)}
+                    style={{
+                      backgroundColor: '#0e639c',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <SvgIcon name="externalLink" size={16} />
+                    Open in Browser
+                  </button>
+                </div>
+              ) : (
+                // Regular iframe for web mode
+                <iframe
+                  ref={iframeRef}
+                  src={previewUrl}
+                  className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                  sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
+                  title={`${project.title} Preview`}
+                  width={scaleConfig.width}
+                  height={scaleConfig.height}
+                  style={{
+                    width: `${scaleConfig.width}px`,
+                    height: `${scaleConfig.height}px`,
+                    transform: `scale(${scaleConfig.scale})`,
+                    transformOrigin: 'top left',
+                    border: 'none',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    minWidth: `${scaleConfig.width}px`,
+                    minHeight: `${scaleConfig.height}px`
+                  }}
+                />
+              )}
             </div>
             {!previewLoaded && (
               <div className={styles.previewLoading}>

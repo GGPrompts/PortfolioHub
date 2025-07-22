@@ -1,8 +1,54 @@
-# ✅ COMPLETED SESSION LOG (2025-01-22)
+# 📍 CURRENT SESSION STATUS (2025-01-22 Latest)
+
+## 🚀 Where We Are Now
+
+### ✅ COMPLETED TODAY:
+1. **Dual-Architecture Documentation**: Updated README.md and CLAUDE.md to clearly explain:
+   - 🌐 **Web Version** (localhost:5173): Standalone portfolio with clipboard commands
+   - 🔌 **VS Code Extension**: Native integration with direct API execution  
+   - 🔗 **Shared Codebase**: Same React components with smart environment detection
+
+2. **Recent Features Documented**:
+   - ✅ Project Landing Pages (click offline project titles)
+   - ✅ Improved Port Detection (switched from Image to Fetch API)
+   - ✅ Iframe Loading Fixes (timeout fallbacks, enhanced CSP)
+   - ✅ Status Synchronization (consistent between web/VS Code versions)
+
+3. **Issue Resolution**:
+   - ✅ Matrix Cards status indicators now work correctly in both versions
+   - ✅ Web version shows Matrix Cards as online (fixed port detection)
+   - ❌ **VS Code previews still not working** - identified iframe nesting limitation
+
+### 🔧 CURRENT ISSUE: VS Code Live Previews
+**Problem**: VS Code webview iframes can't nest other iframes due to security restrictions
+```
+VS Code Webview (iframe) → Portfolio React App → Matrix Cards iframe ❌ BLOCKED
+```
+
+**Solution In Progress**: Embedded Simple Browser panels instead of nested iframes
+- 🟡 **50% Complete**: Implementation started in `portfolioWebviewProvider.ts`
+- 📝 **Added Method**: `_createEmbeddedPreview()` with mobile/desktop toggle
+- ⏳ **Next**: Wire up the React portfolio to trigger embedded previews
+
+## 🎯 IMMEDIATE NEXT STEPS:
+
+### 1. Complete Embedded Simple Browser Implementation
+- [ ] Add message handler for `preview:create` in VS Code extension
+- [ ] Update React portfolio to request embedded previews in VS Code context
+- [ ] Test embedded preview panels with Matrix Cards
+
+### 2. Test & Polish
+- [ ] Verify embedded previews work with mobile/desktop toggle
+- [ ] Ensure preview panels close when projects stop
+- [ ] Add refresh functionality to embedded previews
+
+---
+
+# ✅ COMPLETED SESSION LOG (2025-01-22 Previous)
 
 **All VS Code extension integration work has been completed successfully!**
 
-## 🎉 FINAL SESSION ACHIEVEMENTS:
+## 🎉 PREVIOUS SESSION ACHIEVEMENTS:
 
 ### ✅ FULLY RESOLVED: VS Code Extension Integration
 1. **Complete VS Code API Integration**: All portfolio functionality now works natively in VS Code

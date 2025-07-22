@@ -41,34 +41,24 @@ export async function checkPort(port: number): Promise<boolean> {
   }
   
   try {
+    // Use fetch with short timeout for more reliable detection
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000);
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     
-    // Create a simple image request to check port availability
-    // This avoids CORS errors and connection refused messages
-    const img = new Image();
-    
-    return new Promise((resolve) => {
-      img.onload = () => {
-        clearTimeout(timeoutId);
-        resolve(true); // Port is in use
-      };
-      
-      img.onerror = () => {
-        clearTimeout(timeoutId);
-        resolve(false); // Port is available
-      };
-      
-      // Use a cache-busting query parameter
-      img.src = `http://localhost:${port}/favicon.ico?t=${Date.now()}`;
-      
-      // Fallback timeout
-      setTimeout(() => {
-        resolve(false);
-      }, 1000);
+    const response = await fetch(`http://localhost:${port}/favicon.ico?t=${Date.now()}`, {
+      method: 'HEAD',  // Use HEAD to avoid downloading content
+      signal: controller.signal,
+      cache: 'no-cache'
     });
-  } catch {
-    return false; // Port is available
+    
+    clearTimeout(timeoutId);
+    
+    // Any response (even 404) means the server is running
+    return response.status !== undefined;
+    
+  } catch (error) {
+    // Network errors mean port is not in use
+    return false;
   }
 }
 

@@ -45,24 +45,48 @@
 
 # Start VS Code with profile
 .\launch-vscode-with-profile.ps1
-```# Claude Windows Portfolio Hub 🚀
+```# Claude Development Portfolio 🚀
 
-A modern, AI-powered development portfolio dashboard with VS Code integration, allowing you to view, manage, and showcase multiple projects in a unified interface.
+A dual-architecture development portfolio system offering both **standalone web application** and **native VS Code extension** experiences for managing and showcasing multiple development projects.
 
-## 🆕 What's New
+## 🏗️ Dual Architecture Overview
 
-### VS Code Extension Integration 🎉
-- **Native VS Code Experience**: New extension replaces problematic iframe integration
-- **Persistent Workspace**: No more losing state when switching tabs
-- **Sidebar Integration**: Projects, commands, and cheat sheets in the activity bar
-- **Beautiful Dashboard**: Webview with project statistics and quick actions
-- **One-Click Actions**: Open, run, and browse projects directly from VS Code
+This portfolio system provides **two separate but synchronized React applications**:
 
-### Recent Improvements
-- **Fixed Console Errors**: Silent port checking eliminates ERR_CONNECTION_REFUSED spam
-- **Workspace Persistence**: Multiple workspace files with absolute paths
-- **Enhanced UI**: Better instructions and troubleshooting guides
-- **Dark Mode Fix**: Workspace no longer overrides profile theme settings
+### 🌐 Web Version (`localhost:5173`)
+- **Purpose**: Standalone portfolio browser and project showcase
+- **Command Integration**: Clipboard-based commands for external execution
+- **Use Case**: Independent portfolio viewing, presentations, team demos
+- **Access**: `npm run dev` → http://localhost:5173
+
+### 🔌 VS Code Extension Version
+- **Purpose**: Native VS Code development environment integration  
+- **Command Integration**: Direct VS Code API execution (terminals, files, workspace)
+- **Use Case**: Active development workflow within VS Code IDE
+- **Access**: Activity Bar → Claude Portfolio icon
+
+## ✨ Why Two Versions?
+
+**Different environments, different capabilities:**
+- **Web**: Great for showcasing, limited to browser security model
+- **VS Code**: Full system access, integrated development experience
+- **Shared Codebase**: Same React components with smart environment detection
+- **Automatic Fallback**: Code detects context and uses appropriate integration
+
+## 🆕 Latest Updates (January 2025)
+
+### 🎯 Recent Features Added
+- **✅ Project Landing Pages**: Click offline project titles to view detailed project information with tabs (Overview, README, CLAUDE.md, Commands)
+- **✅ Improved Port Detection**: Switched from Image to Fetch API for reliable server detection in both versions
+- **✅ Iframe Loading Fixes**: Added timeout fallbacks and VS Code CSP improvements for live previews
+- **✅ Enhanced Debugging**: Environment-specific console logging for better troubleshooting
+- **✅ Status Synchronization**: Consistent project status between web and VS Code versions
+
+### 🔧 Architecture Improvements
+- **Enhanced CSP**: VS Code webview Content Security Policy allows proper iframe loading
+- **Smart Environment Detection**: `vsCodeIntegration.ts` automatically detects and adapts behavior
+- **Unified State Management**: Both versions share the same project data and status logic
+- **Robust Error Handling**: Graceful fallbacks for connection issues and loading problems
 
 ## ✨ Features
 

@@ -195,14 +195,52 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
         {project.displayType === 'external' && !isProjectLoading && (
           <>
             {isInline && isRunning && actualPort ? (
-              <iframe
-                src={`http://localhost:${actualPort}`}
-                className={styles.iframe}
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
-                title={project.title}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-              />
+              isVSCodeEnvironment() ? (
+                // VS Code fallback UI for inline preview
+                <div className={styles.vsCodePreviewFallback} style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1e1e1e',
+                  color: '#cccccc',
+                  textAlign: 'center',
+                  padding: '40px'
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '20px' }}>🖼️</div>
+                  <h2 style={{ margin: '0 0 10px 0', color: '#e7e7e7' }}>Live Preview Not Available</h2>
+                  <p style={{ margin: '0 0 30px 0', opacity: 0.8, fontSize: '16px' }}>VS Code security restrictions prevent iframe previews</p>
+                  <button
+                    onClick={openExternal}
+                    style={{
+                      backgroundColor: '#0e639c',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    Open {project.title} in Browser ↗
+                  </button>
+                </div>
+              ) : (
+                <iframe
+                  src={`http://localhost:${actualPort}`}
+                  className={styles.iframe}
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                  title={project.title}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+                />
+              )
             ) : (
               <div className={styles.externalInfo}>
                 <div className={styles.externalContent}>

@@ -72,6 +72,12 @@
         "title": "Open Full Portfolio",
         "category": "Claude Portfolio",
         "icon": "$(preview)"
+      },
+      {
+        "command": "claude-portfolio.openAIAssistant",
+        "title": "Open AI Assistant",
+        "category": "Claude Portfolio",
+        "icon": "$(sparkle)"
       }
     ],
     "viewsContainers": {
@@ -134,6 +140,11 @@
           "command": "claude-portfolio.openProjectInBrowser",
           "when": "view == claudeProjects && viewItem == project",
           "group": "inline"
+        },
+        {
+          "command": "claude-portfolio.openAIAssistant",
+          "when": "view == claudeProjects && viewItem == project",
+          "group": "2_ai"
         }
       ]
     },

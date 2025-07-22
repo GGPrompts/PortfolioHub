@@ -311,6 +311,174 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem.command = 'claude-portfolio.openPortfolio';
         statusBarItem.show();
 
+        // Development Commands
+        const buildReactCommand = vscode.commands.registerCommand('claude-portfolio.buildReact', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Build React App',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('npm run build');
+            vscode.window.showInformationMessage('Building React app...');
+        });
+
+        const startDevCommand = vscode.commands.registerCommand('claude-portfolio.startDev', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Portfolio Dev Server',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('npm run dev');
+            vscode.window.showInformationMessage('Starting portfolio dev server...');
+        });
+
+        const npmInstallCommand = vscode.commands.registerCommand('claude-portfolio.npmInstall', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'NPM Install',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('npm install');
+            vscode.window.showInformationMessage('Installing dependencies...');
+        });
+
+        const killAllServersCommand = vscode.commands.registerCommand('claude-portfolio.killAllServers', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Kill All Servers',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('.\\scripts\\kill-all-servers.ps1');
+            vscode.window.showInformationMessage('Killing all dev servers...');
+        });
+
+        const startAllProjectsCommand = vscode.commands.registerCommand('claude-portfolio.startAllProjects', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Start All Projects',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('.\\scripts\\start-all-enhanced.ps1');
+            vscode.window.showInformationMessage('Starting all projects...');
+        });
+
+        // Extension Commands
+        const reinstallExtensionCommand = vscode.commands.registerCommand('claude-portfolio.reinstallExtension', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Reinstall Extension',
+                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            });
+            terminal.show();
+            terminal.sendText('npm run compile && npx vsce package && code --install-extension .\\claude-portfolio-0.0.1.vsix --force');
+            vscode.window.showInformationMessage('Rebuilding and reinstalling extension...');
+        });
+
+        const buildExtensionCommand = vscode.commands.registerCommand('claude-portfolio.buildExtension', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Build Extension',
+                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            });
+            terminal.show();
+            terminal.sendText('npm run compile');
+            vscode.window.showInformationMessage('Compiling extension TypeScript...');
+        });
+
+        const packageExtensionCommand = vscode.commands.registerCommand('claude-portfolio.packageExtension', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Package Extension',
+                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            });
+            terminal.show();
+            terminal.sendText('npx vsce package');
+            vscode.window.showInformationMessage('Creating VSIX package...');
+        });
+
+        const watchExtensionCommand = vscode.commands.registerCommand('claude-portfolio.watchExtension', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Watch Extension',
+                cwd: path.join(portfolioPath, 'vscode-extension', 'claude-portfolio')
+            });
+            terminal.show();
+            terminal.sendText('npm run watch');
+            vscode.window.showInformationMessage('Watching extension for changes...');
+        });
+
+        // AI Assistant Commands
+        const openClaudeCommand = vscode.commands.registerCommand('claude-portfolio.openClaude', () => {
+            const terminal = vscode.window.createTerminal({
+                name: 'Claude',
+                cwd: portfolioPath
+            });
+            terminal.show();
+            terminal.sendText('claude');
+            vscode.window.showInformationMessage('Starting Claude Code...');
+        });
+
+        // AI Assistant Dropdown Command
+        const openAIAssistantCommand = vscode.commands.registerCommand('claude-portfolio.openAIAssistant', async (treeItem) => {
+            try {
+                // Extract project data from tree item
+                const project = treeItem?.project || treeItem;
+                const projectPath = getProjectPath(portfolioPath, project);
+                
+                // Define AI assistants with their commands
+                const assistants = [
+                    {
+                        label: '$(sparkle) Claude',
+                        description: 'Claude Code - AI pair programming',
+                        detail: 'Runs: claude',
+                        value: 'claude'
+                    },
+                    {
+                        label: '$(sparkle) Gemini',
+                        description: 'Gemini CLI - Google AI assistant',
+                        detail: 'Runs: gemini',
+                        value: 'gemini'
+                    },
+                    {
+                        label: '$(comment-discussion) Copilot',
+                        description: 'GitHub Copilot Chat',
+                        detail: 'Hotkey: Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac)',
+                        value: 'copilot'
+                    }
+                ];
+
+                const selected = await vscode.window.showQuickPick(assistants, {
+                    placeHolder: `Select AI assistant for ${project.title}`,
+                    matchOnDescription: true,
+                    matchOnDetail: true
+                });
+
+                if (selected) {
+                    if (selected.value === 'copilot') {
+                        // For Copilot, show the hotkey info
+                        const terminal = vscode.window.createTerminal({
+                            name: `Copilot - ${project.title}`,
+                            cwd: projectPath
+                        });
+                        terminal.show();
+                        terminal.sendText(`echo "GitHub Copilot Chat: Press Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open"`);
+                        terminal.sendText(`echo "Project: ${project.title}"`);
+                        terminal.sendText(`echo "Path: ${projectPath}"`);
+                        
+                        vscode.window.showInformationMessage('Use Ctrl+Alt+I (Windows/Linux) or Cmd+I (Mac) to open GitHub Copilot Chat');
+                    } else {
+                        // For Claude and Gemini, run the command
+                        const terminal = vscode.window.createTerminal({
+                            name: `${selected.value === 'claude' ? 'Claude' : 'Gemini'} - ${project.title}`,
+                            cwd: projectPath
+                        });
+                        terminal.show();
+                        terminal.sendText(`cd "${projectPath}" && ${selected.value}`);
+                        
+                        vscode.window.showInformationMessage(`Starting ${selected.value === 'claude' ? 'Claude Code' : 'Gemini CLI'} for ${project.title}...`);
+                    }
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error opening AI assistant: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
         // Push all disposables
         context.subscriptions.push(
             openProjectCommand,
@@ -323,7 +491,19 @@ export function activate(context: vscode.ExtensionContext) {
             copyCheatCommand,
             testCommand,
             quickOpenCommand,
-            statusBarItem
+            statusBarItem,
+            // New commands
+            buildReactCommand,
+            startDevCommand,
+            npmInstallCommand,
+            killAllServersCommand,
+            startAllProjectsCommand,
+            reinstallExtensionCommand,
+            buildExtensionCommand,
+            packageExtensionCommand,
+            watchExtensionCommand,
+            openClaudeCommand,
+            openAIAssistantCommand
         );
 
         console.log('Claude Portfolio extension fully activated!');

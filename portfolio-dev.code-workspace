@@ -27,6 +27,22 @@
 		{
 			"name": "GGPrompts Style Guide",
 			"path": "projects/ggprompts-style-guide"
+		},
+		{
+			"name": "GGPrompts",
+			"path": "projects/ggprompts"
+		},
+		{
+			"name": "Sleak Card Component",
+			"path": "projects/sleak-card"
+		},
+		{
+			"name": "Testproject",
+			"path": "projects/testproject"
+		},
+		{
+			"name": "Matrix Cards",
+			"path": "projects/matrix-cards"
 		}
 	],
 	"settings": {

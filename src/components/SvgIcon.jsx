@@ -48,6 +48,48 @@ const SvgIcon = ({
       </svg>
     ),
     
+    // Arrow icons
+    arrowLeft: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12,19 5,12 12,5"/>
+      </svg>
+    ),
+    
+    // Info icon
+    info: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    ),
+    
+    // Terminal icon
+    terminal: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="4,17 10,11 4,5"/>
+        <line x1="12" y1="19" x2="20" y2="19"/>
+      </svg>
+    ),
+    
+    // Box icon for build
+    box: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    ),
+    
+    // Check circle for tests
+    checkCircle: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22,4 12,14.01 9,11.01"/>
+      </svg>
+    ),
+    
     refreshCw: (
       <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>

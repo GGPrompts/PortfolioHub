@@ -17,6 +17,7 @@ import PortfolioSidebar from './components/PortfolioSidebar'
 import { RightSidebar } from './components/RightSidebar'
 import ProjectGrid from './components/ProjectGrid'
 import ProjectViewer from './components/ProjectViewer'
+import EnhancedProjectViewer from './components/EnhancedProjectViewer'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import GitUpdateButton from './components/GitUpdateButton'
 import SvgIcon from './components/SvgIcon'
@@ -310,29 +311,17 @@ export default function App() {
                 <div className="header-actions">
                   {/* Unified preview/port toggle - consolidates live preview and port checking */}
                   <button 
-                    className={`refresh-icon-btn ${portCheckingDisabled ? 'disabled' : ''}`}
+                    className={`refresh-icon-btn ${!livePreviewsEnabled ? 'disabled' : ''}`}
                     onClick={() => {
-                      if (window.vsCodePortfolio?.isVSCodeWebview) {
-                        // In VS Code, toggle both live previews and port checking together
-                        setLivePreviewsEnabled(!livePreviewsEnabled)
-                        setPortCheckingDisabled(livePreviewsEnabled) // Inverse relationship
-                      } else {
-                        // In web mode, toggle port checking
-                        setPortCheckingDisabled(!portCheckingDisabled)
-                      }
+                      // Both versions toggle live previews (eye icon)
+                      setLivePreviewsEnabled(!livePreviewsEnabled)
+                      // Also toggle port checking in sync for consistency
+                      setPortCheckingDisabled(livePreviewsEnabled) // Inverse relationship
                     }}
-                    title={
-                      window.vsCodePortfolio?.isVSCodeWebview 
-                        ? (livePreviewsEnabled ? "Disable live previews" : "Enable live previews")
-                        : (portCheckingDisabled ? "Enable port checking" : "Disable port checking")
-                    }
+                    title={livePreviewsEnabled ? "Disable live previews" : "Enable live previews"}
                   >
                     <SvgIcon 
-                      name={
-                        window.vsCodePortfolio?.isVSCodeWebview 
-                          ? (livePreviewsEnabled ? "eye" : "eyeOff")
-                          : (portCheckingDisabled ? "wifiOff" : "wifi")
-                      } 
+                      name={livePreviewsEnabled ? "eye" : "eyeOff"}
                       size={16} 
                     />
                   </button>
@@ -388,77 +377,10 @@ export default function App() {
             <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
           </>
         ) : selectedProject ? (
-          <div className="project-view-container">
-            <div className="project-header">
-              <div className="project-header-content">
-                <div className="project-info">
-                  <h2>{selectedProject.title}</h2>
-                  <span className="project-type">{selectedProject.displayType}</span>
-                </div>
-                <div className="project-actions">
-                  <button 
-                    className="refresh-icon-btn"
-                    onClick={handleRefreshProject}
-                    title="Refresh project"
-                  >
-                    <SvgIcon name="refresh" size={16} />
-                  </button>
-                  <div className="header-dropdown">
-                    <button 
-                      className="dropdown-toggle"
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      title="More options"
-                    >
-                      <SvgIcon name="moreHorizontal" size={16} />
-                    </button>
-                    {isDropdownOpen && (
-                      <div className="dropdown-menu">
-                        <button 
-                          className="dropdown-item"
-                          onClick={() => {
-                            handleBackToGrid()
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          ← Back to Projects
-                        </button>
-                        {selectedProject.displayType === 'external' && (
-                          <button 
-                            className="dropdown-item"
-                            onClick={() => {
-                              if (selectedProject.demoUrl) {
-                                window.open(selectedProject.demoUrl, '_blank', 'noopener,noreferrer')
-                              } else if (selectedProject.localPort) {
-                                window.open(`http://localhost:${selectedProject.localPort}`, '_blank', 'noopener,noreferrer')
-                              }
-                              setIsDropdownOpen(false)
-                            }}
-                          >
-                            Open in New Tab ↗
-                          </button>
-                        )}
-                        <button 
-                          className="dropdown-item"
-                          onClick={() => {
-                            setIsDashboardOpen(true)
-                            setIsDropdownOpen(false)
-                          }}
-                        >
-                          📊 Status Dashboard
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <ProjectViewer 
-              project={selectedProject} 
-              onClose={handleBackToGrid}
-              isInline={true}
-              key={refreshKey}
-            />
-          </div>
+          <EnhancedProjectViewer 
+            project={selectedProject} 
+            onClose={handleBackToGrid}
+          />
         ) : null}
       </main>
 

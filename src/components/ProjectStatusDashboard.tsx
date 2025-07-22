@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { usePortfolioStore } from '../store/portfolioStore'
 import { getAllPortStatuses, getRunningProjects, getProjectPort } from '../utils/portManager'
+import { isVSCodeEnvironment } from '../utils/vsCodeIntegration'
 import GitUpdateButton from './GitUpdateButton'
 import styles from './ProjectStatusDashboard.module.css'
 
@@ -132,17 +133,47 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
   }
 
   const killProject = async (projectId: string) => {
-    // This would integrate with the project launcher to kill processes
-    console.log(`Killing project ${projectId}`)
-    // For now, just refresh the status
-    await updateProjectStatuses()
+    const project = projects.find(p => p.id === projectId)
+    if (!project || !project.localPort) return
+    
+    // Use VS Code API if available
+    if (isVSCodeEnvironment()) {
+      const command = `$proc = Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`
+      await (window as any).vsCodePortfolio.executeCommand(command, `Kill ${project.title}`)
+      (window as any).vsCodePortfolio.showNotification(`Stopping ${project.title}...`, 'info')
+    } else {
+      // Fallback to clipboard
+      const command = `taskkill /F /PID (Get-NetTCPConnection -LocalPort ${project.localPort} | Select-Object -ExpandProperty OwningProcess)`
+      await navigator.clipboard.writeText(command)
+      alert(`Kill command copied to clipboard for ${project.title}`)
+    }
+    
+    // Refresh status after a delay
+    setTimeout(() => updateProjectStatuses(), 2000)
   }
 
   const startProject = async (projectId: string) => {
-    // This would integrate with the project launcher to start processes
-    console.log(`Starting project ${projectId}`)
-    // For now, just refresh the status
-    await updateProjectStatuses()
+    const project = projects.find(p => p.id === projectId)
+    if (!project) return
+    
+    const projectPath = isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath 
+      ? `${(window as any).vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+    
+    const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
+    
+    // Use VS Code API if available
+    if (isVSCodeEnvironment()) {
+      await (window as any).vsCodePortfolio.executeCommand(command, `Start ${project.title}`)
+      (window as any).vsCodePortfolio.showNotification(`Starting ${project.title}...`, 'info')
+    } else {
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(command)
+      alert(`Start command copied to clipboard for ${project.title}`)
+    }
+    
+    // Refresh status after a delay
+    setTimeout(() => updateProjectStatuses(), 3000)
   }
 
   const startAllProjects = async () => {

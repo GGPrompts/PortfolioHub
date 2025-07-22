@@ -76,21 +76,34 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   // Refresh function for status updates
   const refreshProjectStatus = async () => {
     console.log('🔄 Sidebar: Manual refresh triggered')
-    // Force re-check of all project statuses using the working checkPort function
     const newStatuses = new Map<string, boolean>()
     
-    // Check all projects in parallel using proper checkPort from portManager
-    await Promise.all(
-      projects.map(async (project) => {
-        if (project.localPort) {
-          const isRunning = await checkPort(project.localPort)
-          console.log(`🔄 Sidebar REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
-          newStatuses.set(project.id, isRunning)
-        } else {
-          newStatuses.set(project.id, false)
-        }
-      })
-    )
+    // Check if we're in VS Code webview and use injected data
+    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      console.log('🖥️ Sidebar REFRESH: Using VS Code data')
+      const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+      
+      for (const project of projects) {
+        const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+        const isRunning = vsCodeProject?.status === 'active' || false
+        console.log(`🔄 Sidebar VS CODE REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
+        newStatuses.set(project.id, isRunning)
+      }
+    } else {
+      console.log('🌐 Sidebar REFRESH: Using web-based port checking')
+      // Fallback to port checking for web browser
+      await Promise.all(
+        projects.map(async (project) => {
+          if (project.localPort) {
+            const isRunning = await checkPort(project.localPort)
+            console.log(`🔄 Sidebar WEB REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
+            newStatuses.set(project.id, isRunning)
+          } else {
+            newStatuses.set(project.id, false)
+          }
+        })
+      )
+    }
     
     setProjectStatuses(newStatuses)
     console.log('✅ Sidebar: Manual refresh complete')
@@ -229,18 +242,35 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     }
   }, [sidebarState, selectedProject])
   
-  // Check project statuses
+  // Check project statuses - use VS Code data if available, fallback to port checking
   useEffect(() => {
     const checkStatuses = async () => {
       console.log('🔍 Sidebar: Checking project statuses...')
       const statuses = new Map<string, boolean>()
-      for (const project of projects) {
-        if (project.localPort) {
-          const isRunning = await checkPort(project.localPort)
-          console.log(`📊 Sidebar: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
+      
+      // Check if we're in VS Code webview and use injected data
+      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+        console.log('🖥️ Sidebar: Using VS Code injected project data')
+        const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+        
+        for (const project of projects) {
+          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+          const isRunning = vsCodeProject?.status === 'active' || false
+          console.log(`📊 Sidebar VS CODE: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
           statuses.set(project.id, isRunning)
         }
+      } else {
+        console.log('🌐 Sidebar: Using web-based port checking')
+        // Fallback to port checking for web browser
+        for (const project of projects) {
+          if (project.localPort) {
+            const isRunning = await checkPort(project.localPort)
+            console.log(`📊 Sidebar WEB: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
+            statuses.set(project.id, isRunning)
+          }
+        }
       }
+      
       setProjectStatuses(statuses)
       console.log('✅ Sidebar: Status update complete')
     }

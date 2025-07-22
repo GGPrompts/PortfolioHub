@@ -46,7 +46,10 @@
       "Bash(npm run build:*)",
       "Bash(grep:*)",
       "Bash(npx @vscode/vsce package:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git worktree:*)"
     ],
     "deny": []
   }

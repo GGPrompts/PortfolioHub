@@ -1,51 +1,4 @@
-## 🌟 Future Enhancements
-
-### VS Code Extension Roadmap
-- **AI Integration**: Claude prompts directly in VS Code
-- **Project Templates**: Create projects from extension
-- **Git Status**: Show repository status in project tree
-- **Dependency Viewer**: Manage npm packages visually
-- **Process Manager**: Start/stop servers from VS Code
-- **Snippet Library**: Project-specific code snippets
-
-### Portfolio Enhancements
-- **Cloud Sync**: Backup project configurations
-- **Team Collaboration**: Share portfolio setups
-- **Performance Metrics**: Track build times and sizes
-- **Docker Integration**: Containerized project support## 📚 Documentation
-
-### New Guides
-- **[VS Code Extension Quick Start](vscode-extension/QUICK_START.md)** - Get started with the extension
-- **[Workspace Persistence Guide](docs/vscode-workspace-persistence.md)** - Fix workspace state issues
-- **[Console Error Fixes](docs/vscode-integration-fixes.md)** - Silent port checking implementation
-- **[Dark Mode Fix](docs/fix-vscode-dark-mode.md)** - Preserve theme settings
-
-### Existing Guides
-- **[Terminal Integration](docs/terminal-integration-guide.md)** - xterm.js + node-pty setup
-- **[Project Creation](scripts/README.md)** - Automated project scaffolding
-- **[Port Management](src/utils/README.md)** - Smart port allocation## 🛠️ Troubleshooting
-
-### VS Code Extension Issues
-- **Extension not loading**: Ensure you've run `npm install` and `npm run compile`
-- **Projects not showing**: Check that `manifest.json` exists in the projects folder
-- **Dashboard blank**: Verify the extension has access to the portfolio path
-
-### Web Portfolio Issues
-- **Console errors fixed**: Update to latest version for silent port checking
-- **Dark mode persistence**: Use `portfolio-absolute-paths.code-workspace`
-- **Workspace not opening**: See `docs/vscode-workspace-fix.md`
-
-### Common Fixes
-```powershell
-# Fix VS Code workspace issues
-.\troubleshoot-workspace.ps1
-
-# Kill stuck servers
-.\scripts\kill-all-servers.ps1
-
-# Start VS Code with profile
-.\launch-vscode-with-profile.ps1
-```# Claude Development Portfolio 🚀
+# Claude Development Portfolio 🚀
 
 A dual-architecture development portfolio system offering both **standalone web application** and **native VS Code extension** experiences for managing and showcasing multiple development projects.
 
@@ -73,36 +26,61 @@ This portfolio system provides **two separate but synchronized React application
 - **Shared Codebase**: Same React components with smart environment detection
 - **Automatic Fallback**: Code detects context and uses appropriate integration
 
-## 🆕 Latest Updates (January 2025)
+## 🆕 Latest Breakthrough Features (January 2025)
 
-### 🎯 Recent Features Added
-- **✅ Project Landing Pages**: Click offline project titles to view detailed project information with tabs (Overview, README, CLAUDE.md, Commands)
-- **✅ Improved Port Detection**: Switched from Image to Fetch API for reliable server detection in both versions
-- **✅ Iframe Loading Fixes**: Added timeout fallbacks and VS Code CSP improvements for live previews
-- **✅ Enhanced Debugging**: Environment-specific console logging for better troubleshooting
-- **✅ Status Synchronization**: Consistent project status between web and VS Code versions
+### 🎯 Enhanced Right Sidebar: Quick Commands & Cheat Sheet
+- **✅ 50+ PowerShell-Compatible Commands**: Professional developer command library
+- **✅ Three Panel System**: 
+  - **Quick Commands**: VS Code actions, Git operations, Development tasks
+  - **VS Code Terminals**: Integrated terminal management (web version)
+  - **Live Preview**: Project preview controls
+- **✅ Smart Execution**: Direct VS Code API calls in extension, clipboard copy in web
+- **✅ Organized Categories**: VS Code, Git, Development, PowerShell, AI Prompts sections
+- **✅ One-Click Actions**: Execute commands instantly with proper context
 
-### 🔧 Architecture Improvements
-- **Enhanced CSP**: VS Code webview Content Security Policy allows proper iframe loading
-- **Smart Environment Detection**: `vsCodeIntegration.ts` automatically detects and adapts behavior
-- **Unified State Management**: Both versions share the same project data and status logic
-- **Robust Error Handling**: Graceful fallbacks for connection issues and loading problems
+### 🎮 3D Project Support with Smart Browser Selection  
+- **✅ Automatic 3D Detection**: Projects with `requires3D: true` in manifest.json
+- **✅ Smart Browser Routing**: 
+  - **3D Projects**: Force external browser (for pointer lock support)
+  - **Regular Projects**: Use VS Code Simple Browser or iframe
+- **✅ Pointer Lock Compatibility**: Ensures FPS controls work properly
+- **✅ Current 3D Projects**: 3D Matrix Cards, 3D File System Viewer
 
-## ✨ Features
+### 🎉 Complete VS Code Extension Integration
+- **✅ Native Command Execution**: All portfolio functions work directly in VS Code
+- **✅ Synchronized Status Detection**: Identical port checking across both versions
+- **✅ Live Preview Support**: Embedded iframe functionality in VS Code webview
+- **✅ Project Landing Pages**: Detailed project information with tabbed interface
+- **✅ Smart Environment Detection**: Automatic adaptation based on context
 
-### Core Portfolio Features
+### 🏗️ Architecture Improvements
+- **✅ Enhanced Content Security Policy**: VS Code webview supports localhost iframes
+- **✅ Unified State Management**: Both versions share project data and status logic
+- **✅ Robust Error Handling**: Graceful fallbacks for connection issues
+- **✅ Fetch API Port Detection**: Reliable server detection replacing image-based checking
+
+## ✨ Core Portfolio Features
+
+### 📊 Project Management
 - **🔄 Real-time Project Status** - Automatically detects running development servers
+- **🎯 Smart Port Management** - Automatic port detection and conflict resolution
+- **⚡ One-Click Launch** - Start all projects with a single PowerShell script
+- **📊 Dashboard Analytics** - View project status, technologies used, and portfolio statistics
+- **🔍 Project Filtering** - Filter projects by technology, status, or tags
+
+### 🖼️ Visual Experience  
 - **📱 Realistic Device Displays** - True-to-life mobile (375×812) and desktop (1920×1080) preview scaling
 - **🎯 Collapsible Project Sections** - Hide offline projects to focus on active development
 - **🖼️ Inline Project Viewing** - View projects directly in the portfolio with iframe integration
-- **🎯 Smart Port Management** - Automatic port detection and conflict resolution
-- **⚡ One-Click Launch** - Start all projects with a single PowerShell script
-- **🔍 Project Filtering** - Filter projects by technology, status, or tags
-- **📊 Dashboard Analytics** - View project status, technologies used, and portfolio statistics
-- **📝 Matrix Card Notes** - Professional note-taking system with 3D flip animations and AI organization
 - **📱 Responsive Design** - Adaptive sidebar with collapsed, normal, and expanded states
 
-### New VS Code Extension Features
+### 📝 Development Tools
+- **📝 Matrix Card Notes** - Professional note-taking system with 3D flip animations and AI organization
+- **📚 Development Journals** - Track progress for each project with markdown support
+- **🔗 Git Integration** - Update buttons and version control throughout portfolio
+- **⌨️ Command Center** - Quick access to 50+ development commands
+
+### 🆕 VS Code Extension Features
 - **🗂️ Project Browser** - See all your projects in the VS Code sidebar
 - **📊 Integrated Dashboard** - Beautiful webview dashboard within VS Code
 - **⚡ Quick Commands** - Fast access to common tasks and Git operations
@@ -114,9 +92,10 @@ This portfolio system provides **two separate but synchronized React application
 ## 🎯 Perfect For
 
 - **Full-stack developers** with multiple active projects
-- **Freelancers** showcasing client work
+- **Freelancers** showcasing client work  
 - **Students** organizing coding projects
 - **Teams** managing multiple development environments
+- **3D developers** needing proper pointer lock support
 - **Anyone** who wants to view all their projects in one place
 
 ## 📋 Prerequisites
@@ -124,10 +103,11 @@ This portfolio system provides **two separate but synchronized React application
 - Node.js 18+ and npm
 - PowerShell (Windows) or Terminal (Mac/Linux)
 - Git for version control
+- VS Code (for extension features)
 
 ## 🚀 Quick Start
 
-### Option 1: Web Portfolio (Original)
+### Option 1: Web Portfolio (Standalone)
 
 1. **Clone the repository:**
    ```bash
@@ -147,7 +127,7 @@ This portfolio system provides **two separate but synchronized React application
 
 4. **Visit** `http://localhost:5173` to see your portfolio
 
-### Option 2: VS Code Extension (Recommended) 🆕
+### Option 2: VS Code Extension (Recommended for Development) 🆕
 
 1. **Build the extension:**
    ```powershell
@@ -164,7 +144,7 @@ This portfolio system provides **two separate but synchronized React application
    # For permanent installation
    npm install -g vsce
    vsce package
-   code --install-extension claude-portfolio-0.0.1.vsix
+   code --install-extension claude-portfolio-iframe-fix.vsix
    ```
 
 3. **Use the extension:**
@@ -176,33 +156,40 @@ This portfolio system provides **two separate but synchronized React application
 ## 📁 Project Structure
 
 ```
-claudeWindows-portfolio/
+claude-dev-portfolio/
 ├── src/                     # React portfolio application
 │   ├── components/          # React components
-│   │   ├── ProjectGrid.tsx  # Project grid layout
-│   │   ├── ProjectViewer.tsx # Inline project viewer
-│   │   ├── PortfolioSidebar.tsx # Adaptive sidebar
-│   │   ├── VSCodeManager.tsx # VS Code integration (legacy)
-│   │   └── ProjectStatusDashboard.tsx # Status management
+│   │   ├── ProjectGrid.tsx              # Project grid layout
+│   │   ├── ProjectViewer.tsx            # Inline project viewer
+│   │   ├── PortfolioSidebar.tsx         # Adaptive left sidebar
+│   │   ├── RightSidebar.tsx             # Quick Commands & Cheat Sheet (NEW)
+│   │   ├── QuickCommandsPanel.tsx       # 50+ developer commands (NEW)
+│   │   ├── EnhancedProjectViewer/       # Project landing pages
+│   │   ├── LiveProjectPreview.tsx       # 3D-aware project previews
+│   │   └── ProjectStatusDashboard.tsx   # Status management
 │   ├── store/              # Zustand state management
 │   ├── utils/              # Port management utilities
+│   │   └── vsCodeIntegration.ts         # Dual-environment API bridge
 │   └── styles/             # CSS and styling
 ├── projects/               # Your development projects
-│   ├── manifest.json       # Project configuration
+│   ├── manifest.json       # Project configuration (includes requires3D flags)
 │   └── [project-folders]/  # Individual project directories
 ├── scripts/               # PowerShell automation scripts
-├── vscode-extension/      # VS Code extension (NEW)
+├── vscode-extension/      # VS Code extension (COMPLETED)
 │   └── claude-portfolio/  
 │       ├── src/           # Extension source code
-│       │   ├── extension.ts # Main entry point
-│       │   ├── projectProvider.ts # Project tree view
-│       │   ├── dashboardPanel.ts # Webview dashboard
-│       │   └── commandsProvider.ts # Quick commands
-│       ├── media/         # Dashboard assets
-│       └── package.json   # Extension manifest
+│       │   ├── extension.ts                 # Main entry point
+│       │   ├── portfolioWebviewProvider.ts  # Complete webview with API bridge
+│       │   ├── projectProvider.ts           # Project tree view (legacy)
+│       │   └── commandsProvider.ts          # Quick commands (legacy)
+│       ├── portfolio-dist/                  # Built portfolio embedded in extension
+│       │   ├── index.html                   # Portfolio HTML
+│       │   └── assets/                      # JavaScript & CSS bundles
+│       └── package.json                     # Extension manifest
 ├── docs/                  # Documentation
-│   ├── vscode-workspace-fix.md # Workspace persistence guide
-│   ├── vscode-integration-fixes.md # Console error fixes
+│   ├── COMPLETED_FEATURES.md    # All completed VS Code integration work
+│   ├── ARCHITECTURE.md          # Technical architecture details
+│   ├── vscode-workspace-fix.md  # Workspace persistence guide
 │   └── terminal-integration-guide.md # Terminal features
 └── public/               # Static assets
 ```
@@ -217,16 +204,15 @@ Use the automated script to create a new project with full integration:
 # Create a new project from template
 .\scripts\create-project.ps1 -ProjectName "my-awesome-project" -Description "Description of what it does"
 
-# Optional: Specify a custom port
-.\scripts\create-project.ps1 -ProjectName "my-project" -Port 3015 -Description "Custom port project"
+# Optional: Specify a custom port or 3D support
+.\scripts\create-project.ps1 -ProjectName "my-3d-project" -Port 3015 -Description "3D project with pointer lock" -Requires3D
 ```
 
 **Features:**
 - ✅ **Automatic Integration** - Updates manifest, port manager, and all necessary files
 - ✅ **Template-based** - Creates React + TypeScript + Vite project structure
 - ✅ **Git Ready** - Initializes repository with proper commit
-- ✅ **DEV NOTES Ready** - Immediately available in project dropdown
-- ✅ **Validation** - Performs 6 integration checks to ensure everything works
+- ✅ **3D Support** - Optional `requires3D` flag for projects needing pointer lock
 - ✅ **Port Management** - Automatically finds available ports
 - ✅ **Dev Journal** - Creates development journal file
 
@@ -245,6 +231,7 @@ To add an existing project to the portfolio:
      "localPort": 3010,
      "buildCommand": "npm run dev",
      "path": "my-existing-project",
+     "requires3D": false,
      "thumbnail": "thumbnails/my-existing-project.png",
      "tags": ["React", "TypeScript", "Existing"],
      "tech": ["React", "TypeScript", "Vite"],
@@ -257,21 +244,17 @@ To add an existing project to the portfolio:
      ]
    }
    ```
-3. **Add port mapping** in `src/utils/portManager.ts`:
-   ```typescript
-   export const DEFAULT_PORTS = {
-     // ... existing ports
-     'my-existing-project': 3010
-   };
-   ```
+3. **Add port mapping** in `src/utils/portManager.ts`
 4. **Create dev journal** in `projects/dev-journals/my-existing-project.md`
 5. **Start your project** and it will appear in the portfolio!
 
 ## 🎮 Project Display Types
 
-- **`external`** - Development servers (React, Vue, etc.)
+- **`external`** - Development servers (React, Vue, etc.) with smart browser selection
 - **`iframe`** - Static HTML files that can be embedded
 - **`embed`** - Interactive content requiring special permissions
+
+**3D Project Support**: Projects with `requires3D: true` automatically open in external browser to support pointer lock functionality.
 
 ## 🚀 Automation Scripts
 
@@ -287,8 +270,7 @@ To add an existing project to the portfolio:
 **Features:**
 - ✅ Duplicate server detection
 - ✅ Smart port management
-- ✅ Separate terminal windows
-- ✅ No auto-opening browsers
+- ✅ 3D project support
 - ✅ Process monitoring
 
 ### Kill All Servers
@@ -296,12 +278,13 @@ To add an existing project to the portfolio:
 .\scripts\kill-all-servers.ps1
 ```
 
-## 🎨 VS Code Extension Deep Dive 🆕
+## 🎨 VS Code Extension Deep Dive
 
 ### Why Use the Extension?
-- **No More iFrame Issues**: Workspace state persists perfectly
+- **No More iframe Issues**: Workspace state persists perfectly
 - **Native Integration**: Projects open in proper VS Code workspace
-- **Better Performance**: No embedded browser overhead
+- **Direct Command Execution**: All commands run natively without clipboard
+- **3D Project Support**: Smart browser selection for projects requiring pointer lock
 - **Full VS Code Features**: Terminals, debugging, extensions all work
 - **Professional Workflow**: Everything in one IDE
 
@@ -311,106 +294,62 @@ To add an existing project to the portfolio:
 ```
 🚀 Claude Portfolio
 ├── 📂 Projects
-│   ├── 3D Matrix Cards (Port 3005)
+│   ├── 3D Matrix Cards (Port 3005) [requires3D]
 │   ├── GGPrompts (Port 9323)
 │   └── [Your Projects]
 ├── ⚡ Quick Commands
-│   ├── VS Code Commands
+│   ├── VS Code Commands (50+)
 │   ├── Git Commands
-│   └── Portfolio Commands
+│   ├── Development Tasks
+│   └── PowerShell Operations
 └── 📚 Cheat Sheet
+    ├── AI Prompts
     ├── PowerShell
-    ├── Git
-    └── npm
+    └── Git Operations
 ```
+
+#### Right Sidebar Panel System
+- **Quick Commands**: 50+ professional developer commands
+- **VS Code Terminals**: Integrated terminal management
+- **Live Preview Controls**: Project preview management
+- **Smart Execution**: Context-aware command execution
+- **Category Organization**: VS Code, Git, Development, PowerShell sections
 
 #### Dashboard Webview
 - Project statistics and overview
-- Quick actions to run all servers
+- Quick actions to run all servers  
 - Technology breakdown
 - One-click project opening
-
-#### Smart Project Management
-- Right-click to run projects
-- Automatic terminal creation
-- Port status tracking
-- Workspace folder integration
-
-### Configuration
-```json
-{
-  "claudePortfolio.portfolioPath": "D:\\ClaudeWindows\\claude-dev-portfolio",
-  "claudePortfolio.autoStartProjects": false,
-  "claudePortfolio.defaultBrowser": "default"
-}
-```
-
-## 🎨 Sidebar States
-
-| State | Width | Description |
-|-------|-------|-------------|
-| **Collapsed** | 48px | Icon bar only |
-| **Normal** | 256px | Standard sidebar with project info |
-| **Expanded** | 816px | Detailed project view with stats |
-
-## 📝 Matrix Card Notes System
-
-### Overview
-The portfolio includes a professional note-taking system with Matrix Card aesthetics featuring 3D flip animations, project-specific context, and AI-assisted organization.
-
-### Features
-- **🎴 3D Flip Cards** - Professional cyberpunk-themed interface with smooth animations
-- **📋 Universal Capture** - Quickly capture ideas, features, and thoughts
-- **🤖 AI Instructions** - Add context for Claude to organize notes automatically
-- **🗂️ Smart Organization** - Auto-save to to-sort folder for batch processing
-- **📁 Project Context** - Link notes to specific projects with automatic folder paths
-- **🎨 Letter-sized Design** - Optimal proportions for comfortable writing
-
-### Workflow
-1. **Open DEV NOTES** - Click the ✏️ Edit tab in the sidebar
-2. **Select Project** - Choose from dropdown or use "General" for non-project notes
-3. **Add Instructions** - Optional Claude instructions for AI organization
-4. **Write Content** - Use the large content area for your thoughts
-5. **Preview** - Flip the card to see formatted markdown output
-6. **Save** - Automatically saves to `notes/to-sort/` folder
-7. **Organize** - Use "🗂️ Organize Notes" to batch process all saved notes
-
-### Note Organization
-Notes are saved with full context including:
-- Project paths and metadata
-- Timestamps and Claude instructions
-- Smart prompts for AI-assisted organization
-- Flexible destinations (dev journals, CLAUDE.md, README, etc.)
+- 3D project identification and smart routing
 
 ## 🔄 Project Workflow
 
-### Complete Integration Features
-Once a project is added (via script or manually), it's automatically integrated with:
-
-- **📊 Portfolio Grid** - Visual project cards with live previews
-- **📝 DEV NOTES System** - Project available in Matrix Card notes dropdown
-- **🔍 Real-time Status** - Automatic port detection and running status
-- **📁 File Organization** - Development journals and project-specific context
-- **🔧 Smart Port Management** - Conflict detection and automatic assignment
-- **🌐 Live Previews** - Iframe integration with mobile/desktop view toggles
-
 ### Development Workflow
 1. **Create/Add Project** - Use automated script or manual setup
-2. **Start Development** - `npm run dev` in project directory
-3. **Take Notes** - Use DEV NOTES panel with project-specific context
-4. **View Progress** - Monitor status in portfolio dashboard
-5. **Organize Ideas** - Notes automatically include project paths for Claude
+2. **Start Development** - Projects automatically detected and managed
+3. **Use Quick Commands** - Access 50+ commands via right sidebar
+4. **Take Notes** - Use DEV NOTES panel with project-specific context
+5. **View Progress** - Monitor status in portfolio dashboard
+6. **3D Projects** - Automatic external browser opening for pointer lock support
 
-### Quick Commands
+### Quick Commands Access
 ```powershell
-# Create new project
-.\scripts\create-project.ps1 -ProjectName "new-idea" -Description "Quick prototype"
+# Available via right sidebar or direct execution:
 
-# Start all projects in tabs (recommended)
-.\scripts\start-all-tabbed.ps1
+# VS Code Commands (execute directly)
+- Open Folder, New Terminal, Split Terminal
+- Command Palette, Reload Window
 
-# Kill all servers
-.\scripts\kill-all-servers.ps1
+# Git Commands (execute directly)  
+- git status, pull, push, commit, sync
+
+# Development Commands (execute directly)
+- Start Dev Server, Build React App
+- Install Dependencies, Kill All Servers
+
+# PowerShell Commands (copy to clipboard)
+- Navigate folders, list files, create items
+- Process management, port checking
 ```
 
 ## 🔧 Configuration
@@ -421,64 +360,117 @@ Default port assignments are in `src/utils/portManager.ts`:
 export const DEFAULT_PORTS = {
   'ggprompts-style-guide': 3001,
   'matrix-cards': 3002,
-  'sleak-card': 3003,
-  '3d-file-system': 3004,
-  '3d-matrix-cards': 3005,
+  'sleak-card': 3000,
+  '3d-file-system': 3004,        // requires3D: true
+  '3d-matrix-cards': 3005,       // requires3D: true  
   'ggprompts-professional': 3006,
-  'ggprompts-main': 9323
+  'ggprompts': 9323,
+  'testproject': 3009
   // Portfolio runs on 5173+ (auto-assigned by Vite)
 }
 ```
 
-### Manifest Configuration
-Each project in `projects/manifest.json` supports:
-- `displayType`: How to display the project
-- `localPort`: Development server port
-- `buildCommand`: Command to start the project
-- `tech`: Array of technologies used
-- `tags`: Array of tags for filtering
-- `status`: Project status (active, archived, experimental)
+### 3D Project Configuration
+Projects requiring pointer lock (FPS controls, 3D navigation) should have:
+```json
+{
+  "requires3D": true,
+  "description": "...Features FPS controls, 3D navigation..."
+}
+```
+This ensures they open in external browser instead of embedded iframe.
 
-## 🔍 Key Features Deep Dive
+### VS Code Extension Settings
+```json
+{
+  "claudePortfolio.portfolioPath": "D:\\ClaudeWindows\\claude-dev-portfolio",
+  "claudePortfolio.autoStartProjects": false,
+  "claudePortfolio.defaultBrowser": "external"
+}
+```
 
-### 📱 Realistic Device Display System
-- **True Mobile Previews**: iPhone 13/14 proportions (375×812px) with proper 9:19.5 aspect ratio
-- **Desktop Accuracy**: 1920×1080 resolution with 16:9 aspect ratio for realistic desktop viewing
-- **Smart Zoom Levels**: 25%, 50%, 75%, 100%, and "fit to container" modes
-- **Device Bezel Effects**: Realistic borders and shadows simulating actual device frames
-- **Viewport Injection**: Automatically sets proper viewport meta tags for accurate rendering
-- **Top-Left Alignment**: All zoom levels consistently start from the top of the page
+## 📚 Documentation
 
-### 🎯 Collapsible Project Organization
-- **Section Headers**: Click "🟢 ONLINE" or "🔴 OFFLINE" to collapse/expand sections
-- **Project Counts**: Shows number of projects in each section (e.g., "ONLINE (3)")
-- **Visual Indicators**: Animated arrows rotate to show collapsed/expanded state
-- **Focus Mode**: Hide offline projects to focus only on active development
-- **Consistent Styling**: Section headers match project item sizing for unified appearance
+### 📖 Core Documentation
+- **[CLAUDE.md](CLAUDE.md)** - Essential development guidelines and current active work
+- **[COMPLETED_FEATURES.md](COMPLETED_FEATURES.md)** - All completed VS Code integration work and past achievements
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture, dual-React setup, and component details
+- **[PLAN.md](PLAN.md)** - Future development roadmap
 
-### 📊 Real-time Status Detection
-- Automatically detects which projects are running
-- Shows port information and server status
-- Updates every 5 seconds
-- Excludes portfolio port (5173) from project detection
+### 🔧 Technical Guides
+- **[VS Code Extension Quick Start](vscode-extension/QUICK_START.md)** - Get started with the extension
+- **[Terminal Integration](docs/terminal-integration-guide.md)** - xterm.js + node-pty setup
+- **[Project Creation](scripts/README.md)** - Automated project scaffolding
+- **[Port Management](src/utils/README.md)** - Smart port allocation
 
-### 🖼️ Inline Project Viewing
-- External projects load in secure iframes
-- Maintains sidebar navigation
-- Seamless switching between projects
-- Desktop view as default with mobile toggle option
+### 🛠️ Integration Fixes
+- **[Workspace Persistence Guide](docs/vscode-workspace-persistence.md)** - Fix workspace state issues
+- **[Console Error Fixes](docs/vscode-integration-fixes.md)** - Silent port checking implementation
+- **[Dark Mode Fix](docs/fix-vscode-dark-mode.md)** - Preserve theme settings
 
-### 📱 Responsive Design
-- Mobile-first approach
-- Adaptive sidebar that collapses on mobile
-- Smooth animations and transitions
-- Professional SVG icons throughout interface
+## 🛠️ Troubleshooting
 
-### ⚡ Smart Port Management
-- Automatic port conflict resolution
-- Fallback port assignments (3006-3010, 5174-5177)
-- Support for custom port configurations
-- Portfolio auto-detection starting from port 5173
+### VS Code Extension Issues
+- **Extension not loading**: Ensure you've run `npm install` and `npm run compile`
+- **Projects not showing**: Check that `manifest.json` exists in the projects folder
+- **Dashboard blank**: Verify the extension has access to the portfolio path
+- **3D projects not working**: Check external browser is set as default
+
+### Web Portfolio Issues
+- **Console errors fixed**: Update to latest version for silent port checking
+- **Dark mode persistence**: Use `portfolio-absolute-paths.code-workspace`
+- **3D projects won't open**: Verify `requires3D: true` in manifest.json
+
+### Common Fixes
+```powershell
+# Fix VS Code workspace issues
+.\troubleshoot-workspace.ps1
+
+# Kill stuck servers
+.\scripts\kill-all-servers.ps1
+
+# Start VS Code with profile
+.\launch-vscode-with-profile.ps1
+
+# Check 3D project settings
+cat projects\manifest.json | findstr "requires3D"
+```
+
+## 🛡️ Security Features
+
+- **Iframe sandboxing** for external projects
+- **CORS handling** for development servers
+- **Secure port detection** methods
+- **3D project isolation** via external browser
+- **No credential storage** in the repository
+
+## 📚 Tech Stack
+
+- **Frontend**: React 18, TypeScript, Vite
+- **State Management**: Zustand
+- **Styling**: CSS Modules, CSS Variables
+- **Animations**: React Spring
+- **Build Tool**: Vite
+- **VS Code Extension**: TypeScript, VS Code API
+- **Package Manager**: npm
+
+## 🌟 Showcase Projects
+
+Current portfolio includes:
+- 🎨 **3D Matrix Cards** - Interactive 3D card display with Matrix effects [requires3D]
+- 🌐 **GGPrompts** - AI prompt management platform with real-time collaboration
+- 📱 **Sleak Card Component** - Modern card system with water effects
+- 🗂️ **3D File System Viewer** - Advanced 3D file browser with terminal interface [requires3D]
+- 📚 **GGPrompts Style Guide** - Comprehensive design system documentation
+- 💼 **GGPrompts Professional** - Work-appropriate version with corporate UI
+
+Perfect for showcasing:
+- 🎮 3D applications and games (with proper pointer lock support)
+- 🌐 Web applications and SPAs
+- 📱 Mobile app prototypes
+- 📊 Data visualization projects
+- 🤖 AI/ML experiments
+- 🎨 Creative coding projects
 
 ## 🤝 Contributing
 
@@ -490,57 +482,11 @@ We welcome contributions! Here's how to get started:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 Development Workflow
-
-1. **Local Development:**
-   ```bash
-   npm run dev        # Start portfolio
-   npm run build      # Build for production
-   npm run preview    # Preview production build
-   ```
-
-2. **Adding Projects:**
-   - Add project to `projects/` directory
-   - Update `manifest.json`
-   - Configure port in `portManager.ts`
-
-3. **Testing:**
-   - Test all sidebar states
-   - Verify project launching
-   - Check mobile responsiveness
-
-## 🛡️ Security Features
-
-- **Iframe sandboxing** for external projects
-- **CORS handling** for development servers
-- **Secure port detection** methods
-- **No credential storage** in the repository
-
-## 📚 Tech Stack
-
-- **Frontend**: React 18, TypeScript, Vite
-- **State Management**: Zustand
-- **Styling**: CSS Modules, CSS Variables
-- **Animations**: React Spring
-- **Build Tool**: Vite
-- **Package Manager**: npm
-
-## 🌟 Showcase
-
-Perfect for showcasing:
-- 🎨 Creative coding projects
-- 🌐 Web applications
-- 📱 Mobile app prototypes
-- 🎮 Game development
-- 📊 Data visualization projects
-- 🤖 AI/ML experiments
-
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/GGPrompts/PortfolioHub/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/GGPrompts/PortfolioHub/discussions)
+- **Issues**: [GitHub Issues](https://github.com/GGPrompts/claude-dev-portfolio/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/GGPrompts/claude-dev-portfolio/discussions)
 - **Documentation**: Check the `/docs` folder for detailed guides
-  - **Terminal Integration**: See `docs/terminal-integration-guide.md` for xterm.js + node-pty implementation
 
 ## 📄 License
 
@@ -550,10 +496,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with modern web technologies and love for developer productivity
 - VS Code extension architecture for seamless IDE integration
-- Community feedback that led to the extension approach
+- Community feedback that led to the dual-architecture approach
+- 3D web development community for pointer lock insights
 
 ---
 
 **Made with ❤️ by the Claude Windows Team**
 
-*Transform your development workflow with Claude Portfolio - now with native VS Code integration!* 🚀
+*Transform your development workflow with Claude Portfolio - now with native VS Code integration and smart 3D project support!* 🚀

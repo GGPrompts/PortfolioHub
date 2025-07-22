@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
+import { executeCommand, openInBrowser, openInVSCode, showNotification, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -27,10 +28,88 @@ export default function LiveProjectPreview({
   const [localViewMode, setLocalViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [zoomMode, setZoomMode] = useState<'fit' | '25%' | '50%' | '75%' | '100%'>('fit')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showAIDropdown, setShowAIDropdown] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   
   // Use global view mode if provided, otherwise use local view mode
   const viewMode = globalViewMode || localViewMode
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAIDropdown(false)
+      }
+    }
+
+    if (showAIDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAIDropdown])
+
+  // Helper functions for project actions
+  const handleRunProject = async () => {
+    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
+      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      
+    const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
+    await executeCommand(command, `Run ${project.title}`)
+    showNotification(`Starting ${project.title}...`, 'info')
+  }
+
+  const handleKillProject = async () => {
+    if (!port) {
+      showNotification('Project is not running', 'warning')
+      return
+    }
+    
+    const command = `powershell "Get-Process -Port ${port} -ErrorAction SilentlyContinue | Stop-Process -Force"`
+    await executeCommand(command, `Kill ${project.title}`)
+    showNotification(`Stopping ${project.title}...`, 'info')
+  }
+
+  const handleViewInNewTab = () => {
+    if (port) {
+      const url = `http://localhost:${port}`
+      openInBrowser(url)
+    } else {
+      showNotification('Project is not running', 'warning')
+    }
+  }
+
+  const handleViewInIDE = () => {
+    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
+      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      
+    onProjectClick(project)
+  }
+
+  const handleAIAssistant = async (assistant: 'claude' | 'gemini' | 'copilot') => {
+    const projectPath = isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath 
+      ? `${window.vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+
+    let command = ''
+    switch (assistant) {
+      case 'claude':
+        command = `cd "${projectPath}" && code . && echo "Opening project with Claude Code..."`
+        break
+      case 'gemini':
+        command = `cd "${projectPath}" && echo "Opening project directory for Gemini integration..."`
+        break
+      case 'copilot':
+        command = `cd "${projectPath}" && code . && echo "Opening project with GitHub Copilot..."`
+        break
+    }
+    
+    await executeCommand(command, `${assistant.charAt(0).toUpperCase() + assistant.slice(1)} - ${project.title}`)
+    showNotification(`Opening ${project.title} with ${assistant}...`, 'info')
+    setShowAIDropdown(false)
+  }
 
   // Build preview URL with proper viewport hints
   const getPreviewUrl = () => {
@@ -419,12 +498,86 @@ export default function LiveProjectPreview({
               size="small" 
               variant="minimal"
             />
-            <button
-              onClick={() => onProjectClick(project)}
-              className={styles.viewButton}
-            >
-              View Project
-            </button>
+            
+            {/* Primary Action Buttons */}
+            <div className={styles.primaryActions}>
+              <button
+                onClick={handleRunProject}
+                className={`${styles.actionButton} ${styles.runButton}`}
+                title="Start project server"
+              >
+                <SvgIcon name="play" size={14} />
+                Run
+              </button>
+              
+              <button
+                onClick={handleKillProject}
+                className={`${styles.actionButton} ${styles.killButton}`}
+                title="Stop project server"
+                disabled={!isRunning}
+              >
+                <SvgIcon name="stop" size={14} />
+                Kill
+              </button>
+              
+              <button
+                onClick={handleViewInIDE}
+                className={`${styles.actionButton} ${styles.ideButton}`}
+                title="View project in IDE"
+              >
+                <SvgIcon name="code" size={14} />
+                View in IDE
+              </button>
+              
+              <button
+                onClick={handleViewInNewTab}
+                className={`${styles.actionButton} ${styles.newTabButton}`}
+                title="Open project in new browser tab"
+                disabled={!isRunning}
+              >
+                <SvgIcon name="externalLink" size={14} />
+                New Tab
+              </button>
+            </div>
+            
+            {/* AI Assistant Dropdown */}
+            <div className={styles.aiDropdownContainer} ref={dropdownRef}>
+              <button
+                onClick={() => setShowAIDropdown(!showAIDropdown)}
+                className={`${styles.actionButton} ${styles.aiButton}`}
+                title="Open with AI Assistant"
+              >
+                <SvgIcon name="brain" size={14} />
+                AI Assistant
+                <SvgIcon name="chevronDown" size={12} />
+              </button>
+              
+              {showAIDropdown && (
+                <div className={styles.aiDropdown}>
+                  <button
+                    onClick={() => handleAIAssistant('claude')}
+                    className={`${styles.aiOption} ${styles.claudeOption}`}
+                  >
+                    <SvgIcon name="brain" size={14} />
+                    Claude
+                  </button>
+                  <button
+                    onClick={() => handleAIAssistant('gemini')}
+                    className={`${styles.aiOption} ${styles.geminiOption}`}
+                  >
+                    <SvgIcon name="sparkles" size={14} />
+                    Gemini
+                  </button>
+                  <button
+                    onClick={() => handleAIAssistant('copilot')}
+                    className={`${styles.aiOption} ${styles.copilotOption}`}
+                  >
+                    <SvgIcon name="github" size={14} />
+                    Copilot
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

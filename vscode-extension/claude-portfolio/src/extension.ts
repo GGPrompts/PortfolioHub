@@ -4,6 +4,7 @@ import { DashboardPanel } from './dashboardPanel';
 import { CommandsProvider } from './commandsProvider';
 import { CheatSheetProvider } from './cheatSheetProvider';
 import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
+import { PortfolioTaskProvider } from './taskProvider';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -46,11 +47,18 @@ export function activate(context: vscode.ExtensionContext) {
         const commandsProvider = new CommandsProvider();
         const cheatSheetProvider = new CheatSheetProvider();
         const portfolioWebviewProvider = new PortfolioWebviewProvider(context.extensionUri, portfolioPath);
+        const taskProvider = new PortfolioTaskProvider(portfolioPath);
 
         // Register tree data providers
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
         vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
         vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
+        
+        // Register task provider
+        const taskProviderDisposable = vscode.tasks.registerTaskProvider(
+            PortfolioTaskProvider.taskType,
+            taskProvider
+        );
 
         // Set up cross-provider communication
         // When project provider refreshes, also refresh webview data
@@ -492,6 +500,7 @@ export function activate(context: vscode.ExtensionContext) {
             testCommand,
             quickOpenCommand,
             statusBarItem,
+            taskProviderDisposable,
             // New commands
             buildReactCommand,
             startDevCommand,

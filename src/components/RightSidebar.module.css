@@ -8,42 +8,53 @@
   pointer-events: none; /* Allow clicks through when collapsed */
 }
 
-/* Individual Tabs - Match left sidebar styling */
+/* Individual Tabs - Match left sidebar notebook styling exactly */
 .tab {
   position: fixed;
   right: 0;
-  width: 60px;
-  height: 40px;
-  background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 200, 255, 0.1));
-  border: 1px solid rgba(0, 255, 150, 0.3);
-  border-right: none;
-  border-radius: 8px 0 0 8px;
+  width: 36px;
+  height: 32px;
+  background: rgba(20, 20, 20, 0.85);
+  border: 1px solid rgba(0, 255, 136, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
+  
+  /* Notebook tab shape - rounded on the left (opposite of left sidebar) */
+  border-radius: 12px 0 0 12px;
+  border-right: none;
+  
+  /* Subtle shadow */
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
   user-select: none;
+  transition: all 0.2s ease;
 }
 
 .tab:hover {
-  background: linear-gradient(135deg, rgba(0, 255, 150, 0.2), rgba(0, 200, 255, 0.2));
-  border-color: rgba(0, 255, 150, 0.5);
-  /* Remove transform hover effect to match left sidebar */
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.5);
+  /* No transform effects to maintain alignment like left sidebar */
 }
 
 .activeTab {
-  background: linear-gradient(135deg, rgba(0, 255, 150, 0.15), rgba(0, 200, 255, 0.15));
-  border-color: rgba(0, 255, 150, 0.6);
-  box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+  background: rgba(0, 255, 136, 0.15);
+  border-color: #00ff88;
+  /* No extra glow effects to maintain perfect alignment like left sidebar */
 }
 
 .tabIcon {
-  width: 18px;
-  height: 18px;
-  color: rgba(0, 255, 150, 0.9);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.2s ease;
+}
+
+.activeTab .tabIcon {
+  color: #00ff88;
 }
 
 /* tabLabel removed - using icon only to match left sidebar */
@@ -237,6 +248,57 @@
   color: var(--accent-cyan, #00ffff);
   margin-bottom: 16px;
   opacity: 0.6;
+}
+
+.previewInstructions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent-cyan, #00ffff);
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-cyan, #00ffff);
+  color: #000;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-top: 16px;
+}
+
+.note svg {
+  margin: 0;
+  margin-top: 2px;
+  color: rgba(0, 123, 255, 0.8);
+  flex-shrink: 0;
 }
 
 .previewPlaceholder h4 {

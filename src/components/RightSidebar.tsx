@@ -3,6 +3,7 @@ import { useSpring, animated } from '@react-spring/web';
 import SvgIcon from './SvgIcon';
 import { VSCodeManager } from './VSCodeManager';
 import QuickCommandsPanel from './QuickCommandsPanel';
+import { useProjectData } from '../hooks/useProjectData';
 import styles from './RightSidebar.module.css';
 
 interface RightSidebarProps {
@@ -39,18 +40,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
     return sum + (tab ? tab.width : 0);
   }, 0);
 
-  // Enhanced spring animation for sidebar with overlay mode detection
-  // Use immediate updates during drag, spring animations when not dragging
-  const sharedSpring = useSpring({
+  // Spring animation for sidebar
+  const sidebarSpring = useSpring({
     width: activeTabs.length > 0 ? sidebarWidth : 0,
-    rightOffset: activeTabs.length > 0 ? sidebarWidth : 0,
-    config: { tension: 300, friction: 30, precision: 0.1 },
-    immediate: isDragging // Skip animation during drag for instant feedback
+    config: { tension: 300, friction: 30 }
   });
-  
-  // Extract individual values for cleaner usage
-  const sidebarSpring = { width: sharedSpring.width };
-  const tabSpring = { rightOffset: sharedSpring.rightOffset };
   
   // Update overlay mode when width changes
   React.useEffect(() => {
@@ -139,7 +133,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
             key={tab.id}
             className={`${styles.tab} ${isActive ? styles.activeTab : ''}`}
             style={{
-              right: isActive ? (isDragging ? `${sidebarWidth}px` : tabSpring.rightOffset) : '0px',
+              right: isActive ? `${sidebarWidth}px` : '0px',
               top: `${20 + (index * 50)}px`, // Vertical spacing: 20px base + 50px per tab
             }}
             onClick={() => toggleTab(tab.id)}
@@ -197,13 +191,26 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
               <div className={styles.previewContent}>
                 <div className={styles.previewPlaceholder}>
                   <SvgIcon name="monitor" size={48} />
-                  <h4>{isOverlayMode ? 'Full-Width Live Preview' : 'Live Preview Panel'}</h4>
-                  <p>Project previews will be embedded here when you click "Start Server" in the main portfolio view.</p>
-                  {isOverlayMode ? (
-                    <p><strong>Overlay Mode Active:</strong> This panel is now covering the main content area for maximum preview space!</p>
-                  ) : (
-                    <p>This replaces the need for separate browser tabs! Drag the left edge to expand further.</p>
-                  )}
+                  <h4>VS Code Live Preview Integration</h4>
+                  <p>Click <strong>"View Live Preview"</strong> on any running project to open it in VS Code's Live Preview panel.</p>
+                  <div className={styles.previewInstructions}>
+                    <div className={styles.step}>
+                      <span className={styles.stepNumber}>1</span>
+                      <span>Run a project using the "Run" button</span>
+                    </div>
+                    <div className={styles.step}>
+                      <span className={styles.stepNumber}>2</span>
+                      <span>Click "View Live Preview" to open in VS Code Live Preview</span>
+                    </div>
+                    <div className={styles.step}>
+                      <span className={styles.stepNumber}>3</span>
+                      <span>Live Preview will open in a separate VS Code panel</span>
+                    </div>
+                  </div>
+                  <p className={styles.note}>
+                    <SvgIcon name="info" size={16} />
+                    The VS Code Live Preview extension provides better performance and debugging tools than embedded iframes.
+                  </p>
                 </div>
               </div>
             </div>

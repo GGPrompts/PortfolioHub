@@ -105,6 +105,9 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 case 'projects:launchSelected':
                     await this._launchSelectedProjects(message.projects);
                     break;
+                case 'project:run':
+                    await this._runProject(message.projectPath, message.command, message.projectTitle);
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -485,6 +488,42 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             this._showNotification(`✅ Successfully launched ${successCount} of ${projects.length} selected projects!`);
         } catch (error) {
             this._showNotification(`❌ Failed to launch selected projects: ${error}`, 'error');
+        }
+    }
+
+    private async _runProject(projectPath: string, command: string, projectTitle: string): Promise<void> {
+        try {
+            // Use the secure project command execution
+            const workspaceRoot = path.join(this._portfolioPath, '..');  // D:\ClaudeWindows
+            const success = await VSCodeSecurityService.executeProjectCommand(
+                projectPath,
+                command,
+                `Run ${projectTitle}`,
+                workspaceRoot
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage(`Started ${projectTitle}`);
+                // Wait a moment for server to fully start up
+                setTimeout(async () => {
+                    await this.refreshProjectData();
+                    console.log(`🔄 Refreshed project data after starting ${projectTitle}`);
+                    
+                    // Signal the React app to refresh its cached data
+                    if (this._view) {
+                        this._view.webview.postMessage({
+                            type: 'projectStatusUpdate',
+                            projectId: projectPath.split('\\').pop() || projectTitle,
+                            message: 'Project status updated - refresh your data'
+                        });
+                    }
+                }, 3000); // 3 second delay to allow server startup
+            } else {
+                vscode.window.showErrorMessage(`Failed to start ${projectTitle}`);
+            }
+        } catch (error) {
+            console.error('Failed to run project:', error);
+            vscode.window.showErrorMessage(`Failed to start ${projectTitle}: ${error}`);
         }
     }
 

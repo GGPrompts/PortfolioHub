@@ -13,7 +13,7 @@ const isVSCodeEnvironment = (): boolean => {
 async function fetchProjectData(): Promise<Project[]> {
   // Check if running in VS Code webview with injected data
   if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.projectData) {
-    console.log('📦 Using VS Code injected project data')
+    console.log('📦 Using VS Code injected project data (timestamp:', (window as any).vsCodePortfolio.lastUpdated, ')')
     const injectedData = (window as any).vsCodePortfolio.projectData
     
     if (injectedData && injectedData.projects && Array.isArray(injectedData.projects)) {
@@ -108,12 +108,29 @@ export function useProjectData() {
    * Force refresh of project data (clears cache and refetches)
    */
   const refreshProjectData = async () => {
+    console.log('🔄 Refreshing project data - clearing all caches')
+    
     // Clear port cache for fresh data
     optimizedPortManager.clearCache()
     
-    // Invalidate and refetch both queries
-    await queryClient.invalidateQueries({ queryKey: ['projects'] })
-    await queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
+    // In VS Code environment, signal that we want fresh data by updating timestamp
+    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio) {
+      console.log('🔄 Requesting fresh VS Code project data')
+      // Force React Query to see this as new data by updating query key
+      const timestamp = Date.now()
+      
+      // Invalidate with specific timestamp to force refresh
+      await queryClient.invalidateQueries({ queryKey: ['projects'] })
+      await queryClient.invalidateQueries({ queryKey: ['projectStatus', projects] })
+      
+      // Also manually refetch to ensure immediate update
+      await refetchProjects()
+      await refetchStatus()
+    } else {
+      // Standard refresh for web version
+      await queryClient.invalidateQueries({ queryKey: ['projects'] })
+      await queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
+    }
   }
 
   /**

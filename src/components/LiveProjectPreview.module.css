@@ -470,16 +470,21 @@
   border-color: #ff4444;
 }
 
-/* View in IDE Button - Blue */
-.ideButton {
+/* View Live Preview Button - Blue */
+.previewButton {
   background: rgba(0, 191, 255, 0.1);
   border-color: rgba(0, 191, 255, 0.4);
   color: #00bfff;
 }
 
-.ideButton:hover:not(:disabled) {
+.previewButton:hover:not(:disabled) {
   background: rgba(0, 191, 255, 0.2);
   border-color: #00bfff;
+}
+
+.previewButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* New Tab Button - Purple */

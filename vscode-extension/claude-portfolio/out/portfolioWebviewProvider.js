@@ -121,6 +121,9 @@ class PortfolioWebviewProvider {
                 case 'projects:launchSelected':
                     await this._launchSelectedProjects(message.projects);
                     break;
+                case 'project:run':
+                    await this._runProject(message.projectPath, message.command, message.projectTitle);
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -455,6 +458,36 @@ class PortfolioWebviewProvider {
         }
         catch (error) {
             this._showNotification(`❌ Failed to launch selected projects: ${error}`, 'error');
+        }
+    }
+    async _runProject(projectPath, command, projectTitle) {
+        try {
+            // Use the secure project command execution
+            const workspaceRoot = path.join(this._portfolioPath, '..'); // D:\ClaudeWindows
+            const success = await securityService_1.VSCodeSecurityService.executeProjectCommand(projectPath, command, `Run ${projectTitle}`, workspaceRoot);
+            if (success) {
+                vscode.window.showInformationMessage(`Started ${projectTitle}`);
+                // Wait a moment for server to fully start up
+                setTimeout(async () => {
+                    await this.refreshProjectData();
+                    console.log(`🔄 Refreshed project data after starting ${projectTitle}`);
+                    // Signal the React app to refresh its cached data
+                    if (this._view) {
+                        this._view.webview.postMessage({
+                            type: 'projectStatusUpdate',
+                            projectId: projectPath.split('\\').pop() || projectTitle,
+                            message: 'Project status updated - refresh your data'
+                        });
+                    }
+                }, 3000); // 3 second delay to allow server startup
+            }
+            else {
+                vscode.window.showErrorMessage(`Failed to start ${projectTitle}`);
+            }
+        }
+        catch (error) {
+            console.error('Failed to run project:', error);
+            vscode.window.showErrorMessage(`Failed to start ${projectTitle}: ${error}`);
         }
     }
     async _launchProject(project) {

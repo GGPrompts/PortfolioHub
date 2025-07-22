@@ -24,6 +24,12 @@
   - "Open in new tab" buttons now use VS Code Simple Browser
   - "Kill server" buttons execute proper PowerShell commands
   - "Start server" buttons work with VS Code terminal integration
+- ✅ **Security & Command Execution Fix (July 2025)**: Resolved "commands blocked for security" issue
+  - Implemented message-passing architecture for secure project execution
+  - Fixed path traversal security validation with proper workspace root (D:\ClaudeWindows)
+  - Added automatic status refresh with 3-second startup delay
+  - Real-time communication bridge between VS Code extension and React app
+  - All "Run" buttons now execute commands securely without browser validation conflicts
 
 ### Enhanced Right Sidebar System - COMPLETED JANUARY 2025
 **Status**: 🎉 **ENHANCED RIGHT SIDEBAR FULLY IMPLEMENTED**

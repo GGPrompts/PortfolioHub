@@ -105,10 +105,27 @@ export default function LiveProjectPreview({
 
   // Helper functions for project actions
   const handleRunProject = async () => {
-    const projectPath = getProjectPath()
-    const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
-    await executeCommand(command, `Run ${project.title}`)
-    showNotification(`Starting ${project.title}...`, 'info')
+    if (isVSCodeEnvironment()) {
+      // Use VS Code extension's secure project command execution
+      const projectPath = getProjectPath()
+      const command = project.buildCommand || 'npm run dev'
+      
+      // Send message to VS Code extension to run project securely
+      window.vsCodePortfolio?.postMessage?.({
+        type: 'project:run',
+        projectPath: projectPath,
+        command: command,
+        projectId: project.id,
+        projectTitle: project.title
+      })
+      showNotification(`Starting ${project.title}...`, 'info')
+    } else {
+      // Fallback for web version
+      const projectPath = getProjectPath()
+      const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
+      await executeCommand(command, `Run ${project.title}`)
+      showNotification(`Starting ${project.title}...`, 'info')
+    }
   }
 
   const handleKillProject = async () => {
@@ -376,16 +393,41 @@ export default function LiveProjectPreview({
       setTimeout(() => {
         if (iframeRef.current) {
           iframeRef.current.src = previewUrl || ''
+          
+          // Also try to detect loading by polling the iframe
+          const checkInterval = setInterval(() => {
+            if (iframeRef.current && !previewLoaded) {
+              try {
+                // Check if iframe has loaded content
+                const iframeWindow = iframeRef.current.contentWindow
+                if (iframeWindow && iframeWindow.location.href !== 'about:blank') {
+                  console.log(`✅ LivePreview ${project.id} detected by polling`)
+                  setPreviewLoaded(true)
+                  setIsRefreshing(false)
+                  clearInterval(checkInterval)
+                }
+              } catch (error) {
+                // Cross-origin - that's fine, iframe is probably loaded
+                console.log(`✅ LivePreview ${project.id} cross-origin detected (likely loaded)`)
+                setPreviewLoaded(true)
+                setIsRefreshing(false)
+                clearInterval(checkInterval)
+              }
+            }
+          }, 500)
+          
+          // Clear interval after timeout
+          setTimeout(() => clearInterval(checkInterval), 5000)
         }
       }, 100)
       
-      // Timeout fallback - stop spinner after 10 seconds if iframe doesn't load
+      // Shorter timeout fallback - stop spinner after 3 seconds
       const loadTimeout = setTimeout(() => {
         const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
         console.warn(`⚠️ LivePreview ${project.id} timeout - assuming loaded ${isVSCode ? '(VS Code)' : '(Web)'}`)
         setPreviewLoaded(true)
         setIsRefreshing(false)
-      }, 10000)
+      }, 3000)
       
       return () => clearTimeout(loadTimeout)
     }
@@ -396,42 +438,6 @@ export default function LiveProjectPreview({
     setIsRefreshing(false)
     const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
     console.log(`✅ LivePreview ${project.id} iframe loaded successfully ${isVSCode ? '(VS Code)' : '(Web)'}`)
-    
-    // Inject appropriate viewport meta tag based on device type (skip for same-origin to avoid CORS issues)
-    if (iframeRef.current && window.location.origin === previewUrl?.split('?')[0]?.replace(/:\d+/, ':' + actualPort)) {
-      try {
-        const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document
-        if (iframeDoc) {
-          // Remove any existing viewport meta tags
-          const existingViewport = iframeDoc.querySelector('meta[name="viewport"]')
-          if (existingViewport) {
-            existingViewport.remove()
-          }
-          
-          // Inject appropriate viewport meta tag
-          const viewportMeta = iframeDoc.createElement('meta')
-          viewportMeta.name = 'viewport'
-          
-          if (viewMode === 'desktop') {
-            viewportMeta.content = 'width=1920, initial-scale=1.0, user-scalable=yes'
-            iframeDoc.body.style.minWidth = '1920px'
-          } else {
-            viewportMeta.content = 'width=375, initial-scale=1.0, user-scalable=yes'
-            iframeDoc.body.style.minWidth = '375px'
-          }
-          
-          iframeDoc.head.appendChild(viewportMeta)
-          
-          // Trigger window resize event to update responsive design
-          if (iframeRef.current.contentWindow) {
-            iframeRef.current.contentWindow.dispatchEvent(new Event('resize'))
-          }
-        }
-      } catch (error) {
-        // Cross-origin restrictions may prevent this, that's okay
-        console.log('Could not inject viewport meta (likely cross-origin):', error instanceof Error ? error.message : 'Unknown error')
-      }
-    }
   }
 
   const handleIframeError = () => {
@@ -642,7 +648,7 @@ export default function LiveProjectPreview({
         </div>
         
         <div className={styles.previewControls}>
-          {isRunning && previewUrl && (
+          {actualIsRunning && actualPort && (
             <div className={styles.controlButtons}>
               {!globalViewMode && (
                 <button
@@ -709,29 +715,20 @@ export default function LiveProjectPreview({
                 onClick={handleKillProject}
                 className={`${styles.actionButton} ${styles.killButton}`}
                 title="Stop project server"
-                disabled={!isRunning}
+                disabled={!actualIsRunning}
               >
                 <SvgIcon name="stop" size={14} />
                 Kill
               </button>
               
               <button
-                onClick={handleViewInIDE}
-                className={`${styles.actionButton} ${styles.ideButton}`}
-                title="View project in IDE"
-              >
-                <SvgIcon name="code" size={14} />
-                View in IDE
-              </button>
-              
-              <button
                 onClick={handleViewInNewTab}
-                className={`${styles.actionButton} ${styles.newTabButton}`}
-                title="Open project in new browser tab"
-                disabled={!isRunning}
+                className={`${styles.actionButton} ${styles.previewButton}`}
+                title="View live preview"
+                disabled={!actualIsRunning}
               >
-                <SvgIcon name="externalLink" size={14} />
-                New Tab
+                <SvgIcon name="monitor" size={14} />
+                View Live Preview
               </button>
             </div>
             

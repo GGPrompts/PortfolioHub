@@ -90,6 +90,23 @@ function PortfolioApp() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // VS Code message listener for project status updates
+  useEffect(() => {
+    const handleVSCodeMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'projectStatusUpdate') {
+        console.log('🔄 Received VS Code project status update:', event.data)
+        // Force refresh of project data
+        refreshProjectData()
+      }
+    }
+
+    // Listen for messages from VS Code extension
+    if (window.vsCodePortfolio?.isVSCodeWebview) {
+      window.addEventListener('message', handleVSCodeMessage)
+      return () => window.removeEventListener('message', handleVSCodeMessage)
+    }
+  }, [refreshProjectData])
+
   // Handle click outside dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

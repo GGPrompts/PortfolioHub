@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * VS Code Security Service - Provides secure command execution with workspace trust
@@ -67,11 +68,13 @@ export class VSCodeSecurityService {
      */
     static validateCommand(command: string): boolean {
         if (!command || typeof command !== 'string') {
+            console.warn('Command validation failed: command is null or not a string');
             return false;
         }
 
         const trimmedCommand = command.trim();
         if (trimmedCommand.length === 0) {
+            console.warn('Command validation failed: command is empty');
             return false;
         }
 
@@ -82,7 +85,7 @@ export class VSCodeSecurityService {
         }
 
         // Extract the base command (first word)
-        const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();
+        const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();  
         
         // Special handling for npm commands
         if (baseCommand === 'npm') {
@@ -258,18 +261,18 @@ export class VSCodeSecurityService {
                 return false;
             }
 
-            // Create the full command with cd
-            const fullCommand = `cd "${sanitizedPath}" && ${command}`;
-            
-            // Final validation of the complete command
-            if (!this.validateCommand(fullCommand)) {
+            // SECURITY: Validate only the actual command (not cd part since terminal cwd handles directory)
+            if (!this.validateCommand(command)) {
                 await vscode.window.showErrorMessage(
-                    `Complete command failed validation: ${fullCommand}`
+                    `Project command blocked for security reasons: ${command}`
                 );
                 return false;
             }
 
-            // Create or get terminal
+            // Check if dependencies need to be installed
+            const needsInstall = await this.checkAndInstallDependencies(sanitizedPath, command);
+
+            // Create or get terminal with sanitized path as working directory
             let terminal = vscode.window.terminals.find(t => t.name === terminalName);
             if (!terminal) {
                 terminal = vscode.window.createTerminal({
@@ -278,8 +281,17 @@ export class VSCodeSecurityService {
                 });
             }
 
-            // Execute the command
-            terminal.sendText(command); // Don't include cd since terminal cwd is already set
+            // Install dependencies first if needed
+            if (needsInstall) {
+                terminal.sendText('npm install');
+                // Wait a moment before running the main command
+                setTimeout(() => {
+                    terminal.sendText(command);
+                }, 2000);
+            } else {
+                // Execute the command immediately
+                terminal.sendText(command);
+            }
             terminal.show();
 
             console.log(`Secure project command executed: ${command} in ${sanitizedPath}`);
@@ -342,5 +354,52 @@ export class VSCodeSecurityService {
         // Environment variable names should only contain alphanumeric characters and underscores
         const validPattern = /^[A-Z_][A-Z0-9_]*$/i;
         return validPattern.test(envVarName);
+    }
+
+    /**
+     * Checks if a Node.js project needs dependencies installed
+     * @param projectPath The path to the project directory
+     * @param command The command being executed
+     * @returns Promise<boolean> - true if npm install should be run first
+     */
+    private static async checkAndInstallDependencies(projectPath: string, command: string): Promise<boolean> {
+        // Only check for npm projects
+        if (!command.startsWith('npm ')) {
+            return false;
+        }
+
+        try {
+            const packageJsonPath = path.join(projectPath, 'package.json');
+            const nodeModulesPath = path.join(projectPath, 'node_modules');
+
+            // Check if package.json exists
+            if (!fs.existsSync(packageJsonPath)) {
+                return false;
+            }
+
+            // Check if node_modules exists
+            if (!fs.existsSync(nodeModulesPath)) {
+                console.log(`📦 Dependencies need to be installed for project: ${projectPath}`);
+                
+                // Show user notification
+                vscode.window.showInformationMessage(
+                    `Installing dependencies for ${path.basename(projectPath)}...`
+                );
+                
+                return true;
+            }
+
+            // Check if node_modules is empty or outdated
+            const nodeModulesFiles = fs.readdirSync(nodeModulesPath);
+            if (nodeModulesFiles.length === 0) {
+                console.log(`📦 Empty node_modules detected, installing dependencies: ${projectPath}`);
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Error checking dependencies:', error);
+            return false;
+        }
     }
 }

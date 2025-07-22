@@ -86,6 +86,21 @@ function activate(context) {
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
         vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
         vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
+        // Set up cross-provider communication
+        // When project provider refreshes, also refresh webview data
+        const originalRefresh = projectProvider.refresh.bind(projectProvider);
+        projectProvider.refresh = () => {
+            originalRefresh();
+            // Trigger webview refresh after a short delay to allow project status to update
+            setTimeout(() => {
+                portfolioWebviewProvider.refreshProjectData();
+            }, 1000);
+        };
+        // Set up periodic refresh for project status (every 5 seconds)
+        const refreshInterval = setInterval(() => {
+            projectProvider.refresh();
+        }, 5000);
+        context.subscriptions.push({ dispose: () => clearInterval(refreshInterval) });
         // Keep the webview provider for full portfolio functionality
         // (Not registering as sidebar view, only for full-screen use)
         // Register commands
@@ -118,8 +133,13 @@ function activate(context) {
                 retainContextWhenHidden: true,
                 localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'portfolio-dist')]
             });
-            // Use the same HTML generation logic
-            panel.webview.html = portfolioWebviewProvider._getHtmlForWebview(panel.webview);
+            // Use the same HTML generation logic (async)
+            portfolioWebviewProvider._getHtmlForWebview(panel.webview).then(html => {
+                panel.webview.html = html;
+            }).catch(error => {
+                console.error('Failed to generate webview HTML:', error);
+                panel.webview.html = '<html><body>Error loading portfolio</body></html>';
+            });
             // Set up the same message handling
             portfolioWebviewProvider._setupMessageHandling(panel.webview);
         });

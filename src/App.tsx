@@ -43,16 +43,16 @@ export default function App() {
   const [portCheckingDisabled, setPortCheckingDisabled] = useState(false)
 
   // Load projects from manifest
-  useEffect(() => {
+  const loadProjectData = useCallback(() => {
     console.log('Loading manifest...')
     
     // Check if running in VS Code webview with injected data
     if (window.vsCodePortfolio?.projectData) {
-      console.log('Using VS Code injected data:', window.vsCodePortfolio.projectData)
+      console.log('Using VS Code injected data (updated at:', new Date(window.vsCodePortfolio.lastUpdated || 0).toLocaleTimeString(), '):', window.vsCodePortfolio.projectData)
       const data = window.vsCodePortfolio.projectData
       if (data.projects) {
         setProjects(data.projects)
-        console.log('Projects set from VS Code:', data.projects.length)
+        console.log('Projects set from VS Code:', data.projects.length, '- Project statuses:', data.projects.map((p: any) => `${p.id}: ${p.status}`))
       } else {
         console.error('No projects array in VS Code injected data')
       }
@@ -77,6 +77,33 @@ export default function App() {
       })
       .catch(err => console.error('Failed to load projects:', err))
   }, [setProjects])
+
+  useEffect(() => {
+    loadProjectData()
+    
+    // In VS Code webview, listen for project data updates
+    if (window.vsCodePortfolio?.isVSCodeWebview) {
+      let lastDataHash = '';
+      
+      const checkForDataUpdates = () => {
+        const currentData = window.vsCodePortfolio?.projectData
+        if (currentData?.projects) {
+          // Create a simple hash of the project statuses
+          const statusHash = currentData.projects.map((p: any) => `${p.id}:${p.status}`).join('|')
+          
+          if (lastDataHash && statusHash !== lastDataHash) {
+            console.log('VS Code project status changed, reloading...', statusHash)
+            loadProjectData()
+          }
+          lastDataHash = statusHash
+        }
+      }
+      
+      // Check for updates every 3 seconds
+      const updateInterval = setInterval(checkForDataUpdates, 3000)
+      return () => clearInterval(updateInterval)
+    }
+  }, [loadProjectData, projects.length])
 
   // Handle port checking toggle
   useEffect(() => {
@@ -109,16 +136,29 @@ export default function App() {
   // Check running status for projects
   useEffect(() => {
     const checkRunningStatus = async () => {
-      const running = await getRunningProjects()
       const newRunningStatus: { [key: string]: boolean } = {}
       const newPortStatus: { [key: string]: number | null } = {}
       
-      for (const project of projects) {
-        if (project.displayType === 'external') {
-          const isRunning = running.has(project.id)
-          const port = await getProjectPort(project)
-          newRunningStatus[project.id] = isRunning
-          newPortStatus[project.id] = port
+      // Use VS Code project data when available
+      if (window.vsCodePortfolio?.isVSCodeWebview && window.vsCodePortfolio.projectData?.projects) {
+        const vsCodeProjects = window.vsCodePortfolio.projectData.projects
+        for (const project of projects) {
+          if (project.displayType === 'external') {
+            const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+            newRunningStatus[project.id] = vsCodeProject?.status === 'active' || false
+            newPortStatus[project.id] = vsCodeProject?.localPort || project.localPort || null
+          }
+        }
+      } else {
+        // Use traditional port checking for web version
+        const running = await getRunningProjects()
+        for (const project of projects) {
+          if (project.displayType === 'external') {
+            const isRunning = running.has(project.id)
+            const port = await getProjectPort(project)
+            newRunningStatus[project.id] = isRunning
+            newPortStatus[project.id] = port
+          }
         }
       }
       
@@ -128,8 +168,12 @@ export default function App() {
     
     if (projects.length > 0) {
       checkRunningStatus()
-      const interval = setInterval(checkRunningStatus, 5000)
-      return () => clearInterval(interval)
+      
+      // Don't use interval polling in VS Code webview - rely on injected data
+      if (!window.vsCodePortfolio?.isVSCodeWebview) {
+        const interval = setInterval(checkRunningStatus, 5000)
+        return () => clearInterval(interval)
+      }
     }
   }, [projects])
   
@@ -174,16 +218,29 @@ export default function App() {
   const handleRefreshPortfolio = async (event: React.MouseEvent) => {
     event.stopPropagation()
     // Just refresh the project status without reloading the page
-    const running = await getRunningProjects()
     const newRunningStatus: { [key: string]: boolean } = {}
     const newPortStatus: { [key: string]: number | null } = {}
     
-    for (const project of projects) {
-      if (project.displayType === 'external') {
-        const isRunning = running.has(project.id)
-        const port = await getProjectPort(project)
-        newRunningStatus[project.id] = isRunning
-        newPortStatus[project.id] = port
+    // Use VS Code project data when available
+    if (window.vsCodePortfolio?.isVSCodeWebview && window.vsCodePortfolio.projectData?.projects) {
+      const vsCodeProjects = window.vsCodePortfolio.projectData.projects
+      for (const project of projects) {
+        if (project.displayType === 'external') {
+          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+          newRunningStatus[project.id] = vsCodeProject?.status === 'active' || false
+          newPortStatus[project.id] = vsCodeProject?.localPort || project.localPort || null
+        }
+      }
+    } else {
+      // Use traditional port checking for web version
+      const running = await getRunningProjects()
+      for (const project of projects) {
+        if (project.displayType === 'external') {
+          const isRunning = running.has(project.id)
+          const port = await getProjectPort(project)
+          newRunningStatus[project.id] = isRunning
+          newPortStatus[project.id] = port
+        }
       }
     }
     

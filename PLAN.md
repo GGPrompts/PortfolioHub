@@ -1,6 +1,31 @@
 # Claude Development Portfolio - Development Plan
 
-## 🎯 Current Status (2025-01-22)
+## 🎯 Current Status (2025-07-22)
+
+### 🔄 **ACTIVELY DEBUGGING: VS Code Project Status Synchronization**
+
+**Current Issue**: VS Code Projects tab shows correct online/offline status (green for Matrix Cards), but the portfolio webview shows all projects as offline.
+
+**Root Cause**: Disconnect between VS Code extension's project status checking and React portfolio app's status display.
+
+**Progress So Far**:
+- ✅ VS Code extension now has real-time port checking (every 5 seconds)
+- ✅ VS Code Projects tab correctly shows Matrix Cards as online/green
+- ✅ Added comprehensive debugging system with timestamps and status logging
+- ✅ Fixed webview refresh mechanism to sync with project provider updates
+- ❌ **ISSUE**: Portfolio React app not receiving/displaying updated project status from VS Code extension
+
+**Next Session Tasks**:
+1. **Debug Console Analysis**: Check console logs in VS Code webview to see if project data is being injected correctly
+2. **Status Propagation Fix**: Ensure React app receives and processes updated project status from VS Code extension
+3. **Real-time Updates**: Make portfolio automatically refresh when project status changes
+
+**Debug Setup**: Added extensive logging showing project statuses, timestamps, and data flow between VS Code extension and React app.
+
+### 🐛 **PENDING UI FIXES**
+
+**1. Duplicate Eye Icons**: Two eye icons appearing on My Project Portfolio page - need to consolidate
+**2. AI Assistant Dropdown Clipping**: Dropdown still being hidden by border below it despite overflow:visible fixes
 
 ### ✅ Recently Completed (MAJOR BREAKTHROUGHS)
 - **🚀 COMPLETE VS CODE EXTENSION**: ✅ **FULLY IMPLEMENTED & DEPLOYED**
@@ -377,6 +402,9 @@ const openFolder = async (projectPath: string) => {
 ## 🚧 Known Issues & Technical Debt
 
 ### Current Issues
+- [ ] **URGENT**: VS Code project status not syncing to portfolio webview (Matrix Cards shows online in VS Code tab but offline in portfolio)
+- [ ] **UI**: Duplicate eye icons appearing on My Project Portfolio page
+- [ ] **UI**: AI Assistant dropdown still clipped by container borders despite overflow fixes
 - [ ] 3D view still has minor text visibility issues in some lighting
 - [ ] Some PowerShell commands need better error handling
 - [x] ~~Project status checking could be more efficient~~ ✅ **SOLVED**: Network toggle implemented

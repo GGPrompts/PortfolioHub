@@ -3,7 +3,7 @@
   background: rgba(10, 10, 10, 0.95);
   border: 1px solid rgba(0, 255, 136, 0.2);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible; /* Changed to visible to allow dropdown to show */
   transition: all 0.3s ease;
   position: relative;
   width: 100%;
@@ -337,6 +337,7 @@
   border-top: 1px solid rgba(60, 60, 60, 0.3);
   position: relative;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  overflow: visible; /* Ensure dropdown can show outside */
 }
 
 .projectTitle {
@@ -522,7 +523,7 @@
   border-radius: 6px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  z-index: 1000;
+  z-index: 9999; /* Increased z-index to show above all other elements */
   margin-top: 4px;
 }
 

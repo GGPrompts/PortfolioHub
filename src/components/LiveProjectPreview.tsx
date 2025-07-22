@@ -22,6 +22,21 @@ export default function LiveProjectPreview({
   globalViewMode,
   livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
+  
+  // In VS Code webview, get project status from injected data
+  const getVSCodeProjectStatus = () => {
+    if (!window.vsCodePortfolio?.isVSCodeWebview) return { isRunning, port }
+    
+    const vsCodeProjects = window.vsCodePortfolio.projectData?.projects || []
+    const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+    
+    return {
+      isRunning: vsCodeProject?.status === 'active' || false,
+      port: vsCodeProject?.localPort || project.localPort || null
+    }
+  }
+  
+  const { isRunning: actualIsRunning, port: actualPort } = getVSCodeProjectStatus()
   const [showLivePreview, setShowLivePreview] = useState(false)
   const [previewLoaded, setPreviewLoaded] = useState(false)
   const [imageLoadStatus, setImageLoadStatus] = useState<boolean | undefined>(undefined)
@@ -61,7 +76,7 @@ export default function LiveProjectPreview({
   }
 
   const handleKillProject = async () => {
-    if (!port) {
+    if (!actualPort) {
       showNotification('Project is not running', 'warning')
       return
     }
@@ -72,8 +87,8 @@ export default function LiveProjectPreview({
   }
 
   const handleViewInNewTab = () => {
-    if (port) {
-      const url = `http://localhost:${port}`
+    if (actualPort) {
+      const url = `http://localhost:${actualPort}`
       openInBrowser(url)
     } else {
       showNotification('Project is not running', 'warning')
@@ -113,9 +128,14 @@ export default function LiveProjectPreview({
 
   // Build preview URL with proper viewport hints
   const getPreviewUrl = () => {
-    if (!port) return null
+    // In VS Code webview, disable iframe previews completely
+    if (window.vsCodePortfolio?.isVSCodeWebview) {
+      return null
+    }
     
-    const baseUrl = `http://localhost:${port}`
+    if (!actualPort) return null
+    
+    const baseUrl = `http://localhost:${actualPort}`
     const params = new URLSearchParams()
     
     if (viewMode === 'desktop') {
@@ -234,7 +254,7 @@ export default function LiveProjectPreview({
 
   // Auto-enable live preview when project starts running and global previews are enabled
   useEffect(() => {
-    if (isRunning && port && !showLivePreview && livePreviewsEnabled) {
+    if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled) {
       setIsRefreshing(true)
       // Small delay to let the server fully start
       setTimeout(() => {
@@ -242,12 +262,12 @@ export default function LiveProjectPreview({
         setPreviewLoaded(false)
       }, 2000)
     }
-    if (!isRunning || !livePreviewsEnabled) {
+    if (!actualIsRunning || !livePreviewsEnabled) {
       setShowLivePreview(false)
       setPreviewLoaded(false)
       setIsRefreshing(false)
     }
-  }, [isRunning, port, livePreviewsEnabled])
+  }, [actualIsRunning, actualPort, livePreviewsEnabled])
 
   // Force iframe reload when zoom mode or view mode changes (URL changes)
   useEffect(() => {
@@ -351,7 +371,7 @@ export default function LiveProjectPreview({
   const scaleConfig = getScaleAndDimensions()
 
   return (
-    <div className={`${styles.projectCard} ${isRunning ? styles.running : ''}`}>
+    <div className={`${styles.projectCard} ${actualIsRunning ? styles.running : ''}`}>
       <div className={styles.previewContainer} style={{
         width: `${scaleConfig.containerWidth}px`,
         height: `${scaleConfig.containerHeight}px`
@@ -370,7 +390,7 @@ export default function LiveProjectPreview({
                 className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
-                sandbox="allow-same-origin allow-scripts allow-pointer-lock"
+                sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
                 title={`${project.title} Preview`}
                 width={scaleConfig.width}
                 height={scaleConfig.height}
@@ -424,9 +444,9 @@ export default function LiveProjectPreview({
       {/* Status Bar - Between monitor and description */}
       <div className={styles.statusBar}>
         <div className={styles.statusIndicator}>
-          <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}></span>
+          <span className={`${styles.statusDot} ${actualIsRunning ? styles.running : styles.stopped}`}></span>
           <span className={styles.statusText}>
-            {isRunning ? `SERVER :${port}` : 'OFFLINE'}
+            {actualIsRunning ? `SERVER :${actualPort}` : 'OFFLINE'}
           </span>
           {/* Refresh indicator */}
           {isRefreshing && (

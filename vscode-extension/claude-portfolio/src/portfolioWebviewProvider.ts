@@ -6,6 +6,7 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'claude-portfolio.main';
     
     private _view?: vscode.WebviewView;
+    private _cachedProjectData?: any;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -28,10 +29,33 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             ]
         };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        // Load HTML asynchronously with status checking
+        this._getHtmlForWebview(webviewView.webview).then(html => {
+            webviewView.webview.html = html;
+        }).catch(error => {
+            console.error('Failed to generate webview HTML:', error);
+            webviewView.webview.html = '<html><body>Error loading portfolio</body></html>';
+        });
 
         // Set up message handling
         this._setupMessageHandling(webviewView.webview);
+    }
+
+    public async refreshProjectData(): Promise<void> {
+        if (this._view) {
+            try {
+                // Reload project data with fresh status
+                this._cachedProjectData = await this._loadProjectDataWithStatus();
+                
+                // Update the webview with fresh data
+                const html = await this._getHtmlForWebview(this._view.webview);
+                this._view.webview.html = html;
+                
+                console.log('Portfolio webview refreshed with updated project data');
+            } catch (error) {
+                console.error('Failed to refresh portfolio webview:', error);
+            }
+        }
     }
 
     public _setupMessageHandling(webview: vscode.Webview) {
@@ -313,12 +337,69 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         return { projects: [] };
     }
 
-    public _getHtmlForWebview(webview: vscode.Webview) {
+    private async _loadProjectDataWithStatus(): Promise<any> {
+        try {
+            const manifest = this._loadProjectData();
+            if (manifest.projects && manifest.projects.length > 0) {
+                // Update project statuses with real-time port checking
+                await this._updateProjectStatuses(manifest.projects);
+            }
+            return manifest;
+        } catch (error) {
+            console.error('Failed to load project data with status:', error);
+            return { projects: [] };
+        }
+    }
+
+    private async _updateProjectStatuses(projects: any[]): Promise<void> {
+        const statusPromises = projects.map(async (project) => {
+            if (project.localPort) {
+                try {
+                    const isRunning = await this._checkPortStatus(project.localPort);
+                    project.status = isRunning ? 'active' : 'inactive';
+                } catch (error) {
+                    project.status = 'inactive';
+                }
+            } else {
+                project.status = 'inactive';
+            }
+        });
+        await Promise.all(statusPromises);
+    }
+
+    private _checkPortStatus(port: number): Promise<boolean> {
+        return new Promise((resolve) => {
+            const req = require('http').request({
+                hostname: 'localhost',
+                port: port,
+                path: '/',
+                method: 'GET',
+                timeout: 1000
+            }, (res: any) => {
+                // Only resolve true for successful HTTP status codes
+                resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+            });
+
+            req.on('error', () => {
+                resolve(false);
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+            });
+
+            req.end();
+        });
+    }
+
+    public async _getHtmlForWebview(webview: vscode.Webview) {
         // Get the local path to portfolio assets
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
         
-        // Load project data from manifest
-        const projectData = this._loadProjectData();
+        // Load project data from manifest with status checking (use cache if available)
+        const projectData = this._cachedProjectData || await this._loadProjectDataWithStatus();
+        this._cachedProjectData = projectData;
 
         // Read the actual index.html file and parse asset names
         let htmlContent = '';
@@ -335,14 +416,14 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             const jsMatch = htmlContent.match(/src="\/assets\/(index-[^"]+\.js)"/);
             
             if (cssMatch && jsMatch) {
-                cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, cssMatch[1])).toString();
-                jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, jsMatch[1])).toString();
+                cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', cssMatch[1])).toString();
+                jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', jsMatch[1])).toString();
             }
         } catch (error) {
             console.error('Failed to load portfolio HTML:', error);
-            // Fallback to hardcoded names
-            cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-gcHwfFpK.css')).toString();
-            jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'index-DV13vJNQ.js')).toString();
+            // Fallback to hardcoded names (updated to current build)
+            cssUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-DKQU7oiL.css')).toString();
+            jsUri = webview.asWebviewUri(vscode.Uri.joinPath(portfolioPath, 'assets', 'index-DXCA9X0j.js')).toString();
         }
 
         // Use a nonce to only allow specific scripts to be run
@@ -392,6 +473,7 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             portfolioPath: '${this._portfolioPath.replace(/\\/g, '\\\\')}',
             isVSCodeWebview: true,
             projectData: ${JSON.stringify(projectData)},
+            lastUpdated: ${Date.now()},
             
             // Main postMessage method for communication
             postMessage: (message) => {

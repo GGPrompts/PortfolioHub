@@ -59,17 +59,18 @@
       ]
     },
     {
-      "id": "ggprompts-main",
+      "id": "ggprompts",
       "title": "GGPrompts",
       "description": "AI prompt management platform with real-time collaboration, template system, and community features. Built with React and Supabase.",
       "displayType": "external",
       "localPort": 9323,
       "buildCommand": "npm run dev",
+      "path": "ggprompts",
       "repository": "https://github.com/GGPrompts/ggprompts",
-      "thumbnail": "thumbnails/ggprompts-main.png",
+      "thumbnail": "thumbnails/ggprompts.png",
       "tags": ["React", "Full-Stack", "Real-time", "Database"],
       "tech": ["React", "Vite", "Supabase", "PostgreSQL", "TanStack Query"],
-      "devJournal": "projects/dev-journals/ggprompts-main.md",
+      "devJournal": "projects/dev-journals/ggprompts.md",
       "features": [
         "Real-time collaboration",
         "Template-based prompt system",

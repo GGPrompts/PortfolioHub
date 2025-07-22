@@ -48,13 +48,17 @@ export default function App() {
     
     // Check if running in VS Code webview with injected data
     if (window.vsCodePortfolio?.projectData) {
-      console.log('Using VS Code injected data (updated at:', new Date(window.vsCodePortfolio.lastUpdated || 0).toLocaleTimeString(), '):', window.vsCodePortfolio.projectData)
       const data = window.vsCodePortfolio.projectData
+      const updateTime = new Date(window.vsCodePortfolio.lastUpdated || 0).toLocaleTimeString()
+      console.log('🔄 Using VS Code injected data (updated at:', updateTime, '):', data)
+      
       if (data.projects) {
+        const statusSummary = data.projects.map((p: any) => `${p.id}: ${p.status || 'no-status'}`).join(', ')
+        console.log('📊 VS Code Project statuses:', statusSummary)
         setProjects(data.projects)
-        console.log('Projects set from VS Code:', data.projects.length, '- Project statuses:', data.projects.map((p: any) => `${p.id}: ${p.status}`))
+        console.log('✅ Projects set from VS Code:', data.projects.length, 'projects')
       } else {
-        console.error('No projects array in VS Code injected data')
+        console.error('❌ No projects array in VS Code injected data')
       }
       return
     }
@@ -304,35 +308,40 @@ export default function App() {
                   <p>A collection of creative coding experiments and applications</p>
                 </div>
                 <div className="header-actions">
-                  <ThreeDEye 
-                    isOpen={livePreviewsEnabled}
-                    onClick={() => setLivePreviewsEnabled(!livePreviewsEnabled)}
-                    className="eye-toggle-btn"
-                  />
-                  <button 
-                    className="refresh-icon-btn"
-                    onClick={handleRefreshPortfolio}
-                    title="Refresh project status"
-                  >
-                    <SvgIcon name="refreshCw" size={16} />
-                  </button>
+                  {/* Unified preview/port toggle - consolidates live preview and port checking */}
                   <button 
                     className={`refresh-icon-btn ${portCheckingDisabled ? 'disabled' : ''}`}
-                    onClick={() => setPortCheckingDisabled(!portCheckingDisabled)}
+                    onClick={() => {
+                      if (window.vsCodePortfolio?.isVSCodeWebview) {
+                        // In VS Code, toggle both live previews and port checking together
+                        setLivePreviewsEnabled(!livePreviewsEnabled)
+                        setPortCheckingDisabled(livePreviewsEnabled) // Inverse relationship
+                      } else {
+                        // In web mode, toggle port checking
+                        setPortCheckingDisabled(!portCheckingDisabled)
+                      }
+                    }}
                     title={
                       window.vsCodePortfolio?.isVSCodeWebview 
-                        ? (portCheckingDisabled ? "Enable live previews" : "Disable live previews")
+                        ? (livePreviewsEnabled ? "Disable live previews" : "Enable live previews")
                         : (portCheckingDisabled ? "Enable port checking" : "Disable port checking")
                     }
                   >
                     <SvgIcon 
                       name={
                         window.vsCodePortfolio?.isVSCodeWebview 
-                          ? (portCheckingDisabled ? "eyeOff" : "eye")
+                          ? (livePreviewsEnabled ? "eye" : "eyeOff")
                           : (portCheckingDisabled ? "wifiOff" : "wifi")
                       } 
                       size={16} 
                     />
+                  </button>
+                  <button 
+                    className="refresh-icon-btn"
+                    onClick={handleRefreshPortfolio}
+                    title="Refresh project status"
+                  >
+                    <SvgIcon name="refreshCw" size={16} />
                   </button>
                   {/* View Mode Toggle Buttons */}
                   <div className="view-mode-toggle">

@@ -65,12 +65,16 @@ class PortfolioWebviewProvider {
     async refreshProjectData() {
         if (this._view) {
             try {
+                // Clear cached data to force fresh status checking
+                this._cachedProjectData = null;
                 // Reload project data with fresh status
-                this._cachedProjectData = await this._loadProjectDataWithStatus();
+                const freshData = await this._loadProjectDataWithStatus();
+                this._cachedProjectData = freshData;
+                console.log('Fresh project statuses:', freshData.projects?.map((p) => `${p.id}: ${p.status}`));
                 // Update the webview with fresh data
                 const html = await this._getHtmlForWebview(this._view.webview);
                 this._view.webview.html = html;
-                console.log('Portfolio webview refreshed with updated project data');
+                console.log('Portfolio webview refreshed with updated project data at', new Date().toLocaleTimeString());
             }
             catch (error) {
                 console.error('Failed to refresh portfolio webview:', error);
@@ -352,15 +356,16 @@ class PortfolioWebviewProvider {
     }
     _checkPortStatus(port) {
         return new Promise((resolve) => {
+            // Use favicon.ico check like the webapp for consistency
             const req = require('http').request({
                 hostname: 'localhost',
                 port: port,
-                path: '/',
+                path: '/favicon.ico',
                 method: 'GET',
-                timeout: 1000
+                timeout: 2000
             }, (res) => {
-                // Only resolve true for successful HTTP status codes
-                resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+                // Accept any response (even 404) as indication server is running
+                resolve(res.statusCode !== undefined);
             });
             req.on('error', () => {
                 resolve(false);
@@ -375,9 +380,10 @@ class PortfolioWebviewProvider {
     async _getHtmlForWebview(webview) {
         // Get the local path to portfolio assets
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
-        // Load project data from manifest with status checking (use cache if available)
-        const projectData = this._cachedProjectData || await this._loadProjectDataWithStatus();
+        // Load project data from manifest with status checking (always use fresh data for HTML generation)
+        const projectData = await this._loadProjectDataWithStatus();
         this._cachedProjectData = projectData;
+        console.log('HTML generation - project statuses:', projectData.projects?.map((p) => `${p.id}: ${p.status}`));
         // Read the actual index.html file and parse asset names
         let htmlContent = '';
         let cssUri = '';

@@ -75,23 +75,17 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   
   // Refresh function for status updates
   const refreshProjectStatus = async () => {
-    // Force re-check of all project statuses
+    console.log('🔄 Sidebar: Manual refresh triggered')
+    // Force re-check of all project statuses using the working checkPort function
     const newStatuses = new Map<string, boolean>()
     
-    // Check all projects in parallel
+    // Check all projects in parallel using proper checkPort from portManager
     await Promise.all(
       projects.map(async (project) => {
         if (project.localPort) {
-          try {
-            const response = await fetch(`http://localhost:${project.localPort}`, { 
-              method: 'HEAD',
-              mode: 'no-cors',
-              timeout: 2000
-            })
-            newStatuses.set(project.id, true)
-          } catch {
-            newStatuses.set(project.id, false)
-          }
+          const isRunning = await checkPort(project.localPort)
+          console.log(`🔄 Sidebar REFRESH: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
+          newStatuses.set(project.id, isRunning)
         } else {
           newStatuses.set(project.id, false)
         }
@@ -99,6 +93,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     )
     
     setProjectStatuses(newStatuses)
+    console.log('✅ Sidebar: Manual refresh complete')
   }
   
   // Project wizard state
@@ -237,14 +232,17 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   // Check project statuses
   useEffect(() => {
     const checkStatuses = async () => {
+      console.log('🔍 Sidebar: Checking project statuses...')
       const statuses = new Map<string, boolean>()
       for (const project of projects) {
         if (project.localPort) {
           const isRunning = await checkPort(project.localPort)
+          console.log(`📊 Sidebar: ${project.id} (port ${project.localPort}): ${isRunning ? '🟢 RUNNING' : '🔴 OFFLINE'}`)
           statuses.set(project.id, isRunning)
         }
       }
       setProjectStatuses(statuses)
+      console.log('✅ Sidebar: Status update complete')
     }
     checkStatuses()
     const interval = setInterval(checkStatuses, 5000) // Check every 5 seconds

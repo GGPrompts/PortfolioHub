@@ -15,7 +15,7 @@ export const DEFAULT_PORTS = {
   '3d-matrix-cards': 3005,
   'matrix-cards': 3002,
   'sleak-card': 3003,
-  'ggprompts-main': 9323,
+  'ggprompts': 9323,
   'ggprompts-style-guide': 3001,
   '3d-file-system': 3004,
   'ggprompts-professional': 3006

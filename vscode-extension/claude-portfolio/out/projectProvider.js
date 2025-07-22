@@ -75,34 +75,39 @@ class ProjectProvider {
         }
     }
     async updateProjectStatuses() {
+        console.log('🔍 Updating project statuses...');
         const statusPromises = this.projects.map(async (project) => {
             if (project.localPort) {
                 try {
                     const isRunning = await this.checkPortStatus(project.localPort);
                     project.status = isRunning ? 'active' : 'inactive';
+                    console.log(`📊 ${project.id}: ${isRunning ? '🟢 ACTIVE' : '🔴 INACTIVE'} (port ${project.localPort})`);
                 }
                 catch (error) {
                     project.status = 'inactive';
+                    console.log(`❌ ${project.id}: ERROR checking port ${project.localPort}:`, error);
                 }
             }
             else {
                 project.status = 'inactive';
+                console.log(`⚪ ${project.id}: NO PORT CONFIGURED`);
             }
             return project;
         });
         await Promise.all(statusPromises);
+        console.log('✅ Project status update complete');
     }
     checkPortStatus(port) {
         return new Promise((resolve) => {
             const req = http.request({
                 hostname: 'localhost',
                 port: port,
-                path: '/',
+                path: '/favicon.ico',
                 method: 'GET',
-                timeout: 1000
+                timeout: 2000
             }, (res) => {
-                // Only resolve true for successful HTTP status codes
-                resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+                // Accept any response (even 404) as indication server is running
+                resolve(res.statusCode !== undefined);
             });
             req.on('error', () => {
                 resolve(false);

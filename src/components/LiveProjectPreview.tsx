@@ -451,7 +451,7 @@ export default function LiveProjectPreview({
           {/* Refresh indicator */}
           {isRefreshing && (
             <div className={styles.refreshIndicator} title="Refreshing preview">
-              <SvgIcon name="eye" size={14} />
+              <SvgIcon name="refreshCw" size={14} />
             </div>
           )}
         </div>

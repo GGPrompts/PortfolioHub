@@ -11,7 +11,7 @@
   max-width: 1800px;
   margin: 0 auto;
   grid-auto-rows: minmax(420px, auto);
-  overflow: hidden;
+  overflow: visible; /* Allow dropdowns to show outside grid bounds */
   width: 100%;
   justify-content: center;
 }
@@ -21,7 +21,7 @@
   grid-template-columns: repeat(auto-fill, minmax(620px, 720px));
   gap: 20px;
   grid-auto-rows: minmax(380px, auto);
-  overflow: hidden;
+  overflow: visible; /* Allow dropdowns to show outside grid bounds */
   width: 100%;
   justify-content: center;
 }
@@ -30,7 +30,7 @@
   background: rgba(20, 20, 20, 0.8);
   border: 1px solid rgba(0, 255, 136, 0.2);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible; /* Allow dropdowns to show outside card bounds */
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;

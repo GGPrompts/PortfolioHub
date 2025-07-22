@@ -7,6 +7,14 @@
 		{
 			"name": "Projects",
 			"path": "D:\\ClaudeWindows\\claude-dev-portfolio\\projects"
+		},
+		{
+			"name": "3D Matrix Cards",
+			"path": "projects/3d-matrix-cards"
+		},
+		{
+			"name": "Matrix Cards",
+			"path": "projects/matrix-cards"
 		}
 	],
 	"settings": {

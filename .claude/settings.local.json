@@ -43,7 +43,8 @@
       "Bash(npx vsce:*)",
       "Bash(find:*)",
       "Bash(vsce package:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

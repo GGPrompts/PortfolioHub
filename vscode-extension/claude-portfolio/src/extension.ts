@@ -65,6 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Set up periodic refresh for project status (every 5 seconds)
         const refreshInterval = setInterval(() => {
+            console.log('🔄 Refreshing project status...');
             projectProvider.refresh();
         }, 5000);
         context.subscriptions.push({ dispose: () => clearInterval(refreshInterval) });

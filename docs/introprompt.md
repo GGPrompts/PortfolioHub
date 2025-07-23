@@ -1,111 +1,111 @@
 # Claude Development Portfolio - Project Context
 
 ## Project Overview
-I'm working on a **dual-environment portfolio system** with three distinct but interconnected components. Please understand the architecture before making any changes.
+I'm working on a **unified single React application** with smart environment detection and WebSocket bridge integration. The architecture has been revolutionized to eliminate dual-app confusion while providing seamless VS Code integration.
 
-## 🏗️ **Three Components Explained**
+## 🎯 **Unified Architecture Explained**
 
-### 1. **VS Code Extension (Native Sidebar)**
+### 1. **Single React Application (Universal)**
+- **Location**: `src/` - One React app that works everywhere
+- **Access**: `npm run dev` → http://localhost:5173+ (auto-assigned port)
+- **What it is**: Universal portfolio interface that adapts to different environments
+- **Key Features**:
+  - **Smart Environment Detection** - automatically detects VS Code bridge availability
+  - **Perfect iframe Previews** - no CSP conflicts since app runs in regular browser
+  - **Progressive Enhancement** - enhanced features with VS Code, works standalone without
+  - **Beautiful Styling** - your custom React UI preserved exactly as designed
+
+### 2. **WebSocket Bridge Service (VS Code Extension)**
 - **Location**: `vscode-extension/claude-portfolio/`
-- **What it is**: Native VS Code extension with sidebar panels
-- **Key Files**: `src/extension.ts`, `src/projectProvider.ts`, `package.json`
+- **What it is**: Service-only VS Code extension that provides API bridge
+- **Bridge Address**: `ws://localhost:8123` (automatically starts with extension)
+- **Key Files**: `src/services/websocketBridge.ts`, `src/extension.ts`
 - **Features**:
-  - Project tree view with checkboxes and status indicators
-  - Right-click context menus (Run Project, Open in Browser)
-  - Batch operation commands panel
-  - **Direct VS Code API access** - commands execute in real VS Code terminals
-  - Message passing to embedded React app via `postMessage`
-
-### 2. **VS Code React App (Embedded Webview)**
-- **Location**: Main portfolio React app served inside VS Code webview
-- **What it is**: Portfolio React app embedded in VS Code extension webview
-- **Environment Detection**: `window.vsCodePortfolio?.postMessage` exists
-- **Key Features**:
-  - Full portfolio interface (project cards, DEV NOTES, etc.)
-  - **Message passing to extension** - sends commands via `postMessage`
-  - VS Code-specific security restrictions (CSP, no direct terminal access)
-  - Shows "🔌 VS Code Extension" environment badge
-
-### 3. **Web React App (Standalone Browser)**
-- **Location**: Same React app but accessed via `npm run dev` (port 5173)
-- **What it is**: Standalone web version in regular browser
-- **Environment Detection**: `window.vsCodePortfolio?.postMessage` is undefined
-- **Key Features**:
-  - Full portfolio interface (identical to embedded version)
-  - **Clipboard-based commands** - copies commands for manual execution
-  - No VS Code integration - pure web app
-  - Shows "🌐 Web Application" environment badge
+  - **Terminal Execution** - React app commands execute in real VS Code terminals
+  - **Live Preview Integration** - opens projects in VS Code Live Preview
+  - **File Operations** - save/delete files through VS Code file system API
+  - **Native Notifications** - VS Code notifications from React app
+  - **Project Management** - start/stop projects with workspace integration
 
 ## 🔄 **How They Interact**
 
 ### **Command Execution Flow**:
 ```
-1. VS Code Extension Panels → Direct terminal execution
-2. VS Code React App → postMessage → Extension → Terminal execution  
-3. Web React App → Clipboard copy → Manual paste in terminal
+1. VS Code Extension Panels → Direct terminal execution (native VS Code API)
+2. React App (with bridge) → WebSocket → Extension → Terminal execution  
+3. React App (standalone) → Clipboard copy → Manual paste in terminal
 ```
 
 ### **Environment Detection Logic**:
 ```typescript
-export const isVSCodeEnvironment = (): boolean => {
-  return !!(window as any).vsCodePortfolio?.postMessage;
-};
+// Smart WebSocket bridge detection
+class EnvironmentBridge {
+  async initialize(): Promise<EnvironmentMode> {
+    const connected = await this.tryConnectToVSCode(); // ws://localhost:8123
+    return connected ? 'vscode-local' : 'web-local';
+  }
+}
 ```
 
 ### **Security Architecture**:
-- **Shared Security Config**: `src/shared/security-config.ts` - single source of truth
+- **WebSocket Bridge Security**: All bridge messages validated through existing security services
 - **VS Code Extension**: Uses `VSCodeSecurityService.executeSecureCommand()`
-- **React Apps**: Use `SecureCommandRunner.validateCommand()` before execution
+- **React App**: Uses `SecureCommandRunner.validateCommand()` before execution
+- **Command Validation**: Whitelist-based patterns with dangerous command blocking
 
 ## 📁 **Key File Locations**
 
 ### VS Code Extension:
-- `vscode-extension/claude-portfolio/src/extension.ts` - Main extension entry
+- `vscode-extension/claude-portfolio/src/extension.ts` - Main extension entry with WebSocket bridge startup
+- `vscode-extension/claude-portfolio/src/services/websocketBridge.ts` - WebSocket bridge service (ws://localhost:8123)
 - `vscode-extension/claude-portfolio/src/projectProvider.ts` - Project tree view
-- `vscode-extension/claude-portfolio/src/portfolioWebviewProvider.ts` - React app integration
 - `vscode-extension/claude-portfolio/package.json` - Extension manifest & commands
 
-### React App (Both Environments):
-- `src/App.tsx` - Main React application
-- `src/utils/vsCodeIntegration.ts` - Environment detection & command routing
-- `src/components/EnvironmentBadge.tsx` - Shows VS Code vs Web indicator
-- `src/shared/security-config.ts` - Security validation rules
+### React App (Universal):
+- `src/App.tsx` - Main React application (works everywhere)
+- `src/services/environmentBridge.ts` - Smart environment detection & WebSocket client
+- `src/utils/vsCodeIntegration.ts` - Unified command execution API
+- `src/components/EnvironmentStatus.tsx` - Connection status indicator (🔗 VS Code Enhanced vs 📱 Web Application)
 
 ### Project Configuration:
-- `projects/manifest.json` - Project definitions with `displayType` field:
-  - `"external"` - Regular projects with dev servers
-  - `"vscode-embedded"` - Extension-native projects (always online)
+- `projects/manifest.json` - Project definitions with port configuration
+- External projects located in `D:\ClaudeWindows\Projects\` for context isolation
+- Portfolio uses auto-assigned Vite port (typically 5173+)
 
 ## 🎯 **Important Development Rules**
 
 ### **When Working on VS Code Extension**:
 - Use TypeScript compilation: `npm run compile`
-- Package: `npx vsce package --out extension-name.vsix`
-- Install: `code --install-extension extension-name.vsix`
+- Package: `npx vsce package --out claude-portfolio-unified-architecture.vsix`
+- Install: `code --install-extension claude-portfolio-unified-architecture.vsix`
 - **Context**: Work in `vscode-extension/claude-portfolio/` directory
+- **WebSocket Bridge**: Automatically starts on extension activation at ws://localhost:8123
 
 ### **When Working on React App**:
-- Build: `npm run build` (creates `dist/` folder)
-- Copy to extension: Copy `dist/*` to `vscode-extension/claude-portfolio/portfolio-dist/`
+- Start: `npm run dev` (auto-detects VS Code bridge if available)
+- Build: `npm run build` (creates `dist/` folder for deployment)
 - **Context**: Work in main portfolio directory
+- **Bridge Detection**: App automatically adapts to VS Code availability
 
 ### **Security Considerations**:
-- **Never bypass** `SecureCommandRunner.validateCommand()`
-- All command patterns must be in `SAFE_COMMAND_PATTERNS`
-- VS Code webview has strict CSP - no inline scripts
-- Message passing between React app and extension must be validated
+- **Never bypass** `SecureCommandRunner.validateCommand()` or `VSCodeSecurityService.executeSecureCommand()`
+- All WebSocket bridge messages validated through existing security services
+- Command patterns must be in whitelisted `SAFE_COMMAND_PATTERNS`
+- WebSocket communication secured with message validation
 
 ## 🔧 **Current Status**
-- ✅ **Security**: All command injection vulnerabilities fixed
-- ✅ **Architecture**: Modular service layer with 73% code reduction
-- ✅ **Integration**: Seamless message passing between components
-- ✅ **UX**: Clear environment badges distinguish VS Code vs Web usage
+- ✅ **Unified Architecture**: Single React app with WebSocket bridge integration completed
+- ✅ **Security**: All command injection vulnerabilities fixed with enterprise-grade validation
+- ✅ **WebSocket Bridge**: Service-only VS Code extension provides clean API bridge (ws://localhost:8123)
+- ✅ **Smart Detection**: App automatically adapts features based on VS Code availability
+- ✅ **Performance**: Eliminated dual-app confusion and iframe CSP conflicts
 
 ## 🎪 **Common Tasks**
 - **Add new project**: Update `projects/manifest.json` and `src/utils/portManager.ts`
-- **Add new command**: Update security config, then implement in appropriate component
-- **Fix security issue**: Check `shared/security-config.ts` patterns first
-- **Debug integration**: Check VS Code Developer Tools and extension console
+- **Add new command**: Update security validation, then implement in appropriate component
+- **Test WebSocket bridge**: Check VS Code Output → "Claude Portfolio" for bridge status
+- **Debug connection**: Check browser console for WebSocket connection messages
+- **Fix security issue**: Check security service patterns first
 
 ## 🚀 **Getting Started in New Session**
 Please let me know which component you want to work on and I'll provide context-specific guidance!

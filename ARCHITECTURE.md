@@ -1,38 +1,75 @@
-# Technical Architecture - Portfolio System
+# Technical Architecture - Unified Portfolio System
 
 ## 📋 Documentation Navigation
-- **[← COMPLETED_FEATURES.md](COMPLETED_FEATURES.md)** - All completed VS Code integration work
+- **[← COMPLETED_FEATURES.md](COMPLETED_FEATURES.md)** - All completed features and development history
 - **[← CLAUDE.md](CLAUDE.md)** - Essential development guidelines and current work
+- **[← MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Migration from dual-app to unified architecture
 - **[README.md](README.md)** - Project overview and quick start guide
 
 ---
 
 ## System Overview
 
-The Claude Development Portfolio is a dual-architecture React application that provides both standalone web access and integrated VS Code extension functionality. The system maintains a single codebase with smart environment detection for seamless operation across both contexts.
+The Claude Development Portfolio is a **unified single React application** with smart environment detection that provides seamless functionality across web, VS Code integration, and future remote access. The system uses a WebSocket bridge for VS Code integration instead of embedded webviews, eliminating dual-app confusion and iframe conflicts.
 
 ## Architecture Patterns
 
-### Dual-React Application Architecture
+### Unified Single App Architecture 🎯
 
-The portfolio implements a sophisticated dual-architecture pattern where the same React codebase serves two distinct environments:
+The portfolio implements a revolutionary unified architecture where **one React app** adapts to different environments:
 
-1. **Web Application** (`npm run dev` → http://localhost:5173)
-2. **VS Code Extension Webview** (Activity Bar integration)
+1. **Universal React App** (`npm run dev` → http://localhost:5173+)
+2. **WebSocket Bridge Service** (VS Code Extension → `ws://localhost:8123`)
+3. **Smart Environment Detection** (Automatic feature adaptation)
 
 ### Smart Environment Detection
 
-**Core Detection Logic** (`src/utils/vsCodeIntegration.ts`):
+**Core Detection Logic** (`src/services/environmentBridge.ts`):
 ```typescript
-export function isVSCodeEnvironment(): boolean {
-  return typeof window !== 'undefined' && 
-         window.location.protocol === 'vscode-webview:';
+class EnvironmentBridge {
+  async initialize(): Promise<EnvironmentMode> {
+    // Try to connect to VS Code WebSocket bridge
+    const connected = await this.tryConnectToVSCode();
+    
+    if (connected) {
+      this.mode = 'vscode-local';  // 🔗 Enhanced features
+    } else if (isLocalhost()) {
+      this.mode = 'web-local';     // 📱 Clipboard mode
+    } else {
+      this.mode = 'remote';        // 🌍 Future API mode
+    }
+    
+    return this.mode;
+  }
 }
 ```
 
-This detection enables automatic API selection:
-- **VS Code Context**: Direct terminal execution, file operations, workspace management
-- **Web Context**: Clipboard-based operations, browser APIs, external navigation
+This enables progressive enhancement:
+- **🔗 VS Code Local**: WebSocket bridge → Direct terminal execution, Live Preview, file operations
+- **📱 Web Local**: Clipboard API → Commands copy for manual execution  
+- **🌍 Remote**: Future → HTTPS API calls to home server
+
+### WebSocket Bridge Architecture 🌉
+
+**Bridge Communication Flow**:
+```
+React App (Browser) ←→ WebSocket ←→ VS Code Extension ←→ VS Code APIs
+     ↓                    ↓              ↓                ↓
+Environment Bridge → ws://localhost:8123 → Bridge Service → Terminals/Files
+```
+
+**Key Components**:
+- **`environmentBridge.ts`** - React app WebSocket client with smart detection
+- **`websocketBridge.ts`** - VS Code extension WebSocket server  
+- **Message Validation** - All commands validated through existing security services
+- **Connection Management** - Automatic reconnection and fallback handling
+
+**Benefits Achieved**:
+- ✅ **No iframe CSP issues** - App runs in regular browser
+- ✅ **Perfect project previews** - iframe elements work flawlessly
+- ✅ **Unified codebase** - No dual app maintenance overhead
+- ✅ **Progressive enhancement** - Works with/without VS Code
+- ✅ **Future remote ready** - Architecture supports server integration
 
 ## Component Architecture
 
@@ -41,20 +78,37 @@ This detection enables automatic API selection:
 ```
 src/components/
 ├── PortfolioSidebar.tsx         # Main left navigation with dynamic panels
-├── RightSidebar.tsx             # NEW: Quick Commands & Cheat Sheet system
-├── QuickCommandsPanel.tsx       # NEW: 50+ developer commands with smart execution
-├── LiveProjectPreview.tsx       # Project cards with 3D-aware iframe previews
+├── RightSidebar.tsx             # Quick Commands & Cheat Sheet system  
+├── QuickCommandsPanel.tsx       # 50+ developer commands with smart execution
+├── LiveProjectPreview.tsx       # Project cards with perfect iframe previews
 ├── ProjectStatusDashboard.tsx   # Comprehensive project management
 ├── ProjectViewer.tsx            # Individual project display
 ├── GitUpdateButton.tsx          # Version control integration
 ├── SvgIcon.jsx                  # Professional icon library
-├── VSCodeManager.tsx            # VS Code Server integration (web version)
+├── EnvironmentStatus.tsx        # 🌉 NEW: WebSocket connection status indicator
+├── VSCodeManager.tsx            # VS Code Server integration (deprecated)
 └── EnhancedProjectViewer/       # Project landing pages
     ├── EnhancedProjectViewer.tsx
     ├── ProjectInfo.tsx
     ├── ProjectReadme.tsx
     ├── ProjectCommands.tsx
     └── ProjectClaude.tsx
+```
+
+### Service Layer Architecture
+
+**Core Services** (`src/services/`):
+```
+├── environmentBridge.ts         # 🌉 NEW: Universal environment detection & communication
+├── securityService.ts           # Command validation and security (existing)
+└── optimizedPortManager.ts      # Port detection and caching (existing)
+```
+
+**Integration Layer** (`src/utils/`):
+```
+├── vsCodeIntegration.ts         # 🔄 UPDATED: Unified command API using environment bridge
+├── portManager.ts               # Port management utilities (existing)
+└── projectLauncher.ts           # Project launching utilities (existing)
 ```
 
 ### State Management Architecture

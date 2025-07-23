@@ -2,73 +2,75 @@
 
 ## 📋 **Extension Overview**
 
-This VS Code extension provides native integration with the Claude Development Portfolio system, offering seamless project management directly within VS Code.
+This VS Code extension serves as a **WebSocket bridge service** for the unified Claude Development Portfolio system. Instead of embedding React apps, it provides a clean communication layer between the standalone React portfolio and VS Code's native APIs.
 
 **Extension ID**: `claude-dev.claude-portfolio`  
 **Current Version**: 0.0.1  
-**Package**: `claude-portfolio-fixed-paths.vsix` (latest)
+**Package**: `claude-portfolio-unified-architecture.vsix` (latest)  
+**WebSocket Bridge**: `ws://localhost:8123`
 
 ---
 
 ## 🎯 **Key Features**
 
-### ✅ **Native VS Code Integration**
+### ✅ **WebSocket Bridge Service**
+- **Service-Only Architecture**: No embedded webviews - provides clean API bridge
+- **Automatic Startup**: WebSocket server starts on extension activation at `ws://localhost:8123`
+- **React App Integration**: Allows standalone React portfolio to access VS Code APIs
+- **Secure Communication**: All messages validated through existing security services
+
+### ✅ **Native VS Code Integration** 
 - **Activity Bar Icon**: Dedicated Claude Portfolio panel in VS Code sidebar
 - **Tree View**: Project list with checkboxes, status indicators, and commands
 - **Command Palette**: All extension commands accessible via `Ctrl+Shift+P`
 - **Context Menus**: Right-click projects for additional actions
 
-### ✅ **Project Management**
-- **Real-time Status**: Live port detection and project status monitoring with enhanced refresh
-- **Smart Port Detection**: Advanced detection with Vite auto-increment awareness (5173→5174→5175→etc.)
-  - **Actual Port Detection**: Uses `detectActualPort()` to find real running ports vs. configured ones
-  - **Multiple Instance Warnings**: Shows alerts when projects run on unexpected ports
-  - **Enhanced Status Refresh**: `refreshAll()` with cache clearing for accurate detection
-- **Dual Selection System**:
-  - **Checkboxes** (`☑️`): For batch operations (Multi Project Commands)
-  - **Hand Indicator** (`👉`): For individual project commands (Project Commands)
-- **Smart Path Resolution**: Handles external projects in `D:\ClaudeWindows\Projects\`
+### ✅ **Bridge Capabilities**
+- **Terminal Execution**: React app commands execute in VS Code integrated terminals
+- **File Operations**: Save/delete files through VS Code file system API
+- **Live Preview**: Opens projects in VS Code Live Preview extension
+- **Notifications**: Native VS Code notifications from React app
+- **Project Management**: Start/stop projects, workspace integration
+- **Status Monitoring**: Real-time project status with enhanced port detection
 
-### ✅ **Command Execution**
-- **Individual Project Commands**: Start/Stop, Browser, Git, AI Assistant
-- **Batch Operations**: Start All, Stop All, Install Dependencies, Build All
-- **Security**: All commands validated through `VSCodeSecurityService`
-- **Terminal Integration**: Commands execute in VS Code integrated terminals
-
-### ✅ **Live Preview Integration**
-- **VS Code Live Preview**: Integrates with `ms-vscode.live-server` extension
-- **Fallback Support**: Simple Browser → External Browser if Live Preview unavailable
-- **Smart Detection**: Automatic extension activation and installation prompts
+### ✅ **Security & Performance**
+- **Validated Commands**: All bridge commands go through `VSCodeSecurityService`
+- **Workspace Trust**: Requires trusted workspace for command execution  
+- **Enhanced Port Detection**: Smart Vite auto-increment awareness (5173→5174→5175)
+- **Clean Architecture**: Modular service layer with dependency injection
 
 ---
 
 ## 🏗️ **Architecture Overview**
 
+### **🌉 WebSocket Bridge Service** (`/src/services/websocketBridge.ts`)
+- **Core Bridge**: WebSocket server on `ws://localhost:8123` for React ↔ VS Code communication
+- **Message Handling**: Secure command validation and routing to appropriate services
+- **Real-time Communication**: Bidirectional messaging with connection management
+- **Client Management**: Tracks connected React app instances
+
 ### **Modular Service Layer** (`/src/services/`)
-- **PortDetectionService**: Advanced port checking with enhanced capabilities:
-  - **Smart Auto-increment Detection**: Handles Vite's port auto-increment behavior (5173→5174→5175)
-  - **Network Diagnostics**: Supports `netstat -ano` patterns and `Select-String` filtering
-  - **Cache Management**: `refreshAll()` method with cache clearing for accurate status
-  - **Enhanced Methods**: `detectActualPort()`, `getEnhancedProjectStatus()` for precise detection
-- **ProjectService**: Unified project operations (CRUD, terminal, browser)
+- **PortDetectionService**: Advanced port checking with enhanced capabilities
+- **ProjectService**: Unified project operations (start/stop, status checking)
 - **ConfigurationService**: VS Code settings management with validation
 
 ### **Command Handlers** (`/src/commands/`)
 - **projectCommands.ts**: Individual project operations
 - **batchCommands.ts**: Multi-project batch operations with progress tracking
 - **selectionCommands.ts**: Checkbox and project selection management
-- **workspaceCommands.ts**: VS Code workspace and extension management
+- **workspaceCommands.ts**: VS Code workspace and extension commands (updated for bridge mode)
 
 ### **Provider System** (`/src/`)
 - **projectProvider.ts**: Project tree view with checkbox state management
 - **projectCommandsProvider.ts**: Individual project commands panel
 - **multiProjectCommandsProvider.ts**: Batch commands panel with status filtering
-- **portfolioWebviewProvider.ts**: React app integration via secure webview
+- **portfolioWebviewProvider.ts**: ~~React app integration~~ **REMOVED** - replaced with WebSocket bridge
 
 ### **Security Layer** (`/src/securityService.ts`)
-- **Command Validation**: Whitelist-based command filtering
-- **Path Sanitization**: Prevents directory traversal attacks
-- **Workspace Trust**: Requires trusted workspace for command execution
+- **Bridge Security**: All WebSocket messages validated through existing security services
+- **Command Validation**: Whitelist-based command filtering (unchanged)
+- **Path Sanitization**: Prevents directory traversal attacks (unchanged)
+- **Workspace Trust**: Requires trusted workspace for command execution (unchanged)
 
 ---
 
@@ -79,40 +81,50 @@ vscode-extension/claude-portfolio/
 ├── src/
 │   ├── commands/           # Command handlers (modular)
 │   ├── services/           # Business logic services
-│   ├── extension.ts        # Main entry point (268 lines, 73% reduction!)
+│   │   └── websocketBridge.ts  # 🌉 NEW: WebSocket bridge service
+│   ├── extension.ts        # Main entry point (updated for bridge)
 │   ├── projectProvider.ts  # Project tree view
 │   ├── *CommandsProvider.ts # Command panels
-│   ├── portfolioWebviewProvider.ts # React webview integration
-│   └── securityService.ts  # Security validation
-├── portfolio-dist/         # Built React app assets
-├── package.json            # Extension manifest
+│   ├── portfolioWebviewProvider.ts # ❌ REMOVED - no more embedded React
+│   └── securityService.ts  # Security validation (unchanged)
+├── portfolio-dist/         # ❌ REMOVED - no more embedded assets
+├── package.json            # Extension manifest (updated dependencies)
 ├── reinstall.ps1           # Development script
-└── claude-portfolio-*.vsix # Extension packages
+└── claude-portfolio-unified-architecture.vsix # Latest package
 ```
 
 ---
 
 ## 🚀 **Development Workflow**
 
-### **Building & Installing**
+### **🌉 WebSocket Bridge Development**
 ```powershell
-# Compile TypeScript
+# Install WebSocket dependencies (already done)
+npm install  # Includes ws@^8.14.2 and @types/ws@^8.5.10
+
+# Compile TypeScript with bridge service
 npm run compile
 
-# Package extension
-npx vsce package --out claude-portfolio-latest.vsix
+# Package unified architecture extension
+npx vsce package --out claude-portfolio-unified-architecture.vsix
 
-# Install in VS Code
+# Install and test
 code --uninstall-extension claude-dev.claude-portfolio
-code --install-extension claude-portfolio-latest.vsix
+code --install-extension claude-portfolio-unified-architecture.vsix
 
-# Reload VS Code window
-# Ctrl+Shift+P → "Developer: Reload Window"
+# Check bridge startup in VS Code Output → "Claude Portfolio"
+# Should see: "WebSocket bridge started on ws://localhost:8123"
 ```
 
-### **Quick Reinstall Script**
+### **Testing Bridge Integration**
 ```powershell
-.\reinstall.ps1  # Handles build → package → install → reload
+# Start React portfolio app
+cd ../../  # Back to portfolio root
+npm run dev  # Should auto-detect VS Code bridge
+
+# Check browser console for:
+# "🔗 Connected to VS Code bridge - enhanced features available"
+# If not connected: "📱 Web mode - clipboard commands available"
 ```
 
 ---

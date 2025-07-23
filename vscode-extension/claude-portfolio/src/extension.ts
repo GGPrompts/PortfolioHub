@@ -3,7 +3,7 @@ import { ProjectProvider } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
 import { ProjectCommandsProvider } from './projectCommandsProvider';
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
-import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
+// PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 
@@ -11,6 +11,7 @@ import { PortfolioTaskProvider } from './taskProvider';
 import { ProjectService } from './services/projectService';
 import { ConfigurationService } from './services/configurationService';
 import { PortDetectionService } from './services/portDetectionService';
+import { WebSocketBridgeService } from './services/websocketBridge';
 
 // Command handlers
 import { ProjectCommands } from './commands/projectCommands';
@@ -25,6 +26,7 @@ interface ExtensionServices {
     configService: ConfigurationService;
     projectService: ProjectService;
     portDetectionService: PortDetectionService;
+    websocketBridgeService: WebSocketBridgeService;
 }
 
 /**
@@ -34,7 +36,7 @@ interface ExtensionProviders {
     projectProvider: ProjectProvider;
     projectCommandsProvider: ProjectCommandsProvider;
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
-    portfolioWebviewProvider: PortfolioWebviewProvider;
+    // portfolioWebviewProvider removed - replaced with WebSocket bridge
     taskProvider: PortfolioTaskProvider;
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
 }
@@ -84,6 +86,16 @@ export function activate(context: vscode.ExtensionContext) {
         setupPeriodicRefresh(context, providers, services);
         console.log('✅ Periodic refresh setup');
 
+        // Start WebSocket bridge service
+        services.websocketBridgeService.start().then(success => {
+            if (success) {
+                console.log('✅ WebSocket bridge started on ws://localhost:8123');
+                vscode.window.showInformationMessage('💡 Portfolio React app can now connect to VS Code at ws://localhost:8123');
+            } else {
+                console.warn('⚠️ WebSocket bridge failed to start - React app will use clipboard mode');
+            }
+        });
+
         console.log('🎉 Claude Portfolio extension fully activated!');
 
     } catch (error) {
@@ -99,6 +111,9 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
     console.log('👋 Claude Portfolio extension is deactivating...');
+    
+    // Note: WebSocket bridge will be cleaned up automatically when VS Code closes
+    // Individual service cleanup is handled by VS Code's disposal system
 }
 
 /**
@@ -109,11 +124,19 @@ function initializeServices(): ExtensionServices {
     const portfolioPath = configService.getPortfolioPath();
     const projectService = new ProjectService(portfolioPath);
     const portDetectionService = PortDetectionService.getInstance();
+    
+    // Initialize WebSocket bridge service
+    const websocketBridgeService = new WebSocketBridgeService(
+        portfolioPath, 
+        projectService, 
+        portDetectionService
+    );
 
     return {
         configService,
         projectService,
-        portDetectionService
+        portDetectionService,
+        websocketBridgeService
     };
 }
 
@@ -126,7 +149,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const projectProvider = new ProjectProvider(portfolioPath);
     const projectCommandsProvider = new ProjectCommandsProvider();
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
-    const portfolioWebviewProvider = new PortfolioWebviewProvider(context.extensionUri, portfolioPath);
+    // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
 
@@ -134,7 +157,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
         projectProvider,
         projectCommandsProvider,
         multiProjectCommandsProvider,
-        portfolioWebviewProvider,
+        // portfolioWebviewProvider removed
         taskProvider,
         // cheatSheetProvider removed
     };
@@ -189,7 +212,7 @@ function createCommandHandlers(
 
     const workspaceCommands = new WorkspaceCommands(
         services.configService,
-        providers.portfolioWebviewProvider,
+        null, // portfolioWebviewProvider removed - replaced with WebSocket bridge
         context,
         providers.projectProvider,
         providers.multiProjectCommandsProvider
@@ -230,9 +253,9 @@ function setupProviderCommunication(providers: ExtensionProviders): void {
         // Now call the original refresh
         originalRefresh();
         
-        // Trigger webview refresh after a short delay to allow project status to update
+        // Trigger refresh after a short delay to allow project status to update
         setTimeout(() => {
-            providers.portfolioWebviewProvider.refreshProjectData();
+            // portfolioWebviewProvider removed - WebSocket bridge handles refreshes
             providers.multiProjectCommandsProvider.refresh();
         }, 1000);
     };
@@ -292,7 +315,7 @@ function setupPeriodicRefresh(
         }
         
         providers.projectProvider.refresh();
-        providers.portfolioWebviewProvider.refreshProjectData();
+        // portfolioWebviewProvider removed - WebSocket bridge handles data refresh
     }, refreshInterval);
 
     // Ensure interval is cleared when extension deactivates

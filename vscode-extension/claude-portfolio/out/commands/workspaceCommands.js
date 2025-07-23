@@ -43,7 +43,8 @@ const portDetectionService_1 = require("../services/portDetectionService");
  * VS Code workspace and extension management commands
  */
 class WorkspaceCommands {
-    constructor(configService, portfolioWebviewProvider, extensionContext, projectProvider, multiProjectCommandsProvider) {
+    constructor(configService, portfolioWebviewProvider, // Made optional - null when webview removed
+    extensionContext, projectProvider, multiProjectCommandsProvider) {
         this.configService = configService;
         this.portfolioWebviewProvider = portfolioWebviewProvider;
         this.extensionContext = extensionContext;
@@ -95,25 +96,26 @@ class WorkspaceCommands {
         }
     }
     /**
-     * Open portfolio in full-screen webview
+     * Open portfolio - now launches standalone React app
      */
-    openPortfolioCommand() {
+    async openPortfolioCommand() {
         try {
-            // Create a full-screen portfolio webview panel
-            const panel = vscode.window.createWebviewPanel('claudePortfolioFull', 'Claude Portfolio', vscode.ViewColumn.One, {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                localResourceRoots: [vscode.Uri.joinPath(this.extensionContext.extensionUri, 'portfolio-dist')]
-            });
-            // Use the same HTML generation logic (async)
-            this.portfolioWebviewProvider._getHtmlForWebview(panel.webview).then(html => {
-                panel.webview.html = html;
-            }).catch(error => {
-                console.error('Failed to generate webview HTML:', error);
-                panel.webview.html = '<html><body>Error loading portfolio</body></html>';
-            });
-            // Set up the same message handling
-            this.portfolioWebviewProvider._setupMessageHandling(panel.webview);
+            // Portfolio webview removed - instruct user to open React app directly
+            const portfolioUrl = 'http://localhost:5173';
+            const choice = await vscode.window.showInformationMessage('📱 Portfolio now runs as standalone React app with VS Code bridge!\n\nClick "Open Portfolio" to launch at http://localhost:5173', 'Open Portfolio', 'Copy URL');
+            if (choice === 'Open Portfolio') {
+                // Try Simple Browser first, fallback to external browser
+                try {
+                    await vscode.commands.executeCommand('simpleBrowser.show', portfolioUrl);
+                }
+                catch (error) {
+                    await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
+                }
+            }
+            else if (choice === 'Copy URL') {
+                await vscode.env.clipboard.writeText(portfolioUrl);
+                vscode.window.showInformationMessage('Portfolio URL copied to clipboard!');
+            }
         }
         catch (error) {
             const message = `Error opening portfolio: ${error instanceof Error ? error.message : String(error)}`;

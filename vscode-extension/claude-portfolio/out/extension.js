@@ -40,13 +40,14 @@ const vscode = __importStar(require("vscode"));
 const projectProvider_1 = require("./projectProvider");
 const projectCommandsProvider_1 = require("./projectCommandsProvider");
 const multiProjectCommandsProvider_1 = require("./multiProjectCommandsProvider");
-const portfolioWebviewProvider_1 = require("./portfolioWebviewProvider");
+// PortfolioWebviewProvider removed - replaced with WebSocket bridge
 const taskProvider_1 = require("./taskProvider");
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 // Services
 const projectService_1 = require("./services/projectService");
 const configurationService_1 = require("./services/configurationService");
 const portDetectionService_1 = require("./services/portDetectionService");
+const websocketBridge_1 = require("./services/websocketBridge");
 // Command handlers
 const projectCommands_1 = require("./commands/projectCommands");
 const batchCommands_1 = require("./commands/batchCommands");
@@ -79,6 +80,16 @@ function activate(context) {
         // Set up periodic refresh
         setupPeriodicRefresh(context, providers, services);
         console.log('✅ Periodic refresh setup');
+        // Start WebSocket bridge service
+        services.websocketBridgeService.start().then(success => {
+            if (success) {
+                console.log('✅ WebSocket bridge started on ws://localhost:8123');
+                vscode.window.showInformationMessage('💡 Portfolio React app can now connect to VS Code at ws://localhost:8123');
+            }
+            else {
+                console.warn('⚠️ WebSocket bridge failed to start - React app will use clipboard mode');
+            }
+        });
         console.log('🎉 Claude Portfolio extension fully activated!');
     }
     catch (error) {
@@ -91,6 +102,8 @@ function activate(context) {
  */
 function deactivate() {
     console.log('👋 Claude Portfolio extension is deactivating...');
+    // Note: WebSocket bridge will be cleaned up automatically when VS Code closes
+    // Individual service cleanup is handled by VS Code's disposal system
 }
 /**
  * Initialize all services
@@ -100,10 +113,13 @@ function initializeServices() {
     const portfolioPath = configService.getPortfolioPath();
     const projectService = new projectService_1.ProjectService(portfolioPath);
     const portDetectionService = portDetectionService_1.PortDetectionService.getInstance();
+    // Initialize WebSocket bridge service
+    const websocketBridgeService = new websocketBridge_1.WebSocketBridgeService(portfolioPath, projectService, portDetectionService);
     return {
         configService,
         projectService,
-        portDetectionService
+        portDetectionService,
+        websocketBridgeService
     };
 }
 /**
@@ -114,14 +130,14 @@ function createProviders(services, context) {
     const projectProvider = new projectProvider_1.ProjectProvider(portfolioPath);
     const projectCommandsProvider = new projectCommandsProvider_1.ProjectCommandsProvider();
     const multiProjectCommandsProvider = new multiProjectCommandsProvider_1.MultiProjectCommandsProvider(projectProvider);
-    const portfolioWebviewProvider = new portfolioWebviewProvider_1.PortfolioWebviewProvider(context.extensionUri, portfolioPath);
+    // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new taskProvider_1.PortfolioTaskProvider(portfolioPath);
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
     return {
         projectProvider,
         projectCommandsProvider,
         multiProjectCommandsProvider,
-        portfolioWebviewProvider,
+        // portfolioWebviewProvider removed
         taskProvider,
         // cheatSheetProvider removed
     };
@@ -150,7 +166,8 @@ function createCommandHandlers(services, providers, context) {
     const selectionCommands = new selectionCommands_1.SelectionCommands(providers.projectProvider);
     // Inject project commands provider for unified behavior
     selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
-    const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, providers.portfolioWebviewProvider, context, providers.projectProvider, providers.multiProjectCommandsProvider);
+    const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, null, // portfolioWebviewProvider removed - replaced with WebSocket bridge
+    context, providers.projectProvider, providers.multiProjectCommandsProvider);
     return {
         projectCommands,
         batchCommands,
@@ -181,9 +198,9 @@ function setupProviderCommunication(providers) {
         await portDetectionService.refreshAll(projects);
         // Now call the original refresh
         originalRefresh();
-        // Trigger webview refresh after a short delay to allow project status to update
+        // Trigger refresh after a short delay to allow project status to update
         setTimeout(() => {
-            providers.portfolioWebviewProvider.refreshProjectData();
+            // portfolioWebviewProvider removed - WebSocket bridge handles refreshes
             providers.multiProjectCommandsProvider.refresh();
         }, 1000);
     };
@@ -231,7 +248,7 @@ function setupPeriodicRefresh(context, providers, services) {
             console.log('🔄 Periodic refresh triggered');
         }
         providers.projectProvider.refresh();
-        providers.portfolioWebviewProvider.refreshProjectData();
+        // portfolioWebviewProvider removed - WebSocket bridge handles data refresh
     }, refreshInterval);
     // Ensure interval is cleared when extension deactivates
     context.subscriptions.push({

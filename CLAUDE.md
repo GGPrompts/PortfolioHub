@@ -1,9 +1,10 @@
 # Claude Development Portfolio - Instructions
 
 ## 📋 Documentation Navigation
-- **[COMPLETED_FEATURES.md →](COMPLETED_FEATURES.md)** - All completed VS Code integration work and past achievements
-- **[ARCHITECTURE.md →](ARCHITECTURE.md)** - Technical architecture, dual-React setup, and component details
+- **[COMPLETED_FEATURES.md →](COMPLETED_FEATURES.md)** - All completed features and development history
+- **[ARCHITECTURE.md →](ARCHITECTURE.md)** - Technical architecture and unified single-app design
 - **[README.md](README.md)** - Project overview and quick start guide
+- **[vscode-extension/CLAUDE.md →](vscode-extension/CLAUDE.md)** - VS Code extension documentation
 
 ---
 
@@ -87,22 +88,24 @@ Before adding any new command execution:
 - `src/hooks/useProjectData.ts` - React Query data management
 - `src/utils/optimizedPortManager.ts` - Cached port checking
 
-### Current Status - WEB VERSION
-This CLAUDE.md focuses on the **standalone web application** version of the portfolio. The web app serves as a central hub to view, launch, and manage all projects with a clean, professional interface.
+### Current Status - UNIFIED SINGLE APP ARCHITECTURE
+This CLAUDE.md focuses on the **unified single React application** that works seamlessly across all environments. The app uses smart environment detection to provide enhanced features when VS Code is available while maintaining full functionality as a standalone web application.
 
-**⚠️ IMPORTANT**: This documentation is for the **web version only**. For VS Code extension development, use [vscode-extension/CLAUDE.md](vscode-extension/CLAUDE.md) to avoid conflicts.
+**🎉 BREAKTHROUGH**: We've eliminated the dual-app confusion and created one beautiful React app that works everywhere!
 
 **Security Status**: ✅ **FULLY HARDENED** - All command injection vulnerabilities fixed (July 22, 2025)
-**Web App Status**: ✅ **PRODUCTION READY** - Standalone web interface with clipboard commands
-**VS Code Extension Status**: ✅ **PRODUCTION READY** - See [vscode-extension/CLAUDE.md](vscode-extension/CLAUDE.md) for details
-**Architecture Status**: ✅ **DUAL-ENVIRONMENT ARCHITECTURE** - Web + Extension working independently
+**Architecture Status**: ✅ **UNIFIED SINGLE APP** - One React app + WebSocket bridge to VS Code
+**Web App Status**: ✅ **PRODUCTION READY** - Works standalone with clipboard commands  
+**VS Code Integration**: ✅ **WEBSOCKET BRIDGE** - Enhanced features via ws://localhost:8123
+**Remote Ready**: ✅ **FUTURE-PROOF** - Architecture supports remote server integration
 
-🏗️ **LATEST ARCHITECTURE OVERHAUL (January 23, 2025)**:
-- ✅ **987-line extension.ts reduced to 268 lines** (73% code reduction!)
-- ✅ **Service Layer Created** - PortDetectionService, ProjectService, ConfigurationService
-- ✅ **Command Handlers Modularized** - ProjectCommands, BatchCommands, SelectionCommands, WorkspaceCommands
-- ✅ **100% Functional Parity** - All existing functionality preserved with clean architecture
-- ✅ **Production Ready** - Enterprise-grade modular design with dependency injection
+🏗️ **UNIFIED ARCHITECTURE ACHIEVEMENT (January 23, 2025)**:
+- ✅ **Eliminated Dual Apps** - One React app replaces embedded webview + standalone web app
+- ✅ **WebSocket Bridge Created** - VS Code extension provides service-only bridge at ws://localhost:8123
+- ✅ **Smart Environment Detection** - React app adapts features based on VS Code availability
+- ✅ **Iframe Issues Resolved** - No more CSP conflicts since app runs in regular browser
+- ✅ **Remote Development Ready** - Architecture supports future home server integration
+- ✅ **Security Preserved** - All existing security validation maintained and unified
 
 🔒 **SECURITY FIXES (July 22, 2025)**:
 - ✅ Fixed missing secure command handlers in VS Code extension
@@ -159,21 +162,26 @@ D:\ClaudeWindows\
 **Installation Location:** `%USERPROFILE%\.claude\` (Windows)
 **Repository Location:** `D:\ClaudeWindows\ClaudeGlobalCommands\`
 
-#### Dual React App Architecture
-The portfolio system now supports **two distinct environments**:
+#### Unified Single App Architecture
+The portfolio system now uses **one React application** that adapts to different environments:
 
-**🌐 Web Version** (this directory):
-- **Purpose**: Standalone web application for portfolio browsing
-- **Access**: `npm run dev` → http://localhost:5173
-- **Features**: Full portfolio interface with clipboard-based command execution
-- **Context**: Use this CLAUDE.md when working on web app features
+**🎯 Single React App** (`src/`):
+- **Purpose**: Universal portfolio interface that works everywhere
+- **Access**: `npm run dev` → http://localhost:5173 (or auto-assigned port)
+- **Smart Detection**: Automatically detects VS Code WebSocket bridge availability
+- **Features**: Full portfolio interface with adaptive command execution
+- **No iframe Issues**: Runs in regular browser, perfect project previews
 
-**🔌 VS Code Extension** (`vscode-extension/` directory):
-- **Purpose**: Native VS Code integration with direct API access
-- **Access**: Claude Portfolio activity bar icon in VS Code
-- **Features**: Tree views, native commands, Live Preview integration
-- **Context**: Use `vscode-extension/CLAUDE.md` when working on extension features
+**🌉 WebSocket Bridge** (`vscode-extension/` directory):
+- **Purpose**: Service-only bridge between React app and VS Code APIs  
+- **Access**: Automatically starts at ws://localhost:8123 when VS Code extension loads
+- **Features**: Terminal execution, file operations, Live Preview, notifications
 - **Documentation**: [VS Code Extension CLAUDE.md](vscode-extension/CLAUDE.md)
+
+**🎨 Environment Modes**:
+- **🔗 VS Code Local**: WebSocket bridge connected → Enhanced features (direct terminals, Live Preview)
+- **📱 Web Local**: Bridge unavailable → Clipboard mode (commands copy for manual execution)
+- **🌍 Remote**: Future → API calls to home server for remote development
 
 #### Recent Enhancements (January 2025)
 - **✅ Enhanced Right Sidebar**: 50+ professional developer commands with smart execution
@@ -209,38 +217,41 @@ All projects are now located in `D:\ClaudeWindows\Projects\` for context isolati
 
 ### Key Development Commands
 
-**Web App Quick Start:**
+**🚀 Unified App Quick Start:**
 ```bash
 # Install dependencies
 npm install
 
-# Start web portfolio (port 5173+, auto-assigned by Vite)
+# Start unified portfolio app (auto-detects VS Code bridge)
 npm run dev
+# → Runs at http://localhost:5173 (or auto-assigned port)
+# → Automatically connects to VS Code WebSocket bridge if available
+# → Falls back to clipboard mode if VS Code not available
 
-# Start all projects in tabbed Windows Terminal (recommended)
+# Start all external projects
 .\scripts\start-all-enhanced.ps1
 
-# Create new project
+# Create new external project  
 .\scripts\create-project.ps1 -ProjectName "my-new-project" -Description "Project description"
 ```
 
-**⚠️ VS Code Extension Development:**
+**🔌 VS Code Extension Development:**
 ```bash
-# For extension work, use the dedicated documentation:
-cd vscode-extension
-# See vscode-extension/CLAUDE.md for extension-specific commands
+# For VS Code WebSocket bridge development:
+cd vscode-extension/claude-portfolio
+npm run compile
+npx vsce package --out extension-name.vsix
+code --install-extension extension-name.vsix
+
+# See vscode-extension/CLAUDE.md for detailed extension docs
 ```
 
-**PowerShell Script Options:**
-```powershell
-# Start all projects
-.\scripts\start-all-tabbed.ps1
-
-# Start only portfolio
-.\scripts\start-all-tabbed.ps1 -OnlyPortfolio
-
-# Force restart all (stop existing first)
-.\scripts\start-all-tabbed.ps1 -Force
+**🎯 Environment Detection:**
+```typescript
+// The React app automatically detects and adapts:
+// 🔗 VS Code bridge available → Enhanced terminal execution
+// 📱 Web-only mode → Clipboard-based commands  
+// 🌍 Remote mode (future) → API-based commands
 ```
 
 ## Development Workflows
@@ -267,15 +278,16 @@ cd vscode-extension
 - **Enhanced Filtering**: View organized notes by "All Projects" or specific project
 - **Professional UI**: Toggle between TO-SORT and ORGANIZED views with distinct styling
 
-### VS Code Extension Development Workflow
-1. **Launch VS Code**: Extension auto-loads with Claude Portfolio icon in activity bar
-2. **Access Projects**: Three panels - Projects, Commands, Cheat Sheet
-3. **Direct Actions**: 
-   - Click project titles → Add to workspace or view landing page
-   - Right-click projects → Start/Stop/Open in browser
-   - All commands execute directly in VS Code terminals
-4. **Live Previews**: Embedded iframe previews with proper CSP
-5. **Integrated Experience**: No clipboard needed - everything runs natively
+### Unified Development Workflow  
+1. **Launch React App**: `npm run dev` starts the unified portfolio at http://localhost:5173+
+2. **VS Code Integration**: Extension automatically starts WebSocket bridge at ws://localhost:8123
+3. **Smart Environment Detection**: 
+   - React app detects bridge and shows **🔗 VS Code Enhanced** mode
+   - Commands execute directly in VS Code terminals
+   - Live Preview integration works seamlessly
+   - File operations use VS Code APIs
+4. **Fallback Mode**: Without VS Code, app shows **📱 Web Application** mode with clipboard commands
+5. **No iframe Issues**: App runs in regular browser → Perfect project previews!
 
 ## Project Management
 
@@ -311,7 +323,52 @@ When adding new projects to `manifest.json`:
 }
 ```
 
+## Unified Architecture Benefits
+
+### ✅ **Problems Solved**
+- **🚫 No More Dual App Confusion**: One React app replaces embedded webview + standalone web
+- **🎯 iframe Issues Resolved**: No CSP conflicts since app runs in regular browser
+- **🔒 Security Streamlined**: Single validation path eliminates conflicts
+- **📱 Perfect Previews**: Project iframes work flawlessly in browser environment
+- **🌍 Remote Ready**: Architecture supports future home server integration
+- **⚡ Performance**: Eliminated context switching between dual environments
+
+### 🔧 **How It Works**
+```
+React App (localhost:5173) → Smart Detection → Environment Adaptation
+
+🔗 VS Code Available:
+   React App → WebSocket (ws://localhost:8123) → VS Code Extension → Terminals
+
+📱 Web Only Mode:  
+   React App → Clipboard API → Manual Terminal Execution
+
+🌍 Future Remote:
+   React App → HTTPS API → Home Server → Command Execution
+```
+
+### 🎨 **Environment Status Indicators**
+- **🔗 VS Code Enhanced**: WebSocket bridge connected, full terminal integration
+- **📱 Web Application**: Standalone mode, clipboard-based commands
+- **🌍 Remote Access**: Future home server API integration
+- **❌ Connection Lost**: Automatic fallback to clipboard mode
+
 ## Troubleshooting
+
+### 🌉 **WebSocket Bridge Issues**
+**Problem**: React app shows "📱 Web Application" instead of "🔗 VS Code Enhanced"
+**Solution**:
+- Ensure VS Code extension is installed and activated
+- Check VS Code Output → "Claude Portfolio" for WebSocket bridge startup messages
+- Verify no firewall blocking localhost:8123
+- Try reloading VS Code window (Ctrl+Shift+P → "Developer: Reload Window")
+
+**Problem**: Commands not executing in VS Code terminals
+**Solution**:
+- Check WebSocket connection in browser console
+- Ensure workspace is trusted in VS Code
+- Verify VS Code extension has required permissions
+- Check VS Code Output panel for security validation errors
 
 ### ⚠️ Security Issues
 **Problem**: Command blocked by security validation

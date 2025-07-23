@@ -33,7 +33,14 @@ export class WorkspaceCommands {
             vscode.commands.registerCommand('claude-portfolio.openClaude', this.openClaudeCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.test', this.testCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.copyCheatCommand', this.copyCheatCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.projectCommand', this.projectCommandCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.projectCommand', this.projectCommandCommand.bind(this)),
+            // Portfolio Server Commands
+            vscode.commands.registerCommand('claude-portfolio.startPortfolioServer', this.startPortfolioServerCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.startVSCodeServer', this.startVSCodeServerCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.startAllServers', this.startAllServersCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.startAllProjectsTabbed', this.startAllProjectsTabbedCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.createNewProject', this.createNewProjectCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.checkPortfolioports', this.checkPortfolioPortsCommand.bind(this))
         ];
 
         commands.forEach(command => context.subscriptions.push(command));
@@ -399,6 +406,215 @@ export class WorkspaceCommands {
             const message = `Error executing project command: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
             console.error('Project command error:', error);
+        }
+    }
+
+    /**
+     * Start portfolio development server
+     */
+    private async startPortfolioServerCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'npm run dev',
+                'Start Portfolio Server',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Portfolio server started - check terminal for URL');
+            } else {
+                vscode.window.showErrorMessage('Failed to start portfolio server');
+            }
+        } catch (error) {
+            const message = `Error starting portfolio server: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Start portfolio server error:', error);
+        }
+    }
+
+    /**
+     * Start VS Code server with Simple Browser
+     */
+    private async startVSCodeServerCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            
+            // First start the portfolio server
+            const startSuccess = await VSCodeSecurityService.executeSecureCommand(
+                'npm run dev',
+                'Start VS Code Server',
+                portfolioPath
+            );
+            
+            if (startSuccess) {
+                // Wait a moment for server to start, then open in Simple Browser
+                setTimeout(async () => {
+                    try {
+                        await vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:5173');
+                        vscode.window.showInformationMessage('VS Code server started - opened in Simple Browser');
+                    } catch (error) {
+                        console.error('Failed to open Simple Browser:', error);
+                        vscode.window.showInformationMessage('VS Code server started - manually open http://localhost:5173');
+                    }
+                }, 3000); // 3 second delay for server startup
+            } else {
+                vscode.window.showErrorMessage('Failed to start VS Code server');
+            }
+        } catch (error) {
+            const message = `Error starting VS Code server: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Start VS Code server error:', error);
+        }
+    }
+
+    /**
+     * Start all servers (portfolio + projects)
+     */
+    private async startAllServersCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            
+            // Show confirmation
+            const confirmation = await vscode.window.showInformationMessage(
+                'Start portfolio server and all project servers?',
+                { modal: true },
+                'Yes', 'No'
+            );
+            
+            if (confirmation !== 'Yes') {
+                return;
+            }
+
+            // Show progress
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Starting all servers...',
+                cancellable: false
+            }, async (progress) => {
+                // Start portfolio server
+                progress.report({ increment: 25, message: 'Starting portfolio server...' });
+                const portfolioSuccess = await VSCodeSecurityService.executeSecureCommand(
+                    'npm run dev',
+                    'Start Portfolio Server',
+                    portfolioPath
+                );
+                
+                // Start all project servers using PowerShell script
+                progress.report({ increment: 50, message: 'Starting project servers...' });
+                const scriptsSuccess = await VSCodeSecurityService.executeSecureCommand(
+                    '.\\scripts\\start-all-tabbed.ps1',
+                    'Start All Project Servers',
+                    portfolioPath
+                );
+                
+                progress.report({ increment: 100, message: 'All servers starting...' });
+                
+                if (portfolioSuccess && scriptsSuccess) {
+                    vscode.window.showInformationMessage('All servers started - check terminals for status');
+                } else {
+                    vscode.window.showWarningMessage('Some servers may have failed to start - check terminals');
+                }
+            });
+        } catch (error) {
+            const message = `Error starting all servers: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Start all servers error:', error);
+        }
+    }
+
+    /**
+     * Start all projects in tabbed terminal (PowerShell script)
+     */
+    private async startAllProjectsTabbedCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                '.\\scripts\\start-all-tabbed.ps1',
+                'Start All Projects Tabbed',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('All projects starting in tabbed terminal - check Windows Terminal');
+            } else {
+                vscode.window.showErrorMessage('Failed to start projects in tabbed terminal');
+            }
+        } catch (error) {
+            const message = `Error starting tabbed projects: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Start tabbed projects error:', error);
+        }
+    }
+
+    /**
+     * Create new project using PowerShell script
+     */
+    private async createNewProjectCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            
+            // Get project details from user
+            const projectName = await vscode.window.showInputBox({
+                prompt: 'Enter project name (no spaces, lowercase)',
+                placeHolder: 'my-new-project',
+                validateInput: (value) => {
+                    if (!value) return 'Project name is required';
+                    if (!/^[a-z0-9-]+$/.test(value)) return 'Project name must be lowercase letters, numbers, and hyphens only';
+                    return null;
+                }
+            });
+            
+            if (!projectName) return;
+            
+            const description = await vscode.window.showInputBox({
+                prompt: 'Enter project description',
+                placeHolder: 'A new project for the portfolio'
+            });
+            
+            if (!description) return;
+            
+            // Execute PowerShell script
+            const command = `.\\scripts\\create-project.ps1 -ProjectName "${projectName}" -Description "${description}"`;
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                command,
+                'Create New Project',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage(`Project "${projectName}" created successfully - check terminal for details`);
+            } else {
+                vscode.window.showErrorMessage('Failed to create new project');
+            }
+        } catch (error) {
+            const message = `Error creating new project: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Create new project error:', error);
+        }
+    }
+
+    /**
+     * Check portfolio ports status
+     */
+    private async checkPortfolioPortsCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'netstat -ano | Select-String ":300[0-9]"',
+                'Check Portfolio Ports',
+                portfolioPath
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage('Portfolio ports status displayed in terminal');
+            } else {
+                vscode.window.showErrorMessage('Failed to check portfolio ports');
+            }
+        } catch (error) {
+            const message = `Error checking portfolio ports: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Check portfolio ports error:', error);
         }
     }
 }

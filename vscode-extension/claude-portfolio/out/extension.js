@@ -42,7 +42,7 @@ const projectCommandsProvider_1 = require("./projectCommandsProvider");
 const multiProjectCommandsProvider_1 = require("./multiProjectCommandsProvider");
 const portfolioWebviewProvider_1 = require("./portfolioWebviewProvider");
 const taskProvider_1 = require("./taskProvider");
-const cheatSheetProvider_1 = require("./cheatSheetProvider");
+// CheatSheetProvider removed - functionality available in QuickCommandsPanel
 // Services
 const projectService_1 = require("./services/projectService");
 const configurationService_1 = require("./services/configurationService");
@@ -116,14 +116,14 @@ function createProviders(services, context) {
     const multiProjectCommandsProvider = new multiProjectCommandsProvider_1.MultiProjectCommandsProvider(projectProvider);
     const portfolioWebviewProvider = new portfolioWebviewProvider_1.PortfolioWebviewProvider(context.extensionUri, portfolioPath);
     const taskProvider = new taskProvider_1.PortfolioTaskProvider(portfolioPath);
-    const cheatSheetProvider = new cheatSheetProvider_1.CheatSheetProvider();
+    // cheatSheetProvider removed - functionality in QuickCommandsPanel
     return {
         projectProvider,
         projectCommandsProvider,
         multiProjectCommandsProvider,
         portfolioWebviewProvider,
         taskProvider,
-        cheatSheetProvider
+        // cheatSheetProvider removed
     };
 }
 /**
@@ -134,7 +134,7 @@ function registerProviders(context, providers) {
     vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
-    vscode.window.registerTreeDataProvider('claudeCheatSheet', providers.cheatSheetProvider);
+    // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
     // Register task provider
     const taskProviderDisposable = vscode.tasks.registerTaskProvider(taskProvider_1.PortfolioTaskProvider.taskType, providers.taskProvider);
     context.subscriptions.push(taskProviderDisposable);

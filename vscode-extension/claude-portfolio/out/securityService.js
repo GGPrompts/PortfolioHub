@@ -344,7 +344,7 @@ VSCodeSecurityService.ALLOWED_COMMANDS = new Set([
     'claude', 'gemini', 'python', 'py', 'typescript', 'tsc'
 ]);
 VSCodeSecurityService.ALLOWED_NPM_SCRIPTS = new Set([
-    'dev', 'start', 'build', 'test', 'install', 'run', 'compile', 'watch'
+    'dev', 'start', 'build', 'test', 'test:coverage', 'install', 'run', 'compile', 'watch'
 ]);
 VSCodeSecurityService.DANGEROUS_PATTERNS = [
     /\.\.\//, // Path traversal  

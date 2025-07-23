@@ -5,7 +5,7 @@ import { ProjectCommandsProvider } from './projectCommandsProvider';
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
 import { PortfolioTaskProvider } from './taskProvider';
-import { CheatSheetProvider } from './cheatSheetProvider';
+// CheatSheetProvider removed - functionality available in QuickCommandsPanel
 
 // Services
 import { ProjectService } from './services/projectService';
@@ -36,7 +36,7 @@ interface ExtensionProviders {
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
     portfolioWebviewProvider: PortfolioWebviewProvider;
     taskProvider: PortfolioTaskProvider;
-    cheatSheetProvider: CheatSheetProvider;
+    // cheatSheetProvider removed - functionality in QuickCommandsPanel
 }
 
 /**
@@ -128,7 +128,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
     const portfolioWebviewProvider = new PortfolioWebviewProvider(context.extensionUri, portfolioPath);
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
-    const cheatSheetProvider = new CheatSheetProvider();
+    // cheatSheetProvider removed - functionality in QuickCommandsPanel
 
     return {
         projectProvider,
@@ -136,7 +136,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
         multiProjectCommandsProvider,
         portfolioWebviewProvider,
         taskProvider,
-        cheatSheetProvider
+        // cheatSheetProvider removed
     };
 }
 
@@ -148,7 +148,7 @@ function registerProviders(context: vscode.ExtensionContext, providers: Extensio
     vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
-    vscode.window.registerTreeDataProvider('claudeCheatSheet', providers.cheatSheetProvider);
+    // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
 
     // Register task provider
     const taskProviderDisposable = vscode.tasks.registerTaskProvider(

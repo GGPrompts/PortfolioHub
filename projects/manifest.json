@@ -1,6 +1,45 @@
 {
   "projects": [
     {
+      "id": "claude-portfolio",
+      "title": "Claude Portfolio (Self)",
+      "description": "The main portfolio React app itself - for testing and self-management. Meta-project that manages all other projects with real-time status, VS Code integration, and Matrix Card notes system.",
+      "displayType": "embedded",
+      "localPort": 5175,
+      "buildCommand": "npm run dev",
+      "path": ".",
+      "thumbnail": "thumbnails/claude-portfolio.svg",
+      "tags": [
+        "Meta",
+        "Portfolio",
+        "React",
+        "Management",
+        "VS Code Integration"
+      ],
+      "tech": [
+        "React 18",
+        "TypeScript",
+        "Vite",
+        "Tanstack Query",
+        "Zustand",
+        "Three.js"
+      ],
+      "devJournal": "CLAUDE.md",
+      "features": [
+        "Real-time project status monitoring",
+        "VS Code extension integration",
+        "Matrix Card notes system with 3D animations",
+        "Responsive design with smart layout modes",
+        "Secure command execution via VSCodeSecurityService",
+        "Project launcher with PowerShell automation",
+        "Live preview with iframe sandboxing",
+        "Development journals and progress tracking",
+        "Self-management and meta-development capabilities"
+      ],
+      "special": true,
+      "category": "Meta"
+    },
+    {
       "id": "3d-matrix-cards",
       "title": "3D Matrix Cards",
       "description": "Interactive 3D card display system with Matrix-style effects. Features multiple layouts, touch controls, and realistic card rendering.",

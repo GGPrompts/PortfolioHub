@@ -8,10 +8,11 @@ export interface PortStatus {
 }
 
 // Portfolio port (excluded from project detection)
-export const PORTFOLIO_PORT = 5173;
+export const PORTFOLIO_PORT = 5175;
 
 // Default port assignments for projects only
 export const DEFAULT_PORTS = {
+  'claude-portfolio': 5175,
   '3d-matrix-cards': 3005,
   'matrix-cards': 3002,
   'sleak-card': 3000,

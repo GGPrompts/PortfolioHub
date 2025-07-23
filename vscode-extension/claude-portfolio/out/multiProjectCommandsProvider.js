@@ -141,6 +141,49 @@ class MultiProjectCommandsProvider {
                 description: `Pull latest changes for ${selectedProjects.length} projects`,
                 category: 'Git Operations'
             },
+            // Portfolio Management
+            {
+                label: 'Start Portfolio Server',
+                command: 'claude-portfolio.startPortfolioServer',
+                icon: 'server-environment',
+                description: 'Start the main portfolio development server',
+                category: 'Portfolio'
+            },
+            {
+                label: 'Start VS Code Server',
+                command: 'claude-portfolio.startVSCodeServer',
+                icon: 'browser',
+                description: 'Start portfolio server and open in Simple Browser',
+                category: 'Portfolio'
+            },
+            {
+                label: 'Start All Servers',
+                command: 'claude-portfolio.startAllServers',
+                icon: 'rocket',
+                description: 'Start portfolio and all project servers',
+                category: 'Portfolio'
+            },
+            {
+                label: 'Start Projects (Tabbed)',
+                command: 'claude-portfolio.startAllProjectsTabbed',
+                icon: 'terminal',
+                description: 'Start all projects in Windows Terminal tabs',
+                category: 'Portfolio'
+            },
+            {
+                label: 'Create New Project',
+                command: 'claude-portfolio.createNewProject',
+                icon: 'add',
+                description: 'Create a new project using template',
+                category: 'Portfolio'
+            },
+            {
+                label: 'Check Portfolio Ports',
+                command: 'claude-portfolio.checkPortfolioports',
+                icon: 'ports-view-icon',
+                description: 'Check status of portfolio development ports',
+                category: 'Portfolio'
+            },
             // Selection Management
             {
                 label: `Clear Selection`,

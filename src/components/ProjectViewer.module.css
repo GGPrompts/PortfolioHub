@@ -414,3 +414,182 @@
     padding: 30px 20px;
   }
 }
+
+/* Meta Project View Styles */
+.metaProjectView {
+  height: 100%;
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 255, 0.03));
+  color: #ffffff;
+  overflow-y: auto;
+}
+
+.metaHeader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.metaIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: metaRotate 4s linear infinite;
+}
+
+@keyframes metaRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.metaHeader h2 {
+  color: #00ff88;
+  font-size: 28px;
+  font-weight: 300;
+  margin: 0 0 8px 0;
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+}
+
+.metaHeader p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  margin: 0;
+}
+
+.metaStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
+  transform: translateY(-2px);
+}
+
+.statCard h3 {
+  color: #00ff88;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.statCard p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.statusRunning {
+  color: #00ff88 !important;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.statCard ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.statCard li {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  padding-left: 16px;
+  position: relative;
+}
+
+.statCard li::before {
+  content: "▸";
+  color: #00ff88;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.statCard li:last-child {
+  margin-bottom: 0;
+}
+
+.metaBtn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 8px 8px 8px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metaBtn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
+  transform: translateY(-1px);
+}
+
+.metaFooter {
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.metaFooter p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.metaFooter strong {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Mobile responsive for meta view */
+@media (max-width: 768px) {
+  .metaProjectView {
+    padding: 20px;
+  }
+  
+  .metaStats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .statCard {
+    padding: 20px;
+  }
+  
+  .metaHeader h2 {
+    font-size: 24px;
+  }
+  
+  .metaIcon {
+    font-size: 36px;
+  }
+}

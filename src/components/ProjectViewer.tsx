@@ -192,6 +192,58 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
           />
         )}
 
+        {project.displayType === 'embedded' && !isProjectLoading && (
+          <div className={styles.metaProjectView}>
+            <div className={styles.metaHeader}>
+              <div className={styles.metaIcon}>🔄</div>
+              <h2>Portfolio Self-Management Interface</h2>
+              <p>This is the meta-view of the portfolio application itself</p>
+            </div>
+            
+            <div className={styles.metaStats}>
+              <div className={styles.statCard}>
+                <h3>Current Status</h3>
+                <p className={styles.statusRunning}>✅ Running on port {project.localPort}</p>
+                <p>You are currently using this application</p>
+              </div>
+              
+              <div className={styles.statCard}>
+                <h3>Meta Features</h3>
+                <ul>
+                  <li>Self-referential project management</li>
+                  <li>Real-time status monitoring</li>
+                  <li>VS Code extension integration</li>
+                  <li>Matrix Card notes system</li>
+                  <li>Live development workflow</li>
+                </ul>
+              </div>
+              
+              <div className={styles.statCard}>
+                <h3>Development Actions</h3>
+                <button 
+                  className={styles.metaBtn}
+                  onClick={() => isVSCodeEnvironment() ? 
+                    executeCommand('workbench.action.files.openFolder', 'D:\\ClaudeWindows\\claude-dev-portfolio') :
+                    window.open('vscode://file/D:/ClaudeWindows/claude-dev-portfolio', '_blank')
+                  }
+                >
+                  📁 Open in VS Code
+                </button>
+                <button 
+                  className={styles.metaBtn}
+                  onClick={() => window.open('http://localhost:5173', '_blank')}
+                >
+                  🔗 Open in New Tab
+                </button>
+              </div>
+            </div>
+            
+            <div className={styles.metaFooter}>
+              <p>💡 <strong>Meta-Development:</strong> This portfolio manages itself as a project, enabling real-time testing and development workflow optimization.</p>
+            </div>
+          </div>
+        )}
+
         {project.displayType === 'external' && !isProjectLoading && (
           <>
             {isInline && isRunning && actualPort ? (

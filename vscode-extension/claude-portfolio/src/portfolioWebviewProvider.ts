@@ -84,6 +84,12 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 case 'file:delete':
                     await this._deleteFile(message.path);
                     break;
+                case 'notes:loadToSort':
+                    await this._loadToSortNotes();
+                    break;
+                case 'notes:loadOrganized':
+                    await this._loadOrganizedNotes(message.projectId);
+                    break;
                 case 'git:update':
                     await this._updateGitRepo(message.projectPath);
                     break;
@@ -246,12 +252,218 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             await vscode.workspace.fs.delete(fullPath);
             
             vscode.window.showInformationMessage(`Note deleted: ${relativePath}`);
+            
+            // Refresh the notes list after deletion
+            await this._loadToSortNotes();
         } catch (error: any) {
             if (error.code === 'FileNotFound') {
                 vscode.window.showWarningMessage(`File not found: ${relativePath}`);
             } else {
                 vscode.window.showErrorMessage(`Failed to delete file: ${error}`);
             }
+        }
+    }
+
+    /**
+     * Load notes from the to-sort folder and send to React app
+     */
+    private async _loadToSortNotes(): Promise<void> {
+        try {
+            const notesPath = path.join(this._portfolioPath, 'notes', 'to-sort');
+            const notesUri = vscode.Uri.file(notesPath);
+            
+            // Check if to-sort folder exists
+            try {
+                await vscode.workspace.fs.stat(notesUri);
+            } catch (error) {
+                // Create the to-sort folder if it doesn't exist
+                await vscode.workspace.fs.createDirectory(notesUri);
+                console.log('📁 Created notes/to-sort directory');
+            }
+            
+            // Read all .md files from the to-sort folder
+            const files = await vscode.workspace.fs.readDirectory(notesUri);
+            const mdFiles = files.filter(([name, type]) => 
+                type === vscode.FileType.File && name.endsWith('.md')
+            );
+            
+            const notes = await Promise.all(mdFiles.map(async ([fileName]) => {
+                const filePath = path.join(notesPath, fileName);
+                const fileUri = vscode.Uri.file(filePath);
+                
+                try {
+                    const content = await vscode.workspace.fs.readFile(fileUri);
+                    const contentStr = Buffer.from(content).toString('utf8');
+                    
+                    // Parse the note metadata and content
+                    const note = this._parseNoteFile(contentStr, fileName);
+                    return note;
+                } catch (error) {
+                    console.error(`Failed to read note file ${fileName}:`, error);
+                    return null;
+                }
+            }));
+            
+            // Filter out failed reads and sort by date (newest first)
+            const validNotes = notes.filter(note => note !== null)
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            
+            console.log(`📝 Loaded ${validNotes.length} notes from to-sort folder`);
+            
+            // Send the notes data to the React app
+            if (this._view?.webview) {
+                this._view.webview.postMessage({
+                    type: 'notes:toSortLoaded',
+                    notes: validNotes
+                });
+            }
+            
+        } catch (error) {
+            console.error('Failed to load to-sort notes:', error);
+            vscode.window.showErrorMessage(`Failed to load notes: ${error}`);
+        }
+    }
+
+    /**
+     * Load organized notes from main or project-specific organized folder
+     */
+    private async _loadOrganizedNotes(projectId?: string): Promise<void> {
+        try {
+            let notesPath: string;
+            let folderDescription: string;
+            
+            if (projectId && projectId !== 'all') {
+                // Load from project-specific organized folder
+                notesPath = path.join(this._portfolioPath, 'notes', 'organized', projectId);
+                folderDescription = `organized notes for ${projectId}`;
+            } else {
+                // Load from main organized folder
+                notesPath = path.join(this._portfolioPath, 'notes', 'organized');
+                folderDescription = 'all organized notes';
+            }
+            
+            const notesUri = vscode.Uri.file(notesPath);
+            
+            // Check if organized folder exists
+            try {
+                await vscode.workspace.fs.stat(notesUri);
+            } catch (error) {
+                // Create the organized folder if it doesn't exist
+                await vscode.workspace.fs.createDirectory(notesUri);
+                console.log(`📁 Created ${notesPath} directory`);
+            }
+            
+            // Read all .md files from the organized folder (including subdirectories for main folder)
+            const notes = await this._readNotesRecursively(notesUri, notesPath);
+            
+            // Sort by date (newest first)
+            const sortedNotes = notes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            
+            console.log(`📝 Loaded ${sortedNotes.length} ${folderDescription}`);
+            
+            // Send the organized notes data to the React app
+            if (this._view?.webview) {
+                this._view.webview.postMessage({
+                    type: 'notes:organizedLoaded',
+                    notes: sortedNotes,
+                    projectId: projectId || 'all'
+                });
+            }
+            
+        } catch (error) {
+            console.error('Failed to load organized notes:', error);
+            vscode.window.showErrorMessage(`Failed to load organized notes: ${error}`);
+        }
+    }
+
+    /**
+     * Recursively read notes from a directory and its subdirectories
+     */
+    private async _readNotesRecursively(uri: vscode.Uri, basePath: string): Promise<any[]> {
+        const notes: any[] = [];
+        
+        try {
+            const files = await vscode.workspace.fs.readDirectory(uri);
+            
+            for (const [fileName, fileType] of files) {
+                const itemPath = path.join(basePath, fileName);
+                const itemUri = vscode.Uri.file(itemPath);
+                
+                if (fileType === vscode.FileType.File && fileName.endsWith('.md')) {
+                    // Read markdown file
+                    try {
+                        const content = await vscode.workspace.fs.readFile(itemUri);
+                        const contentStr = Buffer.from(content).toString('utf8');
+                        
+                        // Parse the note metadata and content
+                        const relativePath = path.relative(this._portfolioPath, itemPath);
+                        const note = this._parseNoteFile(contentStr, fileName, relativePath);
+                        notes.push(note);
+                    } catch (error) {
+                        console.error(`Failed to read note file ${fileName}:`, error);
+                    }
+                } else if (fileType === vscode.FileType.Directory) {
+                    // Recursively read subdirectory
+                    const subNotes = await this._readNotesRecursively(itemUri, itemPath);
+                    notes.push(...subNotes);
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to read directory ${basePath}:`, error);
+        }
+        
+        return notes;
+    }
+
+    /**
+     * Parse a note file and extract metadata
+     */
+    private _parseNoteFile(content: string, fileName: string, relativePath?: string): any {
+        try {
+            // Extract project from the content (look for **Project:** line)
+            const projectMatch = content.match(/\*\*Project:\*\*\s*(.+)/);
+            const project = projectMatch ? projectMatch[1].trim() : 'General';
+            
+            // Extract timestamp from filename or content
+            const timestampMatch = fileName.match(/note-(.+)\.md/) || content.match(/\*\*Timestamp:\*\*\s*(.+)/);
+            const timestamp = timestampMatch ? timestampMatch[1] : new Date().toISOString();
+            
+            // Extract title (first # heading)
+            const titleMatch = content.match(/^#\s+(.+)/m);
+            const title = titleMatch ? titleMatch[1].trim() : fileName.replace('.md', '');
+            
+            // Create preview from content (first few lines after the metadata)
+            const contentLines = content.split('\n');
+            const noteContentStart = contentLines.findIndex(line => line.includes('## Note'));
+            const previewLines = contentLines.slice(noteContentStart + 1, noteContentStart + 4)
+                .filter(line => line.trim() && !line.startsWith('---'))
+                .join(' ');
+            const preview = previewLines.substring(0, 100) + (previewLines.length > 100 ? '...' : '');
+            
+            return {
+                id: fileName.replace('.md', ''),
+                title,
+                date: new Date(timestamp).toLocaleDateString(),
+                timestamp,
+                preview: preview || 'No preview available',
+                content,
+                project: project === 'General (No Project)' ? 'General' : project,
+                saved: true,
+                filePath: relativePath || `notes/to-sort/${fileName}`
+            };
+        } catch (error) {
+            console.error(`Failed to parse note file ${fileName}:`, error);
+            return {
+                id: fileName.replace('.md', ''),
+                title: fileName.replace('.md', ''),
+                date: new Date().toLocaleDateString(),
+                timestamp: new Date().toISOString(),
+                preview: 'Failed to parse note content',
+                content: content,
+                project: 'General',
+                saved: true,
+                filePath: relativePath || `notes/to-sort/${fileName}`
+            };
         }
     }
 

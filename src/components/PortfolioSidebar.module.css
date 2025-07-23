@@ -1541,6 +1541,79 @@
   border-color: rgba(0, 255, 255, 0.5);
 }
 
+/* Organized Notes Content */
+.organizedContent {
+  padding: 24px 24px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.organizedDescription {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.organizedDescription p {
+  margin: 0;
+}
+
+/* Organized Notes List */
+.organizedContent .notesList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 8px;
+  min-height: 400px;
+}
+
+/* Scrollbar styling for organized notes list */
+.organizedContent .notesList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.organizedContent .notesList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.organizedContent .notesList::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.organizedContent .notesList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 136, 0.5);
+}
+
+/* Organized Note Item Specifics */
+.noteItemPath {
+  font-size: 11px;
+  color: rgba(0, 255, 255, 0.7);
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+.noteFolderTag {
+  font-size: 11px;
+  color: rgba(255, 165, 0, 0.9);
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
 /* Quick Note Actions */
 .quickNoteActions {
   display: flex;

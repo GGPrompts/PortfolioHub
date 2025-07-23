@@ -83,6 +83,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   // Notes display state
   const [showNotesList, setShowNotesList] = useState(true)
   const [toSortNotes, setToSortNotes] = useState<any[]>([])
+  const [organizedNotes, setOrganizedNotes] = useState<any[]>([])
+  const [currentNotesView, setCurrentNotesView] = useState<'to-sort' | 'organized'>('to-sort')
+  const [selectedOrganizedProject, setSelectedOrganizedProject] = useState<string>('all')
   
   
   // Project wizard state
@@ -465,49 +468,78 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     setIsEditingNote(false)
   }
 
-  // Load notes from TO-SORT folder (simulated)
-  const loadToSortNotes = () => {
-    // In a real implementation, this would fetch from the actual to-sort folder
-    // For now, we'll simulate some notes to demonstrate the UI
-    const mockNotes = [
-      {
-        id: 'note-1',
-        title: 'Header consistency fix',
-        date: new Date().toLocaleDateString(),
-        preview: 'Fixed header height issues between portfolio and project pages...',
-        content: `# Header Consistency Fix\n\n### Fix header height issues between portfolio and project pages\n\nThe headers need to be unified for better UX.`,
-        project: 'General',
-        saved: true,
-        filePath: 'note-2025-01-18T23-00-00-000Z.md'
-      },
-      {
-        id: 'note-2', 
-        title: 'Matrix Cards enhancement',
-        date: new Date(Date.now() - 86400000).toLocaleDateString(),
-        preview: 'Add new card type for code snippets with syntax highlighting...',
-        content: `# Matrix Cards Enhancement\n\n### Add new card type for code snippets\n\nThis would be great for showcasing code examples and technical documentation.`,
-        project: 'matrix-cards',
-        saved: false
-      },
-      {
-        id: 'note-3',
-        title: 'DEV NOTES improvement',
-        date: new Date(Date.now() - 172800000).toLocaleDateString(), 
-        preview: 'Show notes in TO-SORT folder instead of edit interface by default...',
-        content: `# DEV NOTES Improvement\n\n### Show notes in TO-SORT folder by default\n\nMake notes more accessible and give better visibility into captured content.`,
-        project: 'General',
-        saved: false
+  // Load notes from TO-SORT folder
+  const loadToSortNotes = async () => {
+    try {
+      if (isVSCodeEnvironment()) {
+        // In VS Code environment, request file listing from extension
+        (window as any).vsCodePortfolio?.postMessage?.({
+          type: 'notes:loadToSort'
+        });
+        
+        // The extension will handle loading and injecting the notes data
+        // For now, start with empty array and let the extension populate it
+        setToSortNotes([]);
+      } else {
+        // In web environment, we can't access the file system directly
+        // Show a message about VS Code integration being needed for full functionality
+        setToSortNotes([]);
+        console.log('📝 DEV NOTES: File system access requires VS Code environment for full functionality');
       }
-    ]
-    setToSortNotes(mockNotes)
+    } catch (error) {
+      console.error('Failed to load to-sort notes:', error);
+      setToSortNotes([]);
+    }
+  }
+
+  // Load organized notes from main or project-specific organized folder
+  const loadOrganizedNotes = async (projectId: string = 'all') => {
+    try {
+      if (isVSCodeEnvironment()) {
+        // In VS Code environment, request organized notes from extension
+        (window as any).vsCodePortfolio?.postMessage?.({
+          type: 'notes:loadOrganized',
+          projectId
+        });
+        
+        // The extension will handle loading and sending back the notes
+        setOrganizedNotes([]);
+      } else {
+        // In web environment, we can't access the file system directly
+        setOrganizedNotes([]);
+        console.log('📝 ORGANIZED NOTES: File system access requires VS Code environment');
+      }
+    } catch (error) {
+      console.error('Failed to load organized notes:', error);
+      setOrganizedNotes([]);
+    }
   }
 
   // Load notes when DEV NOTES tab is opened
   useEffect(() => {
     if (activeTabs.includes('journals')) {
       loadToSortNotes()
+      loadOrganizedNotes(selectedOrganizedProject)
     }
-  }, [activeTabs])
+  }, [activeTabs, selectedOrganizedProject])
+
+  // Listen for notes data from VS Code extension
+  useEffect(() => {
+    if (isVSCodeEnvironment()) {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'notes:toSortLoaded') {
+          console.log('📝 Received to-sort notes from VS Code extension:', event.data.notes);
+          setToSortNotes(event.data.notes);
+        } else if (event.data?.type === 'notes:organizedLoaded') {
+          console.log('📝 Received organized notes from VS Code extension:', event.data.notes);
+          setOrganizedNotes(event.data.notes);
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, [isVSCodeEnvironment()])
 
   const handleCreateNewNote = () => {
     setShowNotesList(false)
@@ -1268,13 +1300,53 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
               </div>
               <div className={styles.quickNoteActions}>
                 {showNotesList ? (
-                  <button 
-                    className={styles.editToggleBtn}
-                    onClick={handleCreateNewNote}
-                    title="Create new note"
-                  >
-                    ➕ New Note
-                  </button>
+                  <>
+                    <button 
+                      className={styles.editToggleBtn}
+                      onClick={handleCreateNewNote}
+                      title="Create new note"
+                    >
+                      ➕ New Note
+                    </button>
+                    
+                    {/* View switcher for to-sort vs organized notes */}
+                    <div className={styles.viewSwitcher}>
+                      <button 
+                        className={`${styles.viewBtn} ${currentNotesView === 'to-sort' ? styles.active : ''}`}
+                        onClick={() => setCurrentNotesView('to-sort')}
+                        title="View notes waiting to be organized"
+                      >
+                        📥 To-Sort ({toSortNotes.length})
+                      </button>
+                      <button 
+                        className={`${styles.viewBtn} ${currentNotesView === 'organized' ? styles.active : ''}`}
+                        onClick={() => setCurrentNotesView('organized')}
+                        title="View organized notes"
+                      >
+                        📂 Organized ({organizedNotes.length})
+                      </button>
+                    </div>
+                    
+                    {/* Project filter for organized notes */}
+                    {currentNotesView === 'organized' && (
+                      <div className={styles.projectFilter}>
+                        <select 
+                          value={selectedOrganizedProject}
+                          onChange={(e) => setSelectedOrganizedProject(e.target.value)}
+                          className={styles.projectSelect}
+                          title="Filter organized notes by project"
+                        >
+                          <option value="all">All Projects</option>
+                          <option value="general">General</option>
+                          {projects.map(project => (
+                            <option key={project.id} value={project.id}>
+                              {project.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <button 
                     className={styles.editToggleBtn}
@@ -1353,29 +1425,32 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                   </div>
                 </div>
                 
-                <div className={styles.toSortContent}>
-                  <div className={styles.toSortDescription}>
-                    <p>Notes are saved here for quick capture. Use the organize button to generate a Claude prompt for sorting them into project folders.</p>
-                  </div>
-                  
-                  <div className={styles.organizeButtonContainer}>
-                    <button 
-                      className={styles.organizeBtn}
-                      onClick={handleOrganizeNotes}
-                      title="Generate Claude prompt to organize all unsorted notes"
-                    >
-                      🗂️ Copy Organize Prompt
-                    </button>
-                  </div>
-                <div className={styles.notesList}>
-                  {toSortNotes.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <div className={styles.emptyStateIcon}>📝</div>
-                      <p className={styles.emptyStateText}>No notes in TO-SORT folder</p>
-                      <p className={styles.emptyStateSubtext}>Click "New Note" to create your first note</p>
-                    </div>
-                  ) : (
-                    toSortNotes.map((note) => (
+                <div className={styles.notesContent}>
+                  {currentNotesView === 'to-sort' ? (
+                    <div className={styles.toSortContent}>
+                      <div className={styles.toSortDescription}>
+                        <p>Notes are saved here for quick capture. Use the organize button to generate a Claude prompt for sorting them into project folders.</p>
+                      </div>
+                      
+                      <div className={styles.organizeButtonContainer}>
+                        <button 
+                          className={styles.organizeBtn}
+                          onClick={handleOrganizeNotes}
+                          title="Generate Claude prompt to organize all unsorted notes"
+                        >
+                          🗂️ Copy Organize Prompt
+                        </button>
+                      </div>
+                      
+                      <div className={styles.notesList}>
+                        {toSortNotes.length === 0 ? (
+                          <div className={styles.emptyState}>
+                            <div className={styles.emptyStateIcon}>📝</div>
+                            <p className={styles.emptyStateText}>No notes in TO-SORT folder</p>
+                            <p className={styles.emptyStateSubtext}>Click "New Note" to create your first note</p>
+                          </div>
+                        ) : (
+                          toSortNotes.map((note) => (
                       <div 
                         key={note.id}
                         className={styles.noteItem}
@@ -1423,6 +1498,66 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
                   )}
                 </div>
                 </div>
+                    ) : (
+                      <div className={styles.organizedContent}>
+                        <div className={styles.organizedDescription}>
+                          <p>Notes that have been organized and moved to project-specific folders. These are finalized notes ready for reference.</p>
+                        </div>
+                        
+                        <div className={styles.notesList}>
+                          {organizedNotes.length === 0 ? (
+                            <div className={styles.emptyState}>
+                              <div className={styles.emptyStateIcon}>🗂️</div>
+                              <p className={styles.emptyStateText}>
+                                {selectedOrganizedProject === 'all' 
+                                  ? 'No organized notes found' 
+                                  : `No organized notes for ${projects.find(p => p.id === selectedOrganizedProject)?.title || 'selected project'}`
+                                }
+                              </p>
+                              <p className={styles.emptyStateSubtext}>
+                                {selectedOrganizedProject === 'all'
+                                  ? 'Organize notes from the TO-SORT folder to see them here'
+                                  : 'Change project filter or organize notes for this project'
+                                }
+                              </p>
+                            </div>
+                          ) : (
+                            organizedNotes.map((note) => (
+                              <div 
+                                key={note.id}
+                                className={styles.noteItem}
+                              >
+                                <div className={styles.noteItemHeader}>
+                                  <span className={styles.noteItemTitle}>
+                                    📋 {note.title}
+                                  </span>
+                                  <div className={styles.noteItemActions}>
+                                    <span className={styles.noteItemDate}>{note.date}</span>
+                                    <span className={styles.noteItemPath} title={`File: ${note.filePath}`}>
+                                      📁 {note.folder}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className={styles.noteItemPreview}>
+                                  {note.preview}
+                                </div>
+                                <div className={styles.noteItemProject}>
+                                  <span className={styles.noteProjectTag}>
+                                    {note.project === 'General' ? '🌐 General' : `📁 ${note.project}`}
+                                  </span>
+                                  {note.folder && (
+                                    <span className={styles.noteFolderTag}>
+                                      🗂️ {note.folder}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
               </div>
             ) : (
               // Note editing interface

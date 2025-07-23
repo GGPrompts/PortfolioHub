@@ -245,19 +245,27 @@ cd vscode-extension
 
 ## Development Workflows
 
-### Matrix Card Notes System Workflow
-1. **Default Interface**: DEV NOTES panel opens directly to Matrix Card note editor
+### Enhanced DEV NOTES System Workflow (January 2025)
+1. **Note Creation**: DEV NOTES panel opens directly to Matrix Card note editor
 2. **Project Selection**: Choose project from dropdown or leave as "General"
 3. **Claude Instructions**: Add optional instructions for AI organization (marked with ###)
 4. **Note Content**: Write your thoughts in the large letter-sized content area
-5. **Save**: Notes automatically saved to to-sort folder with project context
+5. **Save to TO-SORT**: Notes automatically saved to to-sort folder with project context
 6. **Organization**: Use "Organize Notes" button to generate Claude prompts for batch sorting
+7. **View Organized**: Toggle to "ORGANIZED" view to browse processed notes by project
 
-### Note Organization System
+### Complete Note Organization System
 - **To-Sort Folder**: `D:\ClaudeWindows\claude-dev-portfolio\notes\to-sort\`
-- **Automatic Metadata**: Project paths, timestamps, and Claude instructions included
+  - Quick capture with automatic project context and timestamps
+  - Claude instructions field for AI-assisted organization
+  - Visual indicators: 💾 for saved notes, 🟡 for unsaved
+- **Organized Folders**: `D:\ClaudeWindows\claude-dev-portfolio\notes\organized\`
+  - Main organized folder for general notes
+  - Project-specific folders: `notes/organized/{project}/`
+  - Visual indicators: 📋 for organized notes, 🗂️ for folder tags
 - **Smart Organization**: Generated prompts include project-specific context and file paths
-- **Flexible Destinations**: Notes can be moved to dev journals, CLAUDE.md, README, or topic folders
+- **Enhanced Filtering**: View organized notes by "All Projects" or specific project
+- **Professional UI**: Toggle between TO-SORT and ORGANIZED views with distinct styling
 
 ### VS Code Extension Development Workflow
 1. **Launch VS Code**: Extension auto-loads with Claude Portfolio icon in activity bar

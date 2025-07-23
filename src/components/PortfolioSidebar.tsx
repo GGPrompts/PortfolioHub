@@ -8,7 +8,7 @@ import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
 import EnvironmentBadge from './EnvironmentBadge'
 import styles from './PortfolioSidebar.module.css'
-import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects, launchProjectsEnhanced, executeScript } from '../utils/vsCodeIntegration'
+import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects, launchProjectsEnhanced, executeScript, saveFile } from '../utils/vsCodeIntegration'
 
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
@@ -55,7 +55,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     refreshProjectStatus,
     getProjectStatus,
     runningProjectsCount,
-    totalProjects
+    totalProjects,
+    portfolioPath
   } = useProjectData()
 
   
@@ -255,10 +256,10 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     content += `---\n*Note saved to to-sort folder for later organization*\n`
     
     try {
-      // Check if we're in VS Code and use the VS Code API
-      if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
+      // Check if we're in VS Code and use the unified architecture
+      if (isVSCodeEnvironment()) {
         const filePath = `notes/to-sort/${fileName}`
-        ;(window as any).vsCodePortfolio.saveFile(filePath, content)
+        await saveFile(filePath, content)
         
         // Add the note to local state
         const newNote = {
@@ -472,13 +473,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const loadToSortNotes = async () => {
     try {
       if (isVSCodeEnvironment()) {
-        // In VS Code environment, request file listing from extension
-        (window as any).vsCodePortfolio?.postMessage?.({
-          type: 'notes:loadToSort'
-        });
-        
-        // The extension will handle loading and injecting the notes data
-        // For now, start with empty array and let the extension populate it
+        // TODO: Implement file listing through environment bridge
+        // For now, start with empty array - this will be enhanced in unified architecture
         setToSortNotes([]);
       } else {
         // In web environment, we can't access the file system directly
@@ -496,13 +492,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
   const loadOrganizedNotes = async (projectId: string = 'all') => {
     try {
       if (isVSCodeEnvironment()) {
-        // In VS Code environment, request organized notes from extension
-        (window as any).vsCodePortfolio?.postMessage?.({
-          type: 'notes:loadOrganized',
-          projectId
-        });
-        
-        // The extension will handle loading and sending back the notes
+        // TODO: Implement organized notes loading through environment bridge
+        // For now, start with empty array - this will be enhanced in unified architecture
         setOrganizedNotes([]);
       } else {
         // In web environment, we can't access the file system directly
@@ -642,9 +633,8 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
 
   // Helper function to get correct project path for scripts
   const getProjectPath = (project: any): string => {
-    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath) {
+    if (isVSCodeEnvironment() && portfolioPath) {
       // In VS Code, use proper path resolution
-      const portfolioPath = (window as any).vsCodePortfolio.portfolioPath
       if (project.path) {
         if (project.path.startsWith('../Projects/')) {
           // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name

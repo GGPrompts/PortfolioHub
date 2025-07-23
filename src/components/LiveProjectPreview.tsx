@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Project } from '../store/portfolioStore'
+import { useProjectData } from '../hooks/useProjectData'
 import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
-import { executeCommand, openInBrowser, openInExternalBrowser, openInVSCode, showNotification, isVSCodeEnvironment, openLivePreview } from '../utils/vsCodeIntegration'
+import { executeCommand, openInBrowser, openInExternalBrowser, openInVSCode, showNotification, isVSCodeEnvironment, openLivePreview, addProjectToWorkspace } from '../utils/vsCodeIntegration'
 import styles from './LiveProjectPreview.module.css'
 
 interface LiveProjectPreviewProps {
@@ -22,12 +23,14 @@ export default function LiveProjectPreview({
   globalViewMode,
   livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
+  // Get project data from unified hook
+  const { projectData, portfolioPath } = useProjectData()
   
   // In VS Code environment, get project status from injected data (if available)
   const getVSCodeProjectStatus = () => {
-    if (!isVSCodeEnvironment() || !window.vsCodePortfolio?.projectData) return { isRunning, port }
+    if (!isVSCodeEnvironment() || !projectData?.projects) return { isRunning, port }
     
-    const vsCodeProjects = window.vsCodePortfolio.projectData?.projects || []
+    const vsCodeProjects = projectData.projects || []
     const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
     
     if (vsCodeProject) {
@@ -61,9 +64,8 @@ export default function LiveProjectPreview({
 
   // Helper function to get correct project path
   const getProjectPath = (): string => {
-    if (isVSCodeEnvironment() && window.vsCodePortfolio?.portfolioPath) {
+    if (isVSCodeEnvironment() && portfolioPath) {
       // In VS Code, use proper path resolution
-      const portfolioPath = window.vsCodePortfolio.portfolioPath
       if (project.path) {
         if (project.path.startsWith('../Projects/')) {
           // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name
@@ -111,13 +113,9 @@ export default function LiveProjectPreview({
       const projectPath = getProjectPath()
       const command = project.buildCommand || 'npm run dev'
       
-      window.vsCodePortfolio?.postMessage?.({
-        type: 'project:run',
-        projectPath: projectPath,
-        command: command,
-        projectId: project.id,
-        projectTitle: project.title
-      })
+      // Use unified architecture - executeCommand handles both VS Code and web modes
+      const fullCommand = `cd "${projectPath}" && ${command}`
+      await executeCommand(fullCommand, `Start ${project.title}`)
       showNotification(`Starting ${project.title}...`, 'info')
     } else {
       // Fallback for web version - validate combined command
@@ -171,23 +169,14 @@ export default function LiveProjectPreview({
     }
   }
 
-  const handleViewInIDE = () => {
+  const handleViewInIDE = async () => {
     // In VS Code environment, add project to workspace
     if (isVSCodeEnvironment()) {
       const projectPath = getProjectPath()
       
-      // Use the VS Code API to add project to workspace
-      if (window.vsCodePortfolio?.addProjectToWorkspace) {
-        window.vsCodePortfolio.addProjectToWorkspace(projectPath)
-        showNotification(`Added ${project.title} to VS Code workspace`, 'info')
-      } else {
-        // Fallback to message passing
-        window.vsCodePortfolio?.postMessage?.({
-          type: 'workspace:addProject',
-          project: projectPath
-        })
-        showNotification(`Adding ${project.title} to workspace...`, 'info')
-      }
+      // Use unified architecture - addProjectToWorkspace handles both VS Code and web modes
+      await addProjectToWorkspace({ path: projectPath, title: project.title })
+      showNotification(`Added ${project.title} to VS Code workspace`, 'info')
     } else {
       // Fallback to original behavior for web version
       onProjectClick(project)

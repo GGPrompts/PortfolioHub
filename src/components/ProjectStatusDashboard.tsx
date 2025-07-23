@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { usePortfolioStore } from '../store/portfolioStore'
+import { useProjectData } from '../hooks/useProjectData'
 import { getAllPortStatuses, getRunningProjects, getProjectPort } from '../utils/portManager'
-import { isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import { isVSCodeEnvironment, executeCommand, showNotification } from '../utils/vsCodeIntegration'
 import GitUpdateButton from './GitUpdateButton'
 import styles from './ProjectStatusDashboard.module.css'
 
@@ -21,6 +22,7 @@ interface ProjectStatus {
 
 export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboardProps) {
   const { projects } = usePortfolioStore()
+  const { projectData, portfolioPath } = useProjectData()
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -29,10 +31,10 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     setLoading(true)
     const statuses: ProjectStatus[] = []
     
-    // Check if we're in VS Code webview and use injected data
-    if (typeof window !== 'undefined' && (window as any).vsCodePortfolio?.isVSCodeWebview) {
-      console.log('🖥️ Dashboard: Using VS Code injected project data')
-      const vsCodeProjects = (window as any).vsCodePortfolio.projectData?.projects || []
+    // Check if we're in VS Code environment and use project data
+    if (isVSCodeEnvironment() && projectData?.projects) {
+      console.log('🖥️ Dashboard: Using VS Code project data')
+      const vsCodeProjects = projectData.projects || []
       
       for (const project of projects) {
         if (project.displayType === 'external') {
@@ -105,7 +107,7 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     
     // Only set up interval in web context - VS Code extension handles refreshing
     let interval: NodeJS.Timeout | null = null
-    if (typeof window !== 'undefined' && !(window as any).vsCodePortfolio?.isVSCodeWebview) {
+    if (!isVSCodeEnvironment()) {
       interval = setInterval(updateProjectStatuses, 5000) // Update every 5 seconds
       console.log('⏰ Dashboard: Status check interval created (WEB MODE)')
     } else {
@@ -139,8 +141,8 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     // Use VS Code API if available
     if (isVSCodeEnvironment()) {
       const command = `$proc = Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`
-      await (window as any).vsCodePortfolio.executeCommand(command, `Kill ${project.title}`)
-      (window as any).vsCodePortfolio.showNotification(`Stopping ${project.title}...`, 'info')
+      await executeCommand(command, `Kill ${project.title}`)
+      showNotification(`Stopping ${project.title}...`, 'info')
     } else {
       // Fallback to clipboard
       const command = `taskkill /F /PID (Get-NetTCPConnection -LocalPort ${project.localPort} | Select-Object -ExpandProperty OwningProcess)`
@@ -156,16 +158,16 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     const project = projects.find(p => p.id === projectId)
     if (!project) return
     
-    const projectPath = isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath 
-      ? `${(window as any).vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
+    const projectPath = isVSCodeEnvironment() && portfolioPath 
+      ? `${portfolioPath}\\projects\\${project.id}`
       : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
     
     const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
     
     // Use VS Code API if available
     if (isVSCodeEnvironment()) {
-      await (window as any).vsCodePortfolio.executeCommand(command, `Start ${project.title}`)
-      (window as any).vsCodePortfolio.showNotification(`Starting ${project.title}...`, 'info')
+      await executeCommand(command, `Start ${project.title}`)
+      showNotification(`Starting ${project.title}...`, 'info')
     } else {
       // Fallback to clipboard
       await navigator.clipboard.writeText(command)

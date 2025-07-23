@@ -58,9 +58,11 @@ export const SHARED_SECURITY_CONFIG = {
         /^claude$/i,                                                     // Claude Code
         /^node\s+[^\s]+\.js$/i,                                          // Node.js script execution
         /^python\s+[^\s]+\.py$/i,                                        // Python script execution
+        /^code\s+serve-web\s+--port\s+\d+\s+--host\s+[\d\.]+\s+--without-connection-token\s+--accept-server-license-terms$/i, // VS Code server
         // Combined commands for project execution
         /^cd\s+"[^\.][^"]*"\s+&&\s+npm\s+(run\s+)?(dev|start|build|test)(\s+--.*)?$/,  // cd && npm
         /^cd\s+"[^\.][^"]*"\s+&&\s+(npm\s+(run\s+)?(dev|start|build|test)|yarn\s+(dev|start|build)|pnpm\s+(dev|start))(\s+--.*)?$/,  // cd && package manager
+        /^cd\s+"[^\.][^"]*"\s+&&\s+code\s+serve-web\s+--port\s+\d+\s+--host\s+[\d\.]+\s+--without-connection-token\s+--accept-server-license-terms$/i, // cd && VS Code server
         // PowerShell process management (portfolio specific)
         /^\$proc\s*=\s*Get-NetTCPConnection\s+-LocalPort\s+\d+.*;\s*if\s*\(\$proc\)\s*\{\s*Stop-Process\s+-Id\s+\$proc\.OwningProcess\s+-Force\s*\}$/i,
         /^taskkill\s+\/F\s+\/PID\s+\(Get-NetTCPConnection\s+-LocalPort\s+\d+.*\)$/i,

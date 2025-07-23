@@ -184,8 +184,8 @@ function PortfolioApp() {
     const newPortStatus: { [key: string]: number | null } = {}
     
     // Use VS Code project data when available
-    if (window.vsCodePortfolio?.isVSCodeWebview && window.vsCodePortfolio.projectData?.projects) {
-      const vsCodeProjects = window.vsCodePortfolio.projectData.projects
+    if (isVSCodeEnvironment() && projectData?.projects) {
+      const vsCodeProjects = projectData.projects
       for (const project of projects) {
         if (project.displayType === 'external') {
           const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)

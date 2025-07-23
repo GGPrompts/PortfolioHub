@@ -222,10 +222,18 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                 <h3>Development Actions</h3>
                 <button 
                   className={styles.metaBtn}
-                  onClick={() => isVSCodeEnvironment() ? 
-                    executeCommand('workbench.action.files.openFolder', 'D:\\ClaudeWindows\\claude-dev-portfolio') :
-                    window.open('vscode://file/D:/ClaudeWindows/claude-dev-portfolio', '_blank')
-                  }
+                  onClick={() => {
+                    if (isVSCodeEnvironment()) {
+                      // Send VS Code command message instead of trying to execute as shell command
+                      (window as any).vsCodePortfolio?.postMessage?.({
+                        type: 'command:execute',
+                        command: 'workbench.action.files.openFolder',
+                        args: ['D:\\ClaudeWindows\\claude-dev-portfolio']
+                      });
+                    } else {
+                      window.open('vscode://file/D:/ClaudeWindows/claude-dev-portfolio', '_blank');
+                    }
+                  }}
                 >
                   📁 Open in VS Code
                 </button>

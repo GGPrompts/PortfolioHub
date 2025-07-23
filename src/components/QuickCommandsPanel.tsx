@@ -35,12 +35,12 @@ export const QuickCommandsPanel: React.FC<QuickCommandsPanelProps> = ({ classNam
         { label: 'Git: Add All', command: 'git.stageAll', description: 'Stage all changes', category: 'Git', type: 'vscode' },
         { label: 'Git: Sync', command: 'git.sync', description: 'Sync with remote (pull & push)', category: 'Git', type: 'vscode' },
         
-        // Development Commands (executable in VS Code)
-        { label: 'Start Dev Server', command: 'claude-portfolio.startDev', description: 'npm run dev', category: 'Development', type: 'vscode' },
-        { label: 'Build React App', command: 'claude-portfolio.buildReact', description: 'npm run build', category: 'Development', type: 'vscode' },
-        { label: 'Install Dependencies', command: 'claude-portfolio.npmInstall', description: 'npm install', category: 'Development', type: 'vscode' },
-        { label: 'Kill All Servers', command: 'claude-portfolio.killAllServers', description: 'Kill all running dev servers', category: 'Development', type: 'vscode' },
-        { label: 'Start All Projects', command: 'claude-portfolio.startAllProjects', description: 'Start all project servers', category: 'Development', type: 'vscode' },
+        // Development Commands (use terminal commands instead of non-existent VS Code commands)
+        { label: 'Start Dev Server', command: 'npm run dev', description: 'Start development server', category: 'Development', type: 'terminal' },
+        { label: 'Build React App', command: 'npm run build', description: 'Build for production', category: 'Development', type: 'terminal' },
+        { label: 'Install Dependencies', command: 'npm install', description: 'Install node modules', category: 'Development', type: 'terminal' },
+        { label: 'Kill All Servers', command: '.\\\\scripts\\\\kill-all-servers.ps1', description: 'Kill all running dev servers', category: 'Development', type: 'terminal' },
+        { label: 'Start All Projects', command: '.\\\\scripts\\\\start-all-tabbed.ps1', description: 'Start all project servers', category: 'Development', type: 'terminal' },
         
         // PowerShell Commands (copy to clipboard)
         { label: 'Navigate to folder', command: 'Set-Location "D:\\\\ClaudeWindows\\\\claude-dev-portfolio"', description: 'Change to portfolio directory', category: 'PowerShell', type: 'terminal' },

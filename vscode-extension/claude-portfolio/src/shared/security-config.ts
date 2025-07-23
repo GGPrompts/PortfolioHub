@@ -36,13 +36,18 @@ export const SHARED_SECURITY_CONFIG = {
         /&&\s*(rm|del|format)/i,     // AND-chained destructive
         />\s*nul.*(?:rm|del|format)/i, // Output redirection with destructive commands
         /`.*(?:rm|del|format).*`/i,  // Backtick command injection with destructive commands
-        /\$\(.*(?:rm|del|format).*\)/i // Command substitution with destructive commands
+        /\$\(.*(?:rm|del|format).*\)/i, // Command substitution with destructive commands
+        // Enhanced pipe operation detection
+        /\|\s*(shutdown|reboot|halt)/i, // Pipe to system control
+        /\|\s*(>|>>).*\.(bat|cmd|exe)/i, // Pipe to executable creation
+        /git\s+\w+.*\|.*rm/i,          // Git commands piped to destructive operations
+        /npm\s+\w+.*\|.*del/i          // NPM commands piped to destructive operations
     ],
     
     SAFE_COMMAND_PATTERNS: [
         /^cd\s+"[^\.][^"]*"$/,                               // cd "path" (not starting with .)  
-        /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(\s+--.*)?$/,  // npm with args
-        /^git\s+(status|add|commit|push|pull|branch|checkout)(\s+.*)?$/,  // git commands
+        /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // npm with args (supports quoted args, no pipe operations)
+        /^git\s+(status|add|commit|push|pull|branch|checkout)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // git commands (supports quoted args, no pipe operations)
         /^powershell\.exe.*Get-NetTCPConnection/i,                        // Port management
         /^taskkill\s+\/F\s+\/PID/i,                                      // Process management
         /^Get-Process.*\|.*Where-Object/i,                               // Process queries

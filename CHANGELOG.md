@@ -2,6 +2,58 @@
 
 All notable changes to the Claude Windows Portfolio Hub will be documented in this file.
 
+## [2.2.0] - 2025-07-23 - Enhanced Port Detection & Network Diagnostics
+
+### 🚀 Major Features Added
+
+#### Enhanced Port Detection System
+- **Smart Auto-Increment Detection**: Added comprehensive port detection for Vite dev servers (5173→5174→5175→etc.)
+- **Cache Management**: Implemented cache clearing with `refreshAll()` method for accurate port status
+- **Multi-Range Port Scanning**: Enhanced detection across React (3000-3010), Vite (5173-5180), and custom port ranges
+- **Actual vs Configured Port Resolution**: New `detectActualPort()` method finds running instances on auto-incremented ports
+- **Enhanced Project Status**: `getEnhancedProjectStatus()` provides comprehensive port and process information
+
+#### Network Diagnostics Integration
+- **PowerShell Command Support**: Added support for `netstat -ano | Select-String ":300[0-9]"` diagnostic commands
+- **Network Process Detection**: Enhanced security patterns to allow legitimate network diagnostic operations
+- **Port Range Analysis**: New `getPortRangeStatus()` method for debugging port conflicts
+- **Process Information**: Integrated process name and PID detection with port usage analysis
+
+### 🔧 Configuration Fixes
+
+#### Port Configuration Corrections
+- **Fixed Portfolio Port**: Corrected manifest.json portfolio port from 5175 to 5173 (Vite default)
+- **Smart Port Resolution**: Portfolio now correctly detects on Vite's default 5173 with fallback detection
+- **Improved Port Allocation**: Enhanced port assignment for new projects with automatic conflict resolution
+
+### 🛡️ Security Enhancements
+
+#### Network Command Support
+- **Enhanced SAFE_COMMAND_PATTERNS**: Added comprehensive network diagnostic command patterns
+- **PowerShell Network Commands**: Added support for `netstat`, `findstr`, and `Select-String` operations
+- **Port Scanning Security**: Secured port range checking with validated patterns
+- **Cross-Platform Compatibility**: Network commands work across PowerShell and Command Prompt contexts
+
+### 🐛 Bug Fixes
+
+#### Port Detection Issues
+- **Fixed Port Conflicts**: Enhanced detection prevents false positives from portfolio self-detection
+- **Eliminated Cache Staleness**: Refresh operations now clear cache for accurate real-time status
+- **Improved Status Accuracy**: Multiple detection methods ensure accurate project status reporting
+- **Network Diagnostic Blocking**: Resolved security blocking of legitimate `netstat` and `Select-String` commands
+
+#### VS Code Extension Improvements
+- **Enhanced Refresh Functionality**: Manual refresh now uses enhanced port detection with cache clearing
+- **Smart Status Updates**: Project status updates include actual port detection and process information
+- **Better Error Messages**: Improved feedback when commands are blocked or fail execution
+- **Provider Communication**: Enhanced cross-provider communication with port detection integration
+
+### 📚 Documentation Updates
+- **Updated VS Code Extension CLAUDE.md**: Comprehensive documentation of enhanced port detection features
+- **Enhanced Troubleshooting**: Added port detection troubleshooting section with detailed solutions
+- **Architecture Documentation**: Updated PortDetectionService documentation with new methods
+- **Security Documentation**: Added network diagnostic command support to security achievements
+
 ## [2.1.0] - 2025-07-22 - ServerToolbar & Security Update
 
 ### 🚀 Major Features Added

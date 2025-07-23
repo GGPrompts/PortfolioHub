@@ -106,19 +106,11 @@ export default function LiveProjectPreview({
   // Helper functions for project actions
   const handleRunProject = async () => {
     if (isVSCodeEnvironment()) {
-      // Use VS Code extension's secure project command execution
+      // Send message to VS Code extension to run project securely
+      // Let the VS Code extension handle all security validation
       const projectPath = getProjectPath()
       const command = project.buildCommand || 'npm run dev'
       
-      // Validate command before sending to VS Code extension
-      const { SecureCommandRunner } = await import('../services/securityService')
-      if (!SecureCommandRunner.validateCommand(command)) {
-        console.error(`Command blocked for security reasons: ${command}`)
-        showNotification('Command blocked - security validation failed', 'error')
-        return
-      }
-      
-      // Send message to VS Code extension to run project securely
       window.vsCodePortfolio?.postMessage?.({
         type: 'project:run',
         projectPath: projectPath,
@@ -128,9 +120,19 @@ export default function LiveProjectPreview({
       })
       showNotification(`Starting ${project.title}...`, 'info')
     } else {
-      // Fallback for web version
+      // Fallback for web version - validate combined command
       const projectPath = getProjectPath()
-      const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
+      const baseCommand = project.buildCommand || 'npm run dev'
+      const command = `cd "${projectPath}" && ${baseCommand}`
+      
+      // Only validate the combined command for web version
+      const { SecureCommandRunner } = await import('../services/securityService')
+      if (!SecureCommandRunner.validateCommand(command)) {
+        console.error(`Command blocked for security reasons: ${command}`)
+        showNotification('Command blocked - security validation failed', 'error')
+        return
+      }
+      
       await executeCommand(command, `Run ${project.title}`)
       showNotification(`Starting ${project.title}...`, 'info')
     }

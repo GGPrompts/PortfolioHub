@@ -147,6 +147,14 @@ class PortfolioWebviewProvider {
                 case 'livePreview:openMultiple':
                     await this._openMultipleLivePreviews(message.projects);
                     break;
+                case 'command:execute':
+                    // Execute VS Code command directly
+                    await vscode.commands.executeCommand(message.command, ...(message.args || []));
+                    break;
+                case 'project:start':
+                    // Start a specific project by ID
+                    await this._startProjectById(message.projectId);
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -266,6 +274,44 @@ class PortfolioWebviewProvider {
         catch (error) {
             console.error('Failed to open external browser:', error);
             vscode.window.showErrorMessage(`Failed to open ${url} in external browser`);
+        }
+    }
+    /**
+     * ✅ SECURE: Start project by ID with full security validation
+     */
+    async _startProjectById(projectId) {
+        try {
+            // Load project manifest to get project details
+            const manifestPath = path.join(this._portfolioPath, 'projects', 'manifest.json');
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const project = manifest.projects.find((p) => p.id === projectId);
+            if (!project) {
+                vscode.window.showErrorMessage(`Project not found: ${projectId}`);
+                return;
+            }
+            // Get project path - use existing path resolution logic
+            let projectPath;
+            if (project.path?.startsWith('D:\\')) {
+                projectPath = project.path;
+            }
+            else if (project.path?.startsWith('../Projects/')) {
+                projectPath = path.resolve(this._portfolioPath, project.path);
+            }
+            else if (project.path?.startsWith('projects/')) {
+                projectPath = path.join(this._portfolioPath, project.path);
+            }
+            else if (project.path === '.') {
+                projectPath = this._portfolioPath;
+            }
+            else {
+                projectPath = path.join(this._portfolioPath, 'projects', project.path || project.id);
+            }
+            const command = project.buildCommand || 'npm run dev';
+            await this._runProject(projectPath, command, project.title);
+        }
+        catch (error) {
+            console.error('Failed to start project by ID:', error);
+            vscode.window.showErrorMessage(`Failed to start project: ${projectId}`);
         }
     }
     /**

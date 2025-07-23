@@ -84,7 +84,7 @@ export function useProjectData() {
     queryKey: ['projects'],
     queryFn: fetchProjectData,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: isVSCodeEnvironment() ? false : 3 * 60 * 1000, // 3 minutes for web, disabled for VS Code
+    refetchInterval: isVSCodeEnvironment() ? 60 * 1000 : 3 * 60 * 1000, // 1 minute for VS Code, 3 minutes for web
     refetchOnWindowFocus: false,
     retry: 2,
   })
@@ -99,7 +99,7 @@ export function useProjectData() {
     queryFn: () => fetchProjectStatus(projects),
     enabled: projects.length > 0, // Only run when we have projects
     staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: isVSCodeEnvironment() ? false : 5 * 1000, // 5 seconds for web, disabled for VS Code
+    refetchInterval: isVSCodeEnvironment() ? 10 * 1000 : 5 * 1000, // 10 seconds for VS Code, 5 seconds for web
     refetchOnWindowFocus: false,
     retry: 1,
   })

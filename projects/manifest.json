@@ -5,7 +5,7 @@
       "title": "Claude Portfolio (Self)",
       "description": "The main portfolio React app itself - for testing and self-management. Meta-project that manages all other projects with real-time status, VS Code integration, and Matrix Card notes system.",
       "displayType": "embedded",
-      "localPort": 5175,
+      "localPort": 5173,
       "buildCommand": "npm run dev",
       "path": ".",
       "thumbnail": "thumbnails/claude-portfolio.svg",

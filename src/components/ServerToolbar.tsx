@@ -18,12 +18,16 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        // Use VS Code command directly - no security issues
-        await executeCommand('claude-portfolio.startAllServers')
+        // Use VS Code batch start command instead of shell command
+        (window as any).vsCodePortfolio.postMessage({
+          type: 'command:execute',
+          command: 'claude-portfolio.batchStartProjects',
+          args: [] // Will start all projects
+        });
         setStatusMessage('All servers starting - check terminals for progress')
         setTimeout(() => setStatusMessage(''), 3000)
       } else {
-        // Use executeCommand for non-VS Code environment
+        // Use executeCommand for non-VS Code environment (legitimate shell command)
         await executeCommand('npm run dev')
         setStatusMessage('Portfolio dev server started!')
         setTimeout(() => setStatusMessage(''), 3000)
@@ -43,8 +47,11 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        // Use VS Code command directly - no security issues
-        await executeCommand('claude-portfolio.startPortfolioServer')
+        // Start the portfolio project specifically  
+        (window as any).vsCodePortfolio.postMessage({
+          type: 'project:start',
+          projectId: 'claude-portfolio-self' // Portfolio project ID
+        });
         setStatusMessage('Portfolio server starting - check terminal for URL')
         setTimeout(() => setStatusMessage(''), 3000)
       } else {
@@ -67,8 +74,12 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        // Use VS Code command directly - no security issues
-        await executeCommand('claude-portfolio.startVSCodeServer')
+        // Open the portfolio in VS Code Live Preview
+        (window as any).vsCodePortfolio.postMessage({
+          type: 'livePreview:open',
+          url: 'http://localhost:5173',
+          title: 'Portfolio Live Preview'
+        });
         setStatusMessage('VS Code server started - Simple Browser will open')
         setTimeout(() => setStatusMessage(''), 3000)
       } else {

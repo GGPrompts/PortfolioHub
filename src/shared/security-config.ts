@@ -9,7 +9,8 @@ export const SHARED_SECURITY_CONFIG = {
     ALLOWED_COMMANDS: [
         'npm', 'yarn', 'pnpm', 'node', 'git', 'powershell.exe', 'cmd.exe', 
         'cd', 'claude', 'explorer', 'code', 'taskkill', 'echo', 'dir', 'ls',
-        'python', 'py', 'typescript', 'tsc'
+        'python', 'py', 'typescript', 'tsc', 'cursor', 'windsurf', 'aider',
+        'netstat', 'findstr'
     ],
     
     ALLOWED_NPM_SCRIPTS: [
@@ -35,13 +36,18 @@ export const SHARED_SECURITY_CONFIG = {
         /&&\s*(rm|del|format)/i,     // AND-chained destructive
         />\s*nul.*(?:rm|del|format)/i, // Output redirection with destructive commands
         /`.*(?:rm|del|format).*`/i,  // Backtick command injection with destructive commands
-        /\$\(.*(?:rm|del|format).*\)/i // Command substitution with destructive commands
+        /\$\(.*(?:rm|del|format).*\)/i, // Command substitution with destructive commands
+        // Enhanced pipe operation detection
+        /\|\s*(shutdown|reboot|halt)/i, // Pipe to system control
+        /\|\s*(>|>>).*\.(bat|cmd|exe)/i, // Pipe to executable creation
+        /git\s+\w+.*\|.*rm/i,          // Git commands piped to destructive operations
+        /npm\s+\w+.*\|.*del/i          // NPM commands piped to destructive operations
     ],
     
     SAFE_COMMAND_PATTERNS: [
         /^cd\s+"[^\.][^"]*"$/,                               // cd "path" (not starting with .)  
-        /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(\s+--.*)?$/,  // npm with args
-        /^git\s+(status|add|commit|push|pull|branch|checkout)(\s+.*)?$/,  // git commands
+        /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // npm with args (supports quoted args, no pipe operations)
+        /^git\s+(status|add|commit|push|pull|branch|checkout)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // git commands (supports quoted args, no pipe operations)
         /^powershell\.exe.*Get-NetTCPConnection/i,                        // Port management
         /^taskkill\s+\/F\s+\/PID/i,                                      // Process management
         /^Get-Process.*\|.*Where-Object/i,                               // Process queries
@@ -51,7 +57,22 @@ export const SHARED_SECURITY_CONFIG = {
         /^code\s+"[^"]*"$/i,                                             // VS Code launch
         /^claude$/i,                                                     // Claude Code
         /^node\s+[^\s]+\.js$/i,                                          // Node.js script execution
-        /^python\s+[^\s]+\.py$/i                                         // Python script execution
+        /^python\s+[^\s]+\.py$/i,                                        // Python script execution
+        // Combined commands for project execution
+        /^cd\s+"[^\.][^"]*"\s+&&\s+npm\s+(run\s+)?(dev|start|build|test)(\s+--.*)?$/,  // cd && npm
+        /^cd\s+"[^\.][^"]*"\s+&&\s+(npm\s+(run\s+)?(dev|start|build|test)|yarn\s+(dev|start|build)|pnpm\s+(dev|start))(\s+--.*)?$/,  // cd && package manager
+        // PowerShell process management (portfolio specific)
+        /^\$proc\s*=\s*Get-NetTCPConnection\s+-LocalPort\s+\d+.*;\s*if\s*\(\$proc\)\s*\{\s*Stop-Process\s+-Id\s+\$proc\.OwningProcess\s+-Force\s*\}$/i,
+        /^taskkill\s+\/F\s+\/PID\s+\(Get-NetTCPConnection\s+-LocalPort\s+\d+.*\)$/i,
+        // AI Assistant commands
+        /^claude\s+--project\s+"[^"]*"$/i,                               // Claude with project
+        /^cursor\s+"[^"]*"$/i,                                           // Cursor editor
+        /^windsurf\s+"[^"]*"$/i,                                         // Windsurf editor
+        /^aider\s+--project\s+"[^"]*"$/i,                                // Aider AI assistant
+        // Network and port checking commands
+        /^netstat\s+-ano(\s+\|\s+(findstr|Select-String)\s+"[^"]*")?$/i, // netstat with optional filtering
+        /^netstat\s+-ano\s+\|\s+Select-String\s+":[3-9]\d{3}"$/i,        // netstat with PowerShell port filtering
+        /^netstat\s+-ano\s+\|\s+findstr\s+":[3-9]\d{3}"$/i              // netstat with cmd port filtering
     ],
 
     SAFE_POWERSHELL_PATTERNS: [
@@ -63,7 +84,10 @@ export const SHARED_SECURITY_CONFIG = {
         /^Get-Process.*\|.*Select-Object/i,
         /^Set-Location\s+"[^"]*"$/i,
         /^explorer\s+"[^"]*"$/i,
-        /^code\s+"[^"]*"$/i
+        /^code\s+"[^"]*"$/i,
+        // Network diagnostic patterns
+        /^netstat\s+-ano\s+\|\s+Select-String\s+":[3-9]\d{3}"$/i,
+        /^netstat\s+-ano\s+\|\s+Select-String\s+":300[0-9]"$/i
     ],
 
     ALLOWED_EXTENSIONS: [

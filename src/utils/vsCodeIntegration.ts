@@ -3,7 +3,7 @@
  * Helper functions for seamless integration between portfolio and VS Code extension
  */
 
-import { SecureCommandRunner, SecureTerminalUtils } from '../services/securityService';
+// Dynamic import for security service to avoid build issues
 
 // Check if running inside VS Code webview
 export const isVSCodeEnvironment = (): boolean => {
@@ -12,7 +12,8 @@ export const isVSCodeEnvironment = (): boolean => {
 
 // Execute command in VS Code terminal with security validation
 export const executeCommand = async (command: string, terminalName: string = 'Portfolio Command'): Promise<void> => {
-  // Validate command for security
+  // Dynamic import and validate command for security
+  const { SecureCommandRunner } = await import('../services/securityService');
   if (!SecureCommandRunner.validateCommand(command)) {
     console.error(`Command blocked for security reasons: ${command}`);
     showNotification('Command blocked - security validation failed', 'error');
@@ -61,6 +62,7 @@ export const addProjectToWorkspace = async (projectPath: string): Promise<void> 
 export const updateGitRepo = async (projectPath: string): Promise<void> => {
   try {
     // Validate the project path
+    const { SecureCommandRunner } = await import('../services/securityService');
     const workspaceRoot = 'D:\\ClaudeWindows\\claude-dev-portfolio';
     const sanitizedPath = SecureCommandRunner.sanitizePath(projectPath, workspaceRoot);
     

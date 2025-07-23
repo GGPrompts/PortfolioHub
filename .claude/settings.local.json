@@ -50,7 +50,13 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(git worktree:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(cd \"D:\\ClaudeWindows\\claude-dev-portfolio\")",
+      "Bash(npm run type-check)",
+      "Bash(npm test -- --run)",
+      "Bash(grep -c '\"\"id\"\":' projects/manifest.json)",
+      "Bash(grep -A 3 '\"\"claude-portfolio-unified\"\"' projects/manifest.json)",
+      "Bash(timeout 5s npm run dev)"
     ],
     "deny": []
   }

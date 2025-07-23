@@ -55,8 +55,7 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     refreshProjectStatus,
     getProjectStatus,
     runningProjectsCount,
-    totalProjects,
-    portfolioPath
+    totalProjects
   } = useProjectData()
 
   
@@ -633,8 +632,9 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
 
   // Helper function to get correct project path for scripts
   const getProjectPath = (project: any): string => {
-    if (isVSCodeEnvironment() && portfolioPath) {
+    if (isVSCodeEnvironment()) {
       // In VS Code, use proper path resolution
+      const portfolioPath = 'D:\\ClaudeWindows\\claude-dev-portfolio'
       if (project.path) {
         if (project.path.startsWith('../Projects/')) {
           // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name

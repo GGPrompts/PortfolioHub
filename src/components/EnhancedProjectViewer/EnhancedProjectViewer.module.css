@@ -3,7 +3,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: #0a0a0a;
+  min-height: 100vh;
+  /* Professional dark theme */
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header */
@@ -12,9 +18,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: rgba(10, 10, 10, 0.9);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
 }
 
 .headerInfo {
@@ -49,8 +56,9 @@
 .projectTitle h2 {
   margin: 0;
   font-size: 28px;
-  color: #333;
+  color: #00ff88;
   font-weight: 600;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
 .statusBadge {
@@ -58,8 +66,9 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #666;
-  background: #f0f0f0;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
   padding: 6px 12px;
   border-radius: 20px;
 }
@@ -72,19 +81,20 @@
 }
 
 .statusDot.running {
-  background: #4CAF50;
+  background: #00ff88;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
   }
 }
 
@@ -96,9 +106,9 @@
 
 /* Buttons */
 .btnPrimary {
-  background: #007AFF;
-  color: white;
-  border: none;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
@@ -111,15 +121,16 @@
 }
 
 .btnPrimary:hover {
-  background: #0066CC;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
 }
 
 .btnSecondary {
-  background: #6c757d;
-  color: white;
-  border: none;
+  background: rgba(0, 136, 255, 0.1);
+  border: 1px solid rgba(0, 136, 255, 0.3);
+  color: #4da6ff;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
@@ -132,13 +143,16 @@
 }
 
 .btnSecondary:hover {
-  background: #5a6268;
+  background: rgba(0, 136, 255, 0.2);
+  border-color: rgba(0, 136, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
 }
 
 .btnDanger {
-  background: #dc3545;
-  color: white;
-  border: none;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff4444;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
@@ -151,15 +165,19 @@
 }
 
 .btnDanger:hover {
-  background: #c82333;
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
 }
 
 /* Tabs */
 .viewerTabs {
   display: flex;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+  background: rgba(20, 20, 20, 0.8);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
   padding: 0 24px;
+  color: #ffffff;
 }
 
 .tab {
@@ -169,7 +187,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
   display: flex;
@@ -178,13 +196,14 @@
 }
 
 .tab:hover {
-  color: #333;
-  background: #f5f5f5;
+  color: #ffffff;
+  background: rgba(0, 255, 136, 0.1);
 }
 
 .tab.active {
-  color: #007AFF;
-  border-bottom-color: #007AFF;
+  color: #00ff88;
+  border-bottom-color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
 /* Content */
@@ -192,10 +211,12 @@
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background: white;
+  background: rgba(20, 20, 20, 0.6);
   margin: 24px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
 }
 
 /* Overview */
@@ -211,13 +232,14 @@
 .section h3 {
   margin: 0 0 20px 0;
   font-size: 20px;
-  color: #333;
+  color: #00ff88;
   font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
 }
 
 .section p {
   margin: 0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
   font-size: 16px;
 }
@@ -229,8 +251,9 @@
 }
 
 .techBadge {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 14px;

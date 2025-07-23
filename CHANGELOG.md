@@ -2,6 +2,68 @@
 
 All notable changes to the Claude Windows Portfolio Hub will be documented in this file.
 
+## [2.3.0] - 2025-01-23 - Preview System Overhaul & Critical Fixes
+
+### 🚀 Major Features Added
+
+#### Complete Preview System Redesign
+- **Simplified Mini Device Previews**: Replaced complex scaling system with natural mini monitor (400×250px) and mini phone (200×350px) containers
+- **Full Screen Preview**: Added orange ⛶ button to open previews in new window (1200×800px) for detailed viewing
+- **Natural iframe Scaling**: Eliminated CSS transform scaling in favor of natural container-based sizing
+- **Device-Specific Containers**: Desktop previews use monitor-like wide aspect ratio, mobile uses phone-like tall aspect ratio
+
+#### Critical Port Detection Fixes
+- **Fixed AbortController Conflicts**: Resolved "signal is aborted without reason" errors by using individual controllers per port check
+- **Optimized Polling Frequency**: Reduced React Query intervals from 5s→15s and increased staleTime from 30s→60s
+- **Eliminated Console Spam**: Dramatically reduced fetch request frequency and error logging
+- **Accurate Status Display**: Fixed "1/8 running" to show correct project counts (e.g., "3/8 running")
+
+#### Security & Stability Improvements
+- **Removed Pointer Lock**: Fixed focus lock issues by removing `allow-pointer-lock` from iframe sandbox permissions
+- **Recursive Preview Prevention**: Portfolio app no longer attempts to preview itself, preventing infinite loops
+- **Enhanced Error Handling**: Improved iframe loading and error detection with proper cleanup
+
+### 🔧 Interface Improvements
+
+#### Streamlined Controls
+- **Removed Complex Zoom**: Eliminated broken zoom controls (25%, 50%, 75%, 100%) that never worked properly
+- **Simplified Toggle System**: Kept mobile/desktop toggle, added full screen, removed problematic zoom
+- **Better Button Styling**: Orange full screen button with hover effects and proper visual hierarchy
+
+#### Preview Container Optimization
+- **Desktop Previews**: 400×250px containers show websites like mini monitors
+- **Mobile Previews**: 200×350px containers show mobile layouts like mini phones
+- **Consistent Aspect Ratios**: Proper device-like proportions for realistic previews
+- **No Transform Artifacts**: Clean rendering without CSS scaling issues
+
+### 🐛 Critical Bug Fixes
+
+#### Port Detection Issues
+- **AbortSignal Race Conditions**: Fixed concurrent port checks canceling each other
+- **React Query Cache Problems**: Resolved stale cache data causing incorrect project status
+- **Memory Leak Prevention**: Added proper cleanup for intervals and AbortControllers
+- **Browser Connection Limits**: Reduced request frequency to prevent connection conflicts
+
+#### Preview System Issues
+- **Scaling Artifacts**: Eliminated CSS transform issues that made content unreadable
+- **Responsive Breakpoint Conflicts**: Fixed React apps changing layout in tiny iframes
+- **Focus Lock Interference**: Prevented 3D projects from capturing mouse in parent page
+- **Recursive Loading**: Stopped portfolio from trying to preview itself
+
+### 📚 Documentation Updates
+- **Enhanced Troubleshooting**: Added comprehensive port detection debugging section to CLAUDE.md
+- **Debug Commands**: Provided browser console scripts for testing port detection
+- **Architecture Documentation**: Updated COMPLETED_FEATURES.md with detailed technical fixes
+- **Future Reference**: Added troubleshooting context for similar issues
+
+### 🎯 Performance Improvements
+- **Reduced API Calls**: 67% reduction in port checking frequency (5s→15s intervals)
+- **Optimized Cache Management**: Better React Query cache timing and invalidation
+- **Memory Usage**: Eliminated interval leaks and improved resource cleanup
+- **Network Efficiency**: Fewer concurrent requests prevent browser connection limits
+
+---
+
 ## [2.2.0] - 2025-07-23 - Enhanced Port Detection & Network Diagnostics
 
 ### 🚀 Major Features Added

@@ -1,47 +1,11 @@
 {
   "projects": [
     {
-      "id": "claude-portfolio-vscode",
-      "title": "Claude Portfolio (VSCode)",
-      "description": "VS Code embedded version of the portfolio - integrated directly into the VS Code extension webview. Features native VS Code integration, direct terminal access, and file operations.",
-      "displayType": "vscode-embedded",
-      "localPort": null,
-      "buildCommand": null,
-      "path": "vscode://claude-dev.claude-portfolio/webview",
-      "thumbnail": "thumbnails/claude-portfolio.svg",
-      "tags": [
-        "Meta",
-        "Portfolio",
-        "React",
-        "VS Code Native",
-        "Embedded"
-      ],
-      "tech": [
-        "React 18",
-        "TypeScript",
-        "Vite",
-        "VS Code API",
-        "Native Integration"
-      ],
-      "devJournal": "CLAUDE.md",
-      "features": [
-        "Native VS Code extension integration",
-        "Direct terminal command execution",
-        "File system operations via VS Code API",
-        "Project tree management",
-        "Embedded webview experience",
-        "Secure command execution via VSCodeSecurityService"
-      ],
-      "special": true,
-      "category": "Meta",
-      "vsCodeOnly": true
-    },
-    {
-      "id": "claude-portfolio-web",
-      "title": "Claude Portfolio (Web)",
-      "description": "Standalone web version of the portfolio - full-featured React app with complete Live Preview functionality, DEV NOTES system, and unrestricted iframe access. Best for viewing and testing projects.",
+      "id": "claude-portfolio-unified",
+      "title": "Claude Development Portfolio",
+      "description": "Unified React application with smart environment detection. Provides VS Code Enhanced mode with WebSocket bridge integration and Web Application mode with clipboard fallbacks. Single codebase, maximum compatibility.",
       "displayType": "external",
-      "localPort": 5174,
+      "localPort": 5173,
       "buildCommand": "npm run dev",
       "path": ".",
       "thumbnail": "thumbnails/claude-portfolio.svg",
@@ -49,29 +13,33 @@
         "Meta",
         "Portfolio",
         "React",
-        "Web Standalone",
-        "Full Features"
+        "Unified Architecture",
+        "Smart Detection"
       ],
       "tech": [
         "React 18",
         "TypeScript",
         "Vite",
-        "Live Preview",
-        "Full Browser API"
+        "WebSocket Bridge",
+        "Environment Detection",
+        "VS Code API Integration"
       ],
       "devJournal": "CLAUDE.md",
       "features": [
-        "Full Live Preview iframe functionality",
-        "Complete DEV NOTES system with file operations",
-        "Real-time project status monitoring",
-        "Matrix Card notes system with 3D animations",
-        "Responsive design with smart layout modes",
-        "Unrestricted browser capabilities",
-        "Clipboard-based command execution",
-        "Complete dashboard and project viewer"
+        "Smart environment detection (VS Code Enhanced vs Web Application modes)",
+        "WebSocket bridge integration for VS Code terminal execution",
+        "Clipboard-based fallbacks for web-only environments",
+        "Complete DEV NOTES system with Matrix Card interface",
+        "Real-time project status monitoring with optimized port checking", 
+        "Unified security architecture with command validation",
+        "Live Preview integration and project management",
+        "Responsive design with three adaptive layout modes",
+        "Button audit completed - all 78+ interactive elements functional",
+        "Deprecated API elimination - modern React patterns throughout"
       ],
       "special": true,
-      "category": "Meta"
+      "category": "Meta",
+      "architecture": "unified-single-app"
     },
     {
       "id": "3d-matrix-cards",

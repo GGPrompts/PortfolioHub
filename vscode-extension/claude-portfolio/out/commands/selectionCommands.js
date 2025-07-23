@@ -53,9 +53,140 @@ class SelectionCommands {
         const commands = [
             vscode.commands.registerCommand('claude-portfolio.toggleProjectSelection', this.toggleProjectSelectionCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.clearProjectSelection', this.clearProjectSelectionCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.selectAllProjects', this.selectAllProjectsCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.selectAllProjects', this.selectAllProjectsCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.project.select', this.projectSelectCommand.bind(this))
         ];
         commands.forEach(command => context.subscriptions.push(command));
+    }
+    /**
+     * Project selection command that opens VS Code command palette (gg-devhub style)
+     */
+    async projectSelectCommand(projectId) {
+        try {
+            if (!projectId) {
+                vscode.window.showErrorMessage('No project ID provided for selection');
+                return;
+            }
+            // Get project data
+            const projects = await this.projectProvider.getProjects();
+            const project = projects.find(p => p.id === projectId);
+            if (!project) {
+                vscode.window.showErrorMessage(`Project not found: ${projectId}`);
+                return;
+            }
+            // Build dynamic actions based on project state and type
+            const actions = [];
+            if (project.status === 'active') {
+                // Running project actions
+                actions.push('Open Live Preview');
+                actions.push('Stop Project');
+                actions.push('Open Terminal');
+                // Special handling for 3D projects
+                if (project.requires3D) {
+                    actions.push('Open in External Browser');
+                }
+            }
+            else {
+                // Stopped project actions  
+                actions.push('Start Project');
+                actions.push('Open in VS Code');
+                actions.push('Open Terminal');
+            }
+            // Always available actions
+            actions.push('View Dashboard');
+            actions.push('Toggle Selection'); // For batch operations
+            actions.push('Project Settings');
+            // Show command palette
+            const selected = await vscode.window.showQuickPick(actions, {
+                placeHolder: `What would you like to do with ${project.title}?`,
+                ignoreFocusOut: true
+            });
+            if (!selected) {
+                return; // User cancelled
+            }
+            // Route to appropriate handlers
+            await this.executeProjectAction(selected, project);
+        }
+        catch (error) {
+            const message = `Error in project selection: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Project selection error:', error);
+        }
+    }
+    /**
+     * Execute the selected project action
+     */
+    async executeProjectAction(action, project) {
+        try {
+            switch (action) {
+                case 'Start Project':
+                    await vscode.commands.executeCommand('claude-portfolio.runProject', project);
+                    break;
+                case 'Stop Project':
+                    await vscode.commands.executeCommand('claude-portfolio.stopProject', project);
+                    break;
+                case 'Open Live Preview':
+                    await vscode.commands.executeCommand('claude-portfolio.openProject', project);
+                    break;
+                case 'Open in External Browser':
+                case 'Open in Browser':
+                    await vscode.commands.executeCommand('claude-portfolio.openProjectInBrowser', project);
+                    break;
+                case 'Open in VS Code':
+                    // Open project folder in VS Code
+                    const projectPath = this.getProjectPath(project);
+                    if (projectPath) {
+                        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(projectPath), true);
+                    }
+                    break;
+                case 'Open Terminal':
+                    // Open terminal at project location
+                    const terminal = vscode.window.createTerminal(`${project.title} Terminal`);
+                    const path = this.getProjectPath(project);
+                    if (path) {
+                        terminal.sendText(`cd "${path}"`);
+                    }
+                    terminal.show();
+                    break;
+                case 'View Dashboard':
+                    await vscode.commands.executeCommand('claude-portfolio.showDashboard');
+                    break;
+                case 'Toggle Selection':
+                    // Toggle checkbox selection for batch operations
+                    this.projectProvider.toggleProjectSelection(project.id);
+                    vscode.window.showInformationMessage(this.projectProvider.isProjectSelected(project.id)
+                        ? `✓ ${project.title} selected for batch operations`
+                        : `○ ${project.title} deselected from batch operations`);
+                    break;
+                case 'Project Settings':
+                    // Could open project-specific settings in future
+                    vscode.window.showInformationMessage(`Settings for ${project.title} (feature coming soon)`);
+                    break;
+                default:
+                    vscode.window.showWarningMessage(`Unknown action: ${action}`);
+            }
+        }
+        catch (error) {
+            const message = `Error executing action "${action}": ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error(`Action execution error (${action}):`, error);
+        }
+    }
+    /**
+     * Get project path using existing helper function
+     */
+    getProjectPath(project) {
+        try {
+            // Import the helper function from extension.ts
+            const { getProjectPath } = require('../extension');
+            const configService = require('../services/configurationService').ConfigurationService.getInstance();
+            const portfolioPath = configService.getPortfolioPath();
+            return getProjectPath(portfolioPath, project);
+        }
+        catch (error) {
+            console.error('Error getting project path:', error);
+            return null;
+        }
     }
     /**
      * Toggle project selection checkbox

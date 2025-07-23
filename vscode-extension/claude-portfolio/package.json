@@ -153,6 +153,11 @@
         "command": "claude-portfolio.batchGitPull",
         "title": "Git Pull (Selected)",
         "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.project.select",
+        "title": "Select Project Action",
+        "category": "Claude Portfolio"
       }
     ],
     "viewsContainers": {

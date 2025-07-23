@@ -22,7 +22,7 @@ interface ProjectStatus {
 
 export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboardProps) {
   const { projects } = usePortfolioStore()
-  const { projectData, portfolioPath } = useProjectData()
+  const { projects: allProjects } = useProjectData()
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -32,9 +32,9 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     const statuses: ProjectStatus[] = []
     
     // Check if we're in VS Code environment and use project data
-    if (isVSCodeEnvironment() && projectData?.projects) {
+    if (isVSCodeEnvironment() && allProjects.length > 0) {
       console.log('🖥️ Dashboard: Using VS Code project data')
-      const vsCodeProjects = projectData.projects || []
+      const vsCodeProjects = allProjects || []
       
       for (const project of projects) {
         if (project.displayType === 'external') {
@@ -158,7 +158,8 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     const project = projects.find(p => p.id === projectId)
     if (!project) return
     
-    const projectPath = isVSCodeEnvironment() && portfolioPath 
+    const portfolioPath = 'D:\\ClaudeWindows\\claude-dev-portfolio'
+    const projectPath = isVSCodeEnvironment()
       ? `${portfolioPath}\\projects\\${project.id}`
       : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
     

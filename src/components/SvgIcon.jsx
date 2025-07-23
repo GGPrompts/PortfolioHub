@@ -396,6 +396,21 @@ const SvgIcon = ({
         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
+    ),
+
+    // Lightning/zap icon for enhanced launch
+    zap: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+      </svg>
+    ),
+
+    // Rotate counter-clockwise icon for force restart
+    rotateCcw: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="1,4 1,10 7,10"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
     )
   };
 

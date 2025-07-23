@@ -195,14 +195,12 @@ class ProjectItem extends vscode.TreeItem {
         this.collapsibleState = collapsibleState;
         this.isSelected = isSelected;
         this.provider = provider;
-        // Create label with checkbox and selection indicator
-        const checkbox = isSelected ? '☑️' : '☐';
-        const statusIndicator = project.status === 'active' ? '●' : '○';
-        const isCurrentlySelected = provider?.getCurrentSelectedProject()?.id === project.id;
-        const selectionIndicator = isCurrentlySelected ? '👉 ' : '';
-        this.label = `${selectionIndicator}${checkbox} ${project.title} [${statusIndicator}]`;
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to: Toggle checkbox AND select for commands\nRight-click for more options`;
-        this.description = `Port ${this.project.localPort}`;
+        // Clean project label without checkboxes (gg-devhub style)
+        this.label = project.title;
+        // Status-based description showing port and status
+        const statusText = project.status === 'active' ? 'running' : 'stopped';
+        this.description = project.localPort ? `${statusText} :${project.localPort}` : statusText;
+        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to open command palette\nRight-click for context menu`;
         // Set contextValue based on project type and selection state
         if (this.project.displayType === 'vscode-embedded') {
             this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';
@@ -210,18 +208,18 @@ class ProjectItem extends vscode.TreeItem {
         else {
             this.contextValue = isSelected ? 'selectedProject' : 'project';
         }
-        // Set icon based on status (smaller since we have checkbox)
+        // Set icon based on status (gg-devhub style)
         if (this.project.status === 'active') {
-            this.iconPath = new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('charts.green'));
+            this.iconPath = new vscode.ThemeIcon('play-circle', new vscode.ThemeColor('testing.iconPassed'));
         }
         else {
-            this.iconPath = new vscode.ThemeIcon('circle-outline');
+            this.iconPath = new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('testing.iconQueued'));
         }
-        // Single click toggles checkbox, double-click opens project
+        // Single click opens command palette for project actions
         this.command = {
-            command: 'claude-portfolio.toggleProjectSelection',
-            title: 'Toggle Project Selection',
-            arguments: [this] // Pass the TreeItem itself instead of just the project
+            command: 'claude-portfolio.project.select',
+            title: 'Select Project Action',
+            arguments: [this.project.id] // Pass the project ID for clean command palette integration
         };
     }
 }

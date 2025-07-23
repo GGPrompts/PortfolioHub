@@ -264,7 +264,7 @@
 .previewToggle,
 .openExternal,
 .viewModeToggle,
-.zoomToggle {
+.fullScreenToggle {
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   color: #00ff88;
@@ -280,10 +280,11 @@
   justify-content: center;
 }
 
-.zoomToggle {
-  background: rgba(0, 255, 255, 0.1);
-  border-color: rgba(0, 255, 255, 0.3);
-  color: #00ffff;
+.fullScreenToggle {
+  background: rgba(255, 140, 0, 0.1);
+  border-color: rgba(255, 140, 0, 0.3);
+  color: #ff8c00;
+  font-size: 16px;
 }
 
 .previewToggle:hover,
@@ -294,10 +295,10 @@
   box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
 }
 
-.zoomToggle:hover {
-  background: rgba(0, 255, 255, 0.2);
-  border-color: #00ffff;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+.fullScreenToggle:hover {
+  background: rgba(255, 140, 0, 0.2);
+  border-color: #ff8c00;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.3);
 }
 
 /* Device viewport container for proper scaling */

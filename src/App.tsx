@@ -179,35 +179,66 @@ function PortfolioApp() {
 
   const handleRefreshPortfolio = async (event: React.MouseEvent) => {
     event.stopPropagation()
-    // Just refresh the project status without reloading the page
+    console.log('🔄 Manual portfolio refresh triggered')
+    
+    // Force clear cache and refresh project data
+    console.log('🧹 Clearing port cache...')
+    await refreshProjectData()
+    
+    // Test direct port check for matrix-cards using multiple methods
+    console.log('🧪 Testing matrix-cards port 3002 with multiple approaches...')
+    
+    // Test 1: Direct fetch HEAD
+    try {
+      const testResponse = await fetch('http://localhost:3002', {
+        method: 'HEAD',
+        mode: 'no-cors',
+        cache: 'no-cache'
+      })
+      console.log('✅ Test 1 - HEAD no-cors succeeded:', testResponse.type, testResponse.status)
+    } catch (error) {
+      console.log('❌ Test 1 - HEAD no-cors failed:', error)
+    }
+    
+    // Test 2: Direct fetch GET
+    try {
+      const testResponse = await fetch('http://localhost:3002', {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'no-cache'
+      })
+      console.log('✅ Test 2 - GET no-cors succeeded:', testResponse.type, testResponse.status)
+    } catch (error) {
+      console.log('❌ Test 2 - GET no-cors failed:', error)
+    }
+    
+    // Test 3: Using optimized port manager directly (bypass cache)
+    console.log('🧪 Testing with optimized port manager (bypass cache)...')
+    const { optimizedPortManager } = await import('./utils/optimizedPortManager')
+    const directResult = await optimizedPortManager.isPortAvailable(3002, true) // Skip cache
+    console.log('📊 Direct port manager result for 3002:', directResult)
+    
+    // Update local state as well for legacy components
     const newRunningStatus: { [key: string]: boolean } = {}
     const newPortStatus: { [key: string]: number | null } = {}
     
-    // Use VS Code project data when available
-    if (isVSCodeEnvironment() && projectData?.projects) {
-      const vsCodeProjects = projectData.projects
-      for (const project of projects) {
-        if (project.displayType === 'external') {
-          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-          newRunningStatus[project.id] = vsCodeProject?.status === 'active' || false
-          newPortStatus[project.id] = vsCodeProject?.localPort || project.localPort || null
-        }
-      }
-    } else {
-      // Use traditional port checking for web version
-      const running = await getRunningProjects()
-      for (const project of projects) {
-        if (project.displayType === 'external') {
-          const isRunning = running.has(project.id)
-          const port = await getProjectPort(project)
-          newRunningStatus[project.id] = isRunning
-          newPortStatus[project.id] = port
-        }
+    // Use optimized port manager for both VS Code and web environments
+    const running = await getRunningProjects()
+    console.log('🏃 Running projects found:', running.map(p => `${p.id}:${p.localPort}`))
+    
+    for (const project of projects) {
+      if (project.displayType === 'external') {
+        const isRunning = running.some(p => p.id === project.id)
+        newRunningStatus[project.id] = isRunning
+        newPortStatus[project.id] = project.localPort || null
+        console.log(`📊 Project ${project.id}: ${isRunning ? '✅ RUNNING' : '❌ STOPPED'}`)
       }
     }
     
     setRunningStatus(newRunningStatus)
     setProjectPorts(newPortStatus)
+    
+    console.log('✅ Portfolio refresh complete')
   }
 
   const startVSCodeServer = async () => {

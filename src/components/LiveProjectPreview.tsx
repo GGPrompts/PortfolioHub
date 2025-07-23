@@ -24,36 +24,30 @@ export default function LiveProjectPreview({
   livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
   // Get project data from unified hook
-  const { projectData, portfolioPath } = useProjectData()
+  const { projects: allProjects, getProjectStatus: getUnifiedProjectStatus } = useProjectData()
   
-  // In VS Code environment, get project status from injected data (if available)
-  const getVSCodeProjectStatus = () => {
-    if (!isVSCodeEnvironment() || !projectData?.projects) return { isRunning, port }
+  // Get project status from unified data (React Query + optimized port manager)
+  const getProjectStatusData = () => {
+    // Use React Query status from useProjectData hook (unified architecture)
+    const queryStatus = getUnifiedProjectStatus(project.id)
     
-    const vsCodeProjects = projectData.projects || []
-    const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-    
-    if (vsCodeProject) {
-      console.log(`🎯 LivePreview ${project.id} VS Code data:`, {
-        status: vsCodeProject.status,
-        localPort: vsCodeProject.localPort,
-        actualPort: vsCodeProject.actualPort,
-        isActive: vsCodeProject.status === 'active'
-      })
-    }
+    console.log(`🎯 LivePreview ${project.id} unified status:`, {
+      queryStatus,
+      projectPort: project.localPort,
+      finalStatus: queryStatus
+    })
     
     return {
-      isRunning: vsCodeProject?.status === 'active' || false,
-      port: vsCodeProject?.actualPort || vsCodeProject?.localPort || project.localPort || null
+      isRunning: queryStatus,
+      port: project.localPort || null
     }
   }
   
-  const { isRunning: actualIsRunning, port: actualPort } = getVSCodeProjectStatus()
+  const { isRunning: actualIsRunning, port: actualPort } = getProjectStatusData()
   const [showLivePreview, setShowLivePreview] = useState(false)
   const [previewLoaded, setPreviewLoaded] = useState(false)
   const [imageLoadStatus, setImageLoadStatus] = useState<boolean | undefined>(undefined)
   const [localViewMode, setLocalViewMode] = useState<'mobile' | 'desktop'>('desktop')
-  const [zoomMode, setZoomMode] = useState<'fit' | '25%' | '50%' | '75%' | '100%'>('fit')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showAIDropdown, setShowAIDropdown] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -64,8 +58,9 @@ export default function LiveProjectPreview({
 
   // Helper function to get correct project path
   const getProjectPath = (): string => {
-    if (isVSCodeEnvironment() && portfolioPath) {
+    if (isVSCodeEnvironment()) {
       // In VS Code, use proper path resolution
+      const portfolioPath = 'D:\\ClaudeWindows\\claude-dev-portfolio'
       if (project.path) {
         if (project.path.startsWith('../Projects/')) {
           // New structure: ../Projects/project-name -> D:\ClaudeWindows\Projects\project-name
@@ -231,122 +226,39 @@ export default function LiveProjectPreview({
     setShowAIDropdown(false)
   }
 
-  // Build preview URL with proper viewport hints
+  // Build preview URL without cache busting to prevent reload loops
   const getPreviewUrl = () => {
     if (!actualPort) return null
     
     const baseUrl = `http://localhost:${actualPort}`
     const params = new URLSearchParams()
     
-    if (viewMode === 'desktop') {
-      // Always force desktop viewport for desktop view
-      params.set('viewport', 'desktop')
-      params.set('width', '1920')
-      params.set('height', '1080')
-      params.set('orientation', 'landscape')
-    } else {
-      // Mobile viewport
-      params.set('viewport', 'mobile')
-      params.set('width', '375')
-      params.set('height', '812')
-      params.set('orientation', 'portrait')
-    }
+    // Only add viewport hint (some apps may use this)
+    params.set('viewport', viewMode)
     
     return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl
   }
   
   const previewUrl = getPreviewUrl()
 
-  // Calculate realistic device dimensions and scaling
-  const getScaleAndDimensions = () => {
+  // Simple mini device previews that fit their containers
+  const getPreviewDimensions = () => {
     if (viewMode === 'desktop') {
-      // Desktop view - 16:9 aspect ratio (1920x1080)
-      const desktopWidth = 1920
-      const desktopHeight = 1080
-      const containerWidth = 560  // Realistic desktop card width
-      const containerHeight = 315 // 16:9 aspect ratio
-      
-      let scale: number
-      let displayMode: string
-      
-      switch (zoomMode) {
-        case '25%':
-          scale = 0.25
-          displayMode = '25% zoom'
-          break
-        case '50%':
-          scale = 0.5
-          displayMode = '50% zoom'
-          break
-        case '75%':
-          scale = 0.75
-          displayMode = '75% zoom'
-          break
-        case '100%':
-          scale = 1.0
-          displayMode = '100% zoom'
-          break
-        case 'fit':
-        default:
-          // Scale to fit container while maintaining aspect ratio
-          scale = Math.min(containerWidth / desktopWidth, containerHeight / desktopHeight)
-          displayMode = 'fit to container'
-          break
-      }
-      
+      // Mini monitor - wide aspect ratio for desktop content
       return {
-        scale,
-        width: desktopWidth,
-        height: desktopHeight,
-        containerWidth,
-        containerHeight,
+        containerWidth: 400,
+        containerHeight: 250, // Slightly taller to show more content
         containerClass: 'desktopDisplay',
-        displayMode,
+        displayMode: 'Mini Monitor',
         deviceType: 'desktop'
       }
     } else {
-      // Mobile view - iPhone 13/14 proportions (375x812)
-      const mobileWidth = 375
-      const mobileHeight = 812
-      const containerWidth = 220  // Realistic phone card width
-      const containerHeight = 476 // 9:19.5 aspect ratio (375:812)
-      
-      let scale: number
-      let displayMode: string
-      
-      switch (zoomMode) {
-        case '25%':
-          scale = 0.25
-          displayMode = '25% zoom'
-          break
-        case '50%':
-          scale = 0.5
-          displayMode = '50% zoom'
-          break
-        case '75%':
-          scale = 0.75
-          displayMode = '75% zoom'
-          break
-        case '100%':
-          scale = 1.0
-          displayMode = '100% zoom'
-          break
-        case 'fit':
-        default:
-          // Scale to fit container while maintaining aspect ratio
-          scale = Math.min(containerWidth / mobileWidth, containerHeight / mobileHeight)
-          displayMode = 'fit to container'
-          break
-      }
-      
+      // Mini phone - phone aspect ratio for mobile content
       return {
-        scale,
-        width: mobileWidth,
-        height: mobileHeight,
-        containerWidth,
-        containerHeight,
-        containerClass: 'mobileDisplay',
-        displayMode,
+        containerWidth: 200,
+        containerHeight: 350, // Phone-like proportions
+        containerClass: 'mobileDisplay', 
+        displayMode: 'Mini Phone',
         deviceType: 'mobile'
       }
     }
@@ -434,11 +346,12 @@ export default function LiveProjectPreview({
       
       return () => clearTimeout(loadTimeout)
     }
-  }, [zoomMode, viewMode, previewUrl, project.id])
+  }, [viewMode, previewUrl, project.id])
 
   const handleIframeLoad = () => {
     setPreviewLoaded(true)
     setIsRefreshing(false)
+    
     const isVSCode = isVSCodeEnvironment()
     console.log(`✅ LivePreview ${project.id} iframe loaded successfully ${isVSCode ? '(VS Code Enhanced)' : '(Web Application)'}`)
   }
@@ -475,31 +388,30 @@ export default function LiveProjectPreview({
     }
   }
 
-  const toggleZoomMode = () => {
-    const modes: Array<'fit' | '25%' | '50%' | '75%' | '100%'> = ['fit', '25%', '50%', '75%', '100%']
-    const currentIndex = modes.indexOf(zoomMode)
-    const nextIndex = (currentIndex + 1) % modes.length
-    const newMode = modes[nextIndex]
-    
-    // Force iframe reload for all zoom changes to ensure proper rendering
-    setIsRefreshing(true)
-    setPreviewLoaded(false)
-    setZoomMode(newMode)
+  const openFullScreen = () => {
+    if (previewUrl) {
+      // Open preview in new window/tab at full size
+      window.open(previewUrl, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes')
+    }
   }
 
-  const scaleConfig = getScaleAndDimensions()
+  const previewConfig = getPreviewDimensions()
+
+  // Prevent recursive preview loops for the portfolio app itself
+  const isPortfolioApp = project.id === 'claude-portfolio-unified'
+  const shouldShowPreview = showLivePreview && previewUrl && livePreviewsEnabled && !isPortfolioApp
 
   return (
     <div className={`${styles.projectCard} ${actualIsRunning ? styles.running : ''}`}>
       <div className={styles.previewContainer} style={{
-        width: `${scaleConfig.containerWidth}px`,
-        height: `${scaleConfig.containerHeight}px`
+        width: `${previewConfig.containerWidth}px`,
+        height: `${previewConfig.containerHeight}px`
       }}>
-        {showLivePreview && previewUrl && livePreviewsEnabled ? (
-          <div className={`${styles.livePreviewWrapper} ${styles[scaleConfig.containerClass]}`}>
+        {shouldShowPreview ? (
+          <div className={`${styles.livePreviewWrapper} ${styles[previewConfig.containerClass]}`}>
             <div className={styles.deviceViewport} style={{
-              width: `${scaleConfig.width * scaleConfig.scale}px`,
-              height: `${scaleConfig.height * scaleConfig.scale}px`,
+              width: '100%',
+              height: '100%',
               overflow: 'hidden',
               position: 'relative'
             }}>
@@ -528,21 +440,15 @@ export default function LiveProjectPreview({
                   className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
                   onLoad={handleIframeLoad}
                   onError={handleIframeError}
-                  sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
                   title={`${project.title} Preview`}
-                  width={scaleConfig.width}
-                  height={scaleConfig.height}
+                  width="100%"
+                  height="100%"
                   style={{
-                    width: `${scaleConfig.width}px`,
-                    height: `${scaleConfig.height}px`,
-                    transform: `scale(${scaleConfig.scale})`,
-                    transformOrigin: 'top left',
+                    width: '100%',
+                    height: '100%',
                     border: 'none',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    minWidth: `${scaleConfig.width}px`,
-                    minHeight: `${scaleConfig.height}px`
+                    borderRadius: '6px'
                   }}
                 />
               )}
@@ -553,15 +459,21 @@ export default function LiveProjectPreview({
                 <p>Loading {project.title}...</p>
               </div>
             )}
-            {zoomMode !== 'fit' && (
-              <div className={styles.scaleIndicator}>
-                {scaleConfig.deviceType === 'desktop' ? '1920×1080' : '375×812'} ({scaleConfig.displayMode})
-              </div>
-            )}
+            <div className={styles.scaleIndicator}>
+              {previewConfig.displayMode}
+            </div>
           </div>
         ) : (
           <div className={styles.staticPreview}>
-            {project.thumbnail && imageLoadStatus !== false ? (
+            {isPortfolioApp ? (
+              <div className={styles.placeholderThumbnail}>
+                <div className={styles.placeholderIcon}>🔄</div>
+                <p>Portfolio App</p>
+                <small style={{color: '#888', fontSize: '10px', marginTop: '4px'}}>
+                  Preview disabled to prevent recursion
+                </small>
+              </div>
+            ) : project.thumbnail && imageLoadStatus !== false ? (
               <img
                 src={project.thumbnail}
                 alt={project.title}
@@ -618,11 +530,11 @@ export default function LiveProjectPreview({
                 </button>
               )}
               <button
-                onClick={toggleZoomMode}
-                className={styles.zoomToggle}
-                title={`Zoom: ${zoomMode === 'fit' ? 'Fit to container' : zoomMode}`}
+                onClick={openFullScreen}
+                className={styles.fullScreenToggle}
+                title="Open full screen"
               >
-                {zoomMode === 'fit' ? '⊟' : zoomMode}
+                ⛶
               </button>
               <button
                 onClick={togglePreview}

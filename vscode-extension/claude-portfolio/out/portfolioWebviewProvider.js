@@ -99,6 +99,9 @@ class PortfolioWebviewProvider {
                 case 'file:save':
                     await this._saveFile(message.path, message.content);
                     break;
+                case 'file:delete':
+                    await this._deleteFile(message.path);
+                    break;
                 case 'git:update':
                     await this._updateGitRepo(message.projectPath);
                     break;
@@ -226,6 +229,29 @@ class PortfolioWebviewProvider {
         }
         catch (error) {
             vscode.window.showErrorMessage(`Failed to save file: ${error}`);
+        }
+    }
+    async _deleteFile(relativePath) {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+            vscode.window.showErrorMessage('No workspace folder open');
+            return;
+        }
+        const fullPath = vscode.Uri.joinPath(workspaceFolder.uri, relativePath);
+        try {
+            // Check if file exists before deleting
+            await vscode.workspace.fs.stat(fullPath);
+            // Delete file
+            await vscode.workspace.fs.delete(fullPath);
+            vscode.window.showInformationMessage(`Note deleted: ${relativePath}`);
+        }
+        catch (error) {
+            if (error.code === 'FileNotFound') {
+                vscode.window.showWarningMessage(`File not found: ${relativePath}`);
+            }
+            else {
+                vscode.window.showErrorMessage(`Failed to delete file: ${error}`);
+            }
         }
     }
     async _updateGitRepo(projectPath) {

@@ -46,6 +46,18 @@ export const saveFile = async (filePath: string, content: string): Promise<void>
   }
 };
 
+// Delete file through VS Code API
+export const deleteFile = async (filePath: string): Promise<void> => {
+  if (isVSCodeEnvironment()) {
+    (window as any).vsCodePortfolio.postMessage({
+      type: 'file:delete',
+      path: filePath
+    });
+  } else {
+    console.warn('File deletion only available in VS Code environment');
+  }
+};
+
 // Add project to VS Code workspace
 export const addProjectToWorkspace = async (projectPath: string): Promise<void> => {
   if (isVSCodeEnvironment()) {

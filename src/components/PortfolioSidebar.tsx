@@ -6,6 +6,7 @@ import GitUpdateButton from './GitUpdateButton'
 import SvgIcon from './SvgIcon'
 import NoteCard from './NoteCard'
 import ProjectWizard from './ProjectWizard'
+import EnvironmentBadge from './EnvironmentBadge'
 import styles from './PortfolioSidebar.module.css'
 import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard, launchAllProjects, launchSelectedProjects, launchProjectsEnhanced, executeScript } from '../utils/vsCodeIntegration'
 
@@ -532,12 +533,33 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
     setIsEditingNote(true)
   }
 
-  const handleDeleteNote = (noteId: string, noteTitle: string) => {
+  const handleDeleteNote = async (noteId: string, noteTitle: string) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete the note "${noteTitle}"?\n\nThis action cannot be undone.`)
     if (confirmDelete) {
-      setToSortNotes(prev => prev.filter(note => note.id !== noteId))
-      // In a real implementation, this would also delete the file from the filesystem
-      console.log(`Note "${noteTitle}" deleted from TO-SORT folder`)
+      // Find the note to get its file path
+      const noteToDelete = toSortNotes.find(note => note.id === noteId)
+      if (noteToDelete) {
+        try {
+          // Import deleteFile from VS Code integration
+          const { deleteFile, isVSCodeEnvironment } = await import('../utils/vsCodeIntegration')
+          
+          if (isVSCodeEnvironment()) {
+            // In VS Code, delete the actual file
+            await deleteFile(noteToDelete.filePath)
+          } else {
+            // In web version, just warn user (file system access limited)
+            console.warn('File deletion in web version - file will remain on disk')
+          }
+          
+          // Remove from UI state regardless of environment
+          setToSortNotes(prev => prev.filter(note => note.id !== noteId))
+          console.log(`Note "${noteTitle}" deleted from TO-SORT folder`)
+        } catch (error) {
+          console.error('Failed to delete note file:', error)
+          // Still remove from UI even if file deletion failed
+          setToSortNotes(prev => prev.filter(note => note.id !== noteId))
+        }
+      }
     }
   }
 
@@ -675,6 +697,11 @@ export default function PortfolioSidebar({ onOpenDashboard, onWidthChange, layou
       style={{ width: springProps.width }}
     >
       <div className={styles.sidebarContainer}>
+        {/* Environment Badge */}
+        <div className={styles.environmentBadgeContainer}>
+          <EnvironmentBadge size="small" showDescription={false} />
+        </div>
+        
         {/* Responsive mode indicator */}
         {layoutStrategy === 'overlay' && activeTabs.length > 0 && (
           <div className={styles.responsiveIndicator} title="Overlay mode - content protected from cutoff">

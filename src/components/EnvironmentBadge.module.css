@@ -1,0 +1,78 @@
+.envBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  margin: 0 4px;
+}
+
+.envBadge.small {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  gap: 4px;
+}
+
+.envBadge.medium {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  gap: 6px;
+}
+
+.envBadge.large {
+  padding: 6px 16px;
+  font-size: 0.9rem;
+  gap: 8px;
+}
+
+.envBadge.vscode {
+  background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
+  color: white;
+  border-color: #007acc;
+  box-shadow: 0 2px 4px rgba(0, 122, 204, 0.2);
+}
+
+.envBadge.web {
+  background: linear-gradient(135deg, #00d4aa 0%, #00a085 100%);
+  color: white;
+  border-color: #00d4aa;
+  box-shadow: 0 2px 4px rgba(0, 212, 170, 0.2);
+}
+
+.envBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.icon {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.label {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.description {
+  display: block;
+  font-size: 0.7em;
+  opacity: 0.9;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .envBadge.large {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .envBadge .description {
+    display: none;
+  }
+}

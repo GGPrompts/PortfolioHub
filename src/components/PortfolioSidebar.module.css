@@ -1773,6 +1773,15 @@
   color: #00ff88;
 }
 
+/* Environment Badge Container */
+.environmentBadgeContainer {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
 /* Responsive Mode Indicator */
 .responsiveIndicator {
   position: fixed;

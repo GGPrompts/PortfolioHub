@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { executeCommand, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import EnvironmentBadge from './EnvironmentBadge'
 import styles from './ServerToolbar.module.css'
 
 interface ServerToolbarProps {
@@ -97,6 +98,9 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
 
   return (
     <div className={`${styles.toolbar} ${globalViewMode === 'desktop' ? styles.desktop : ''}`}>
+      <div className={styles.toolbarHeader}>
+        <EnvironmentBadge size="small" showDescription={true} />
+      </div>
       <div className={styles.buttonGroup}>
         <button 
           onClick={handleStartAllServers}

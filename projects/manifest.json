@@ -1,11 +1,47 @@
 {
   "projects": [
     {
-      "id": "claude-portfolio",
-      "title": "Claude Portfolio (Self)",
-      "description": "The main portfolio React app itself - for testing and self-management. Meta-project that manages all other projects with real-time status, VS Code integration, and Matrix Card notes system.",
-      "displayType": "embedded",
-      "localPort": 5173,
+      "id": "claude-portfolio-vscode",
+      "title": "Claude Portfolio (VSCode)",
+      "description": "VS Code embedded version of the portfolio - integrated directly into the VS Code extension webview. Features native VS Code integration, direct terminal access, and file operations.",
+      "displayType": "vscode-embedded",
+      "localPort": null,
+      "buildCommand": null,
+      "path": "vscode://claude-dev.claude-portfolio/webview",
+      "thumbnail": "thumbnails/claude-portfolio.svg",
+      "tags": [
+        "Meta",
+        "Portfolio",
+        "React",
+        "VS Code Native",
+        "Embedded"
+      ],
+      "tech": [
+        "React 18",
+        "TypeScript",
+        "Vite",
+        "VS Code API",
+        "Native Integration"
+      ],
+      "devJournal": "CLAUDE.md",
+      "features": [
+        "Native VS Code extension integration",
+        "Direct terminal command execution",
+        "File system operations via VS Code API",
+        "Project tree management",
+        "Embedded webview experience",
+        "Secure command execution via VSCodeSecurityService"
+      ],
+      "special": true,
+      "category": "Meta",
+      "vsCodeOnly": true
+    },
+    {
+      "id": "claude-portfolio-web",
+      "title": "Claude Portfolio (Web)",
+      "description": "Standalone web version of the portfolio - full-featured React app with complete Live Preview functionality, DEV NOTES system, and unrestricted iframe access. Best for viewing and testing projects.",
+      "displayType": "external",
+      "localPort": 5174,
       "buildCommand": "npm run dev",
       "path": ".",
       "thumbnail": "thumbnails/claude-portfolio.svg",
@@ -13,28 +49,26 @@
         "Meta",
         "Portfolio",
         "React",
-        "Management",
-        "VS Code Integration"
+        "Web Standalone",
+        "Full Features"
       ],
       "tech": [
         "React 18",
         "TypeScript",
         "Vite",
-        "Tanstack Query",
-        "Zustand",
-        "Three.js"
+        "Live Preview",
+        "Full Browser API"
       ],
       "devJournal": "CLAUDE.md",
       "features": [
+        "Full Live Preview iframe functionality",
+        "Complete DEV NOTES system with file operations",
         "Real-time project status monitoring",
-        "VS Code extension integration",
         "Matrix Card notes system with 3D animations",
         "Responsive design with smart layout modes",
-        "Secure command execution via VSCodeSecurityService",
-        "Project launcher with PowerShell automation",
-        "Live preview with iframe sandboxing",
-        "Development journals and progress tracking",
-        "Self-management and meta-development capabilities"
+        "Unrestricted browser capabilities",
+        "Clipboard-based command execution",
+        "Complete dashboard and project viewer"
       ],
       "special": true,
       "category": "Meta"

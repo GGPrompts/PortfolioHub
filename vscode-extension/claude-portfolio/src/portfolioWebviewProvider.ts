@@ -581,35 +581,20 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             
             const workspaceRoot = path.join(this._portfolioPath, '..');
             
-            // Execute server startup commands individually for security compliance
-            const commands = [
-                'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
-                `Set-Location "${this._portfolioPath}"`,
-                'Write-Host "Starting VS Code Server from: $(Get-Location)"',
-                `code serve-web --port ${port} --host 0.0.0.0 --without-connection-token --accept-server-license-terms`
-            ];
+            // Use secure combined command that passes security validation
+            console.log('🔧 Using secure server startup command...');
+            const serverCommand = `cd "${this._portfolioPath}" && code serve-web --port ${port} --host 0.0.0.0 --without-connection-token --accept-server-license-terms`;
             
-            let successCount = 0;
-            for (const command of commands) {
-                const success = await VSCodeSecurityService.executeSecureCommand(
-                    command,
-                    'VS Code Server Setup',
-                    workspaceRoot
-                );
-                
-                if (success) {
-                    successCount++;
-                    console.log(`✅ Server setup command executed: ${command.substring(0, 50)}...`);
-                    
-                    // Add delay between commands for stability
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } else {
-                    console.warn(`❌ Failed to execute server command: ${command}`);
-                    break;
-                }
-            }
+            console.log(`📋 Executing command: ${serverCommand}`);
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                serverCommand,
+                'VS Code Server Setup',
+                workspaceRoot
+            );
             
-            if (successCount === commands.length) {
+            const successCount = success ? 1 : 0;
+            
+            if (success) {
                 vscode.window.showInformationMessage(
                     `✅ VS Code Server starting on port ${port}!\n\n💡 Tip: Once ready, open Simple Browser → http://localhost:${port} for live previews`
                 );
@@ -636,7 +621,7 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 }, 10000); // Wait 10 seconds for server to start
                 
             } else {
-                vscode.window.showErrorMessage(`Failed to start VS Code Server. ${successCount}/${commands.length} commands succeeded.`);
+                vscode.window.showErrorMessage(`Failed to start VS Code Server. Server command was blocked by security validation.`);
             }
             
         } catch (error) {

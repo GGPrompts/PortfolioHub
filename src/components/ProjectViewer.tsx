@@ -192,12 +192,24 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
           />
         )}
 
-        {project.displayType === 'embedded' && !isProjectLoading && (
+        {(project.displayType === 'embedded' || project.displayType === 'vscode-embedded') && !isProjectLoading && (
           <div className={styles.metaProjectView}>
             <div className={styles.metaHeader}>
-              <div className={styles.metaIcon}>🔄</div>
-              <h2>Portfolio Self-Management Interface</h2>
-              <p>This is the meta-view of the portfolio application itself</p>
+              <div className={styles.metaIcon}>
+                {project.displayType === 'vscode-embedded' ? '🔌' : '🔄'}
+              </div>
+              <h2>
+                {project.displayType === 'vscode-embedded' 
+                  ? 'VS Code Extension Interface' 
+                  : 'Portfolio Self-Management Interface'
+                }
+              </h2>
+              <p>
+                {project.displayType === 'vscode-embedded'
+                  ? 'This portfolio is embedded directly in VS Code with native integration'
+                  : 'This is the meta-view of the portfolio application itself'
+                }
+              </p>
             </div>
             
             <div className={styles.metaStats}>

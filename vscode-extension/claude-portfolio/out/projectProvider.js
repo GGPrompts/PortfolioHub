@@ -118,6 +118,12 @@ class ProjectProvider {
     async updateProjectStatuses() {
         console.log('🔍 Updating project statuses...');
         const statusPromises = this.projects.map(async (project) => {
+            // VSCode embedded projects are always online since they're part of the extension
+            if (project.displayType === 'vscode-embedded') {
+                project.status = 'active';
+                console.log(`📊 ${project.id}: 🟢 ACTIVE (VSCode embedded - always online)`);
+                return project;
+            }
             if (project.localPort) {
                 try {
                     const isRunning = await this.checkPortStatus(project.localPort);
@@ -197,7 +203,13 @@ class ProjectItem extends vscode.TreeItem {
         this.label = `${selectionIndicator}${checkbox} ${project.title} [${statusIndicator}]`;
         this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to: Toggle checkbox AND select for commands\nRight-click for more options`;
         this.description = `Port ${this.project.localPort}`;
-        this.contextValue = isSelected ? 'selectedProject' : 'project';
+        // Set contextValue based on project type and selection state
+        if (this.project.displayType === 'vscode-embedded') {
+            this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';
+        }
+        else {
+            this.contextValue = isSelected ? 'selectedProject' : 'project';
+        }
         // Set icon based on status (smaller since we have checkbox)
         if (this.project.status === 'active') {
             this.iconPath = new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('charts.green'));

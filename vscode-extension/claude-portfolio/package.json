@@ -71,7 +71,7 @@
         "command": "claude-portfolio.openPortfolio",
         "title": "Open Full Portfolio",
         "category": "Claude Portfolio",
-        "icon": "$(preview)"
+        "icon": "$(play-circle)"
       },
       {
         "command": "claude-portfolio.openAIAssistant",
@@ -199,7 +199,8 @@
         {
           "command": "claude-portfolio.openPortfolio",
           "when": "view == claudeProjects",
-          "group": "navigation"
+          "group": "navigation",
+          "alt": "claude-portfolio.openPortfolio"
         },
         {
           "command": "claude-portfolio.refreshProjects",
@@ -220,12 +221,12 @@
         },
         {
           "command": "claude-portfolio.selectProject",
-          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject || viewItem == vsCodeProject || viewItem == selectedVSCodeProject)",
           "group": "1_commands"
         },
         {
           "command": "claude-portfolio.openAIAssistant",
-          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject || viewItem == vsCodeProject || viewItem == selectedVSCodeProject)",
           "group": "2_ai"
         }
       ]

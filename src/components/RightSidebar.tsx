@@ -20,8 +20,7 @@ interface Tab {
 
 const tabs: Record<string, Tab> = {
   commands: { id: 'commands', label: 'Quick Commands', icon: 'terminal', width: 800 },
-  vscode: { id: 'vscode', label: 'VS Code Terminals', icon: 'code', width: 800 },
-  preview: { id: 'preview', label: 'Live Preview', icon: 'monitor', width: 800 }
+  vscode: { id: 'vscode', label: 'VS Code Terminals', icon: 'code', width: 800 }
 };
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWidthChange }) => {
@@ -69,7 +68,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
   const getTabPosition = (tabId: string) => {
     if (!activeTabs.includes(tabId)) return 0;
     
-    const fixedOrder = ['commands', 'vscode', 'preview']; // Order of tabs from top to bottom
+    const fixedOrder = ['commands', 'vscode']; // Order of tabs from top to bottom
     const tabIndex = fixedOrder.indexOf(tabId);
     return tabIndex * 50; // 50px spacing between tabs
   };
@@ -176,45 +175,6 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWi
             </div>
           )}
 
-          {activeTabs.includes('preview') && (
-            <div className={styles.previewPanel}>
-              <div className={styles.panelHeader}>
-                <SvgIcon name="monitor" className={styles.headerIcon} />
-                <h3>Live Preview{isOverlayMode ? ' - Overlay Mode' : ''}</h3>
-                {isOverlayMode && (
-                  <div className={styles.overlayIndicator}>
-                    <SvgIcon name="maximize2" size={16} />
-                    <span>Full View</span>
-                  </div>
-                )}
-              </div>
-              <div className={styles.previewContent}>
-                <div className={styles.previewPlaceholder}>
-                  <SvgIcon name="monitor" size={48} />
-                  <h4>VS Code Live Preview Integration</h4>
-                  <p>Click <strong>"View Live Preview"</strong> on any running project to open it in VS Code's Live Preview panel.</p>
-                  <div className={styles.previewInstructions}>
-                    <div className={styles.step}>
-                      <span className={styles.stepNumber}>1</span>
-                      <span>Run a project using the "Run" button</span>
-                    </div>
-                    <div className={styles.step}>
-                      <span className={styles.stepNumber}>2</span>
-                      <span>Click "View Live Preview" to open in VS Code Live Preview</span>
-                    </div>
-                    <div className={styles.step}>
-                      <span className={styles.stepNumber}>3</span>
-                      <span>Live Preview will open in a separate VS Code panel</span>
-                    </div>
-                  </div>
-                  <p className={styles.note}>
-                    <SvgIcon name="info" size={16} />
-                    The VS Code Live Preview extension provides better performance and debugging tools than embedded iframes.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </animated.div>
 

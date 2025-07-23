@@ -26,10 +26,17 @@ export const executeCommand = async (command: string, terminalName: string = 'Po
       command,
       name: terminalName
     });
+    showNotification(`Executing: ${terminalName}`, 'info');
   } else {
     // Fallback to clipboard for non-VS Code environments
-    await navigator.clipboard.writeText(command);
-    console.log(`Command copied to clipboard: ${command}`);
+    try {
+      await navigator.clipboard.writeText(command);
+      console.log(`Command copied to clipboard: ${command}`);
+      showNotification(`Command copied to clipboard!\n\n📋 "${command}"\n\n💡 Paste this into your terminal to execute.`, 'info');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      showNotification(`Failed to copy command to clipboard. Command: ${command}`, 'error');
+    }
   }
 };
 
@@ -164,8 +171,15 @@ export const showNotification = (text: string, level: 'info' | 'warning' | 'erro
       level
     });
   } else {
-    // Fallback to console
+    // Fallback to browser alert for web app users
     console.log(`Notification (${level}): ${text}`);
+    if (level === 'error') {
+      alert(`❌ Error: ${text}`);
+    } else if (level === 'warning') {
+      alert(`⚠️ Warning: ${text}`);
+    } else {
+      alert(`ℹ️ Info: ${text}`);
+    }
   }
 };
 

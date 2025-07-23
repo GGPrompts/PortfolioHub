@@ -511,67 +511,19 @@ export default function LiveProjectPreview({
               position: 'relative'
             }}>
               {isVSCodeEnvironment() ? (
-                // VS Code Live Preview UI
-                <div className={styles.vsCodeLivePreview} style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#1e1e1e',
-                  color: '#cccccc',
-                  textAlign: 'center',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  border: '2px dashed #0e639c'
-                }}>
-                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#e7e7e7' }}>Launch Live Preview</h3>
-                  <p style={{ margin: '0 0 20px 0', opacity: 0.8 }}>Open {project.title} in VS Code Live Preview panel</p>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => openLivePreview(previewUrl, project.title, project.id)}
-                      style={{
-                        backgroundColor: '#0e639c',
-                        color: 'white',
-                        border: 'none',
-                        padding: '12px 24px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <SvgIcon name="monitor" size={16} />
-                      Open Live Preview
-                    </button>
-                    <button
-                      onClick={() => openInBrowser(previewUrl)}
-                      style={{
-                        backgroundColor: 'transparent',
-                        color: '#cccccc',
-                        border: '1px solid #555',
-                        padding: '12px 24px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <SvgIcon name="externalLink" size={16} />
-                      Simple Browser
-                    </button>
-                  </div>
-                  <p style={{ margin: '20px 0 0 0', opacity: 0.6, fontSize: '12px' }}>
-                    Live Preview opens in a separate VS Code panel with full functionality
-                  </p>
-                </div>
+                // VS Code uses regular iframe (CSP allows localhost)
+                <iframe
+                  src={previewUrl}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    borderRadius: '8px'
+                  }}
+                  title={`${project.title} Preview`}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"
+                  allow={project.permissions?.join('; ')}
+                />
               ) : (
                 // Regular iframe for web mode
                 <iframe

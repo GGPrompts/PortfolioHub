@@ -1,208 +1,804 @@
+/* Enhanced VS Code Dashboard - Maximum Visual Impact */
+:root {
+    /* Fallback theme variables for cases where VS Code theme doesn't define them */
+    --fallback-background: #1e1e1e;
+    --fallback-foreground: #cccccc;
+    --fallback-accent: #007acc;
+    --fallback-shadow: rgba(0, 0, 0, 0.5);
+    --fallback-border: #3c3c3c;
+    --fallback-hover: #2d2d30;
+    --fallback-success: #4caf50;
+    --fallback-inactive: #666666;
+}
+
+/* Debug indicator - remove after testing */
+body::after {
+    content: '✅ Premium CSS Loaded';
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: var(--fallback-success);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    z-index: 9999;
+    opacity: 0.8;
+}
+
 body {
     padding: 0;
     margin: 0;
-    font-family: var(--vscode-font-family);
-    background-color: var(--vscode-editor-background);
-    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family, 'Segoe UI', sans-serif);
+    background: linear-gradient(135deg, 
+        var(--vscode-editor-background, var(--fallback-background)) 0%, 
+        var(--vscode-sideBar-background, var(--fallback-hover)) 50%,
+        var(--vscode-editor-background, var(--fallback-background)) 100%);
+    color: var(--vscode-editor-foreground, var(--fallback-foreground));
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
 }
 
+/* Animated background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 122, 204, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 122, 204, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(0, 122, 204, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: backgroundPulse 20s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Enhanced container with glass effect */
 .container {
-    padding: 20px;
-    max-width: 1200px;
+    padding: 30px;
+    max-width: 1400px;
     margin: 0 auto;
+    backdrop-filter: blur(10px);
+    background: rgba(30, 30, 30, 0.8);
+    border-radius: 20px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(0, 122, 204, 0.2);
+    border: 1px solid rgba(60, 60, 60, 0.6);
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
+/* Premium header with animated title */
 header {
     text-align: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 50px;
+    padding: 30px 0 40px 0;
+    background: linear-gradient(135deg, 
+        var(--vscode-editor-inactiveSelectionBackground)30 0%, 
+        transparent 100%);
+    border-radius: 15px;
+    border: 1px solid var(--vscode-panel-border)40;
+    box-shadow: 0 4px 16px var(--vscode-widget-shadow)20;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated header background */
+header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent 40%, 
+        var(--vscode-textLink-foreground)08 50%, 
+        transparent 60%);
+    animation: headerShine 8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes headerShine {
+    0%, 100% { transform: rotate(0deg) translate(-50%, -50%); }
+    50% { transform: rotate(180deg) translate(-50%, -50%); }
 }
 
 header h1 {
-    font-size: 2.5em;
-    margin: 0 0 10px 0;
-    color: var(--vscode-editor-foreground);
+    font-size: 3.2em;
+    margin: 0 0 15px 0;
+    background: linear-gradient(135deg, 
+        var(--vscode-textLink-foreground) 0%, 
+        var(--vscode-textLink-activeForeground) 50%,
+        var(--vscode-focusBorder) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 8px var(--vscode-widget-shadow)30;
+    animation: titleGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    0% { filter: brightness(1) drop-shadow(0 0 5px var(--vscode-textLink-foreground)30); }
+    100% { filter: brightness(1.2) drop-shadow(0 0 15px var(--vscode-textLink-foreground)50); }
 }
 
 header p {
     color: var(--vscode-descriptionForeground);
-    font-size: 1.1em;
-}
-
-/* Statistics Cards */
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
-}
-
-.stat-card {
-    background: var(--vscode-editor-inactiveSelectionBackground);
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    border: 1px solid var(--vscode-panel-border);
-}
-
-.stat-card h3 {
-    margin: 0 0 10px 0;
-    color: var(--vscode-descriptionForeground);
-    font-size: 0.9em;
-    text-transform: uppercase;
+    font-size: 1.3em;
+    position: relative;
+    z-index: 2;
+    opacity: 0.9;
+    font-weight: 300;
     letter-spacing: 0.5px;
 }
 
-.stat-value {
-    font-size: 2.5em;
-    font-weight: bold;
-    color: var(--vscode-textLink-foreground);
-}
-
-/* Projects Grid */
-.projects-grid {
+/* Premium Statistics Cards with Hover Effects */
+.stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 50px;
+    perspective: 1000px;
 }
 
-.project-card {
-    background: var(--vscode-editor-inactiveSelectionBackground);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 8px;
-    padding: 20px;
+.stat-card {
+    background: linear-gradient(135deg, 
+        var(--vscode-editor-inactiveSelectionBackground)90 0%, 
+        var(--vscode-sideBar-background)60 100%);
+    padding: 30px 25px;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid var(--vscode-panel-border)50;
+    box-shadow: 
+        0 8px 25px var(--vscode-widget-shadow)25,
+        0 2px 8px var(--vscode-widget-shadow)15,
+        inset 0 1px 0 var(--vscode-focusBorder)15;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    transform-style: preserve-3d;
+}
+
+/* Animated background orb */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, 
+        var(--vscode-textLink-foreground)15 0%, 
+        transparent 70%);
+    border-radius: 50%;
+    transition: all 0.6s ease;
+    transform: scale(0);
+}
+
+.stat-card:hover::before {
+    transform: scale(1.5) rotate(45deg);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) rotateX(5deg) rotateY(5deg);
+    border-color: var(--vscode-textLink-foreground)80;
+    box-shadow: 
+        0 20px 40px var(--vscode-widget-shadow)40,
+        0 8px 16px var(--vscode-widget-shadow)25,
+        inset 0 1px 0 var(--vscode-focusBorder)30;
+}
+
+.stat-card h3 {
+    margin: 0 0 15px 0;
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.95em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    opacity: 0.8;
     transition: all 0.3s ease;
 }
 
-.project-card:hover {
-    border-color: var(--vscode-textLink-foreground);
+.stat-card:hover h3 {
+    opacity: 1;
     transform: translateY(-2px);
 }
 
+.stat-value {
+    font-size: 3.2em;
+    font-weight: 700;
+    background: linear-gradient(135deg, 
+        var(--vscode-textLink-foreground) 0%, 
+        var(--vscode-textLink-activeForeground) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 8px var(--vscode-widget-shadow)20;
+    animation: statPulse 3s ease-in-out infinite;
+}
+
+@keyframes statPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.stat-card:hover .stat-value {
+    transform: translateY(-3px) scale(1.1);
+    filter: brightness(1.2) drop-shadow(0 0 10px var(--vscode-textLink-foreground)40);
+}
+
+/* Ultra-Premium Projects Grid */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+    perspective: 1200px;
+}
+
+.project-card {
+    background: linear-gradient(145deg, 
+        var(--vscode-editor-inactiveSelectionBackground)95 0%, 
+        var(--vscode-sideBar-background)80 50%,
+        var(--vscode-editor-inactiveSelectionBackground)95 100%);
+    border: 1px solid var(--vscode-panel-border)60;
+    border-radius: 20px;
+    padding: 30px;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 10px 30px var(--vscode-widget-shadow)20,
+        0 3px 10px var(--vscode-widget-shadow)15,
+        inset 0 1px 0 var(--vscode-focusBorder)20;
+    transform-style: preserve-3d;
+}
+
+/* Animated gradient overlay */
+.project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--vscode-textLink-foreground)12 50%, 
+        transparent 100%);
+    transition: all 0.6s ease;
+    pointer-events: none;
+}
+
+.project-card:hover::before {
+    left: 100%;
+}
+
+/* Floating particles effect */
+.project-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: var(--vscode-textLink-foreground)60;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    box-shadow: 
+        20px -10px 0 var(--vscode-textLink-foreground)40,
+        -15px 25px 0 var(--vscode-focusBorder)30,
+        30px 20px 0 var(--vscode-textLink-activeForeground)50,
+        -25px -15px 0 var(--vscode-textLink-foreground)35;
+    transition: all 0.8s ease;
+    pointer-events: none;
+}
+
+.project-card:hover::after {
+    transform: translate(-50%, -50%) scale(1);
+    animation: floatingParticles 4s ease-in-out infinite;
+}
+
+@keyframes floatingParticles {
+    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    25% { transform: translate(-45%, -55%) scale(1.2) rotate(90deg); }
+    50% { transform: translate(-55%, -50%) scale(0.8) rotate(180deg); }
+    75% { transform: translate(-50%, -45%) scale(1.1) rotate(270deg); }
+}
+
+.project-card:hover {
+    border-color: var(--vscode-textLink-foreground)90;
+    transform: translateY(-12px) rotateX(8deg) rotateY(-3deg) scale(1.02);
+    box-shadow: 
+        0 25px 50px var(--vscode-widget-shadow)35,
+        0 10px 20px var(--vscode-widget-shadow)25,
+        inset 0 1px 0 var(--vscode-focusBorder)40,
+        0 0 0 1px var(--vscode-textLink-foreground)30;
+}
+
+/* Enhanced Project Card Content */
 .project-card h3 {
-    margin: 0 0 10px 0;
+    margin: 0 0 12px 0;
     color: var(--vscode-editor-foreground);
+    font-size: 1.4em;
+    font-weight: 600;
+    position: relative;
+    z-index: 3;
+    transition: all 0.3s ease;
+}
+
+.project-card:hover h3 {
+    transform: translateY(-2px);
+    color: var(--vscode-textLink-foreground);
 }
 
 .project-card p {
     color: var(--vscode-descriptionForeground);
-    margin: 0 0 15px 0;
-    font-size: 0.9em;
+    margin: 0 0 20px 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    position: relative;
+    z-index: 3;
+    opacity: 0.9;
+    transition: all 0.3s ease;
 }
 
+.project-card:hover p {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+/* Premium Meta Information */
 .project-meta {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 0.85em;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    position: relative;
+    z-index: 3;
 }
 
 .port {
+    background: var(--vscode-textPreformat-background);
     color: var(--vscode-textPreformat-foreground);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    border: 1px solid var(--vscode-panel-border)40;
+    box-shadow: 0 2px 4px var(--vscode-widget-shadow)20;
 }
 
+/* Enhanced Status Indicator */
 .status {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.status::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translateY(-50%);
 }
 
 .status.active {
-    background: var(--vscode-testing-runAction);
+    background: linear-gradient(135deg, 
+        var(--vscode-testing-runAction) 0%, 
+        var(--vscode-testing-runAction)80 100%);
     color: var(--vscode-editor-background);
+    box-shadow: 
+        0 0 15px var(--vscode-testing-runAction)40,
+        0 2px 4px var(--vscode-widget-shadow)30;
+    animation: statusPulse 2s ease-in-out infinite;
 }
 
+.status.active::before {
+    background: var(--vscode-editor-background);
+    animation: activePulse 1.5s ease-in-out infinite;
+}
+
+.status.inactive {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--vscode-panel-border)60;
+}
+
+.status.inactive::before {
+    background: var(--vscode-descriptionForeground)60;
+}
+
+@keyframes statusPulse {
+    0%, 100% { box-shadow: 0 0 15px var(--vscode-testing-runAction)40, 0 2px 4px var(--vscode-widget-shadow)30; }
+    50% { box-shadow: 0 0 25px var(--vscode-testing-runAction)60, 0 2px 8px var(--vscode-widget-shadow)40; }
+}
+
+@keyframes activePulse {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.7; transform: translateY(-50%) scale(1.2); }
+}
+
+/* Premium Tech Tags */
 .project-tech {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 3;
 }
 
 .tech-tag {
-    background: var(--vscode-badge-background);
+    background: linear-gradient(135deg, 
+        var(--vscode-badge-background) 0%, 
+        var(--vscode-badge-background)80 100%);
     color: var(--vscode-badge-foreground);
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 5px 12px;
+    border-radius: 12px;
     font-size: 0.8em;
+    font-weight: 500;
+    border: 1px solid var(--vscode-panel-border)40;
+    box-shadow: 0 2px 4px var(--vscode-widget-shadow)15;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
+.tech-tag::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--vscode-textLink-foreground)30, transparent);
+    transition: left 0.5s ease;
+}
+
+.project-card:hover .tech-tag::before {
+    left: 100%;
+}
+
+.tech-tag:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px var(--vscode-widget-shadow)25;
+}
+
+/* Ultra-Premium Action Buttons */
 .project-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 12px;
+    position: relative;
+    z-index: 3;
 }
 
 .project-actions button {
-    padding: 8px 12px;
-    background: var(--vscode-button-background);
+    padding: 12px 16px;
+    background: linear-gradient(135deg, 
+        var(--vscode-button-background) 0%, 
+        var(--vscode-button-background)90 100%);
     color: var(--vscode-button-foreground);
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--vscode-panel-border)40;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 0.85em;
-    transition: background 0.2s;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 8px var(--vscode-widget-shadow)20;
+}
+
+.project-actions button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: var(--vscode-textLink-foreground)20;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.6s ease;
+}
+
+.project-actions button:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .project-actions button:hover {
-    background: var(--vscode-button-hoverBackground);
+    background: linear-gradient(135deg, 
+        var(--vscode-button-hoverBackground) 0%, 
+        var(--vscode-button-hoverBackground)90 100%);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 8px 16px var(--vscode-widget-shadow)30,
+        0 2px 4px var(--vscode-widget-shadow)20;
+    border-color: var(--vscode-textLink-foreground)60;
 }
 
-/* Action Buttons */
+.project-actions button:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Ultra-Premium Global Action Buttons */
 .actions {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     justify-content: center;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
+    perspective: 1000px;
 }
 
 .action-btn {
-    padding: 12px 24px;
-    background: var(--vscode-button-background);
+    padding: 16px 32px;
+    background: linear-gradient(135deg, 
+        var(--vscode-button-background) 0%, 
+        var(--vscode-button-background)85 100%);
     color: var(--vscode-button-foreground);
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--vscode-panel-border)50;
+    border-radius: 16px;
     cursor: pointer;
-    font-size: 1em;
-    transition: background 0.2s;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    box-shadow: 
+        0 8px 20px var(--vscode-widget-shadow)25,
+        0 2px 8px var(--vscode-widget-shadow)15,
+        inset 0 1px 0 var(--vscode-focusBorder)20;
+    transform-style: preserve-3d;
+}
+
+/* Animated background effect */
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--vscode-textLink-foreground)25 50%, 
+        transparent 100%);
+    transition: left 0.8s ease;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+/* Floating orb effect */
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--vscode-textLink-foreground)70;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    box-shadow: 
+        0 0 20px var(--vscode-textLink-foreground)40,
+        15px 0 0 -2px var(--vscode-textLink-foreground)50,
+        -15px 0 0 -2px var(--vscode-textLink-foreground)50,
+        0 15px 0 -2px var(--vscode-focusBorder)40,
+        0 -15px 0 -2px var(--vscode-focusBorder)40;
+    transition: all 0.6s ease;
+}
+
+.action-btn:hover::after {
+    transform: translate(-50%, -50%) scale(1) rotate(180deg);
 }
 
 .action-btn:hover {
-    background: var(--vscode-button-hoverBackground);
+    background: linear-gradient(135deg, 
+        var(--vscode-button-hoverBackground) 0%, 
+        var(--vscode-button-hoverBackground)85 100%);
+    transform: translateY(-6px) rotateX(10deg) scale(1.05);
+    box-shadow: 
+        0 20px 40px var(--vscode-widget-shadow)35,
+        0 8px 16px var(--vscode-widget-shadow)25,
+        inset 0 1px 0 var(--vscode-focusBorder)40,
+        0 0 0 1px var(--vscode-textLink-foreground)40;
+    border-color: var(--vscode-textLink-foreground)80;
 }
 
-/* Tips Section */
+.action-btn:active {
+    transform: translateY(-3px) rotateX(5deg) scale(1.02);
+}
+
+/* Premium Tips Section with Glass Effect */
 .tips {
-    background: var(--vscode-editor-inactiveSelectionBackground);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 8px;
-    padding: 20px;
+    background: linear-gradient(135deg, 
+        var(--vscode-editor-inactiveSelectionBackground)90 0%, 
+        var(--vscode-sideBar-background)70 100%);
+    border: 1px solid var(--vscode-panel-border)60;
+    border-radius: 20px;
+    padding: 35px;
+    backdrop-filter: blur(12px);
+    box-shadow: 
+        0 12px 25px var(--vscode-widget-shadow)25,
+        0 4px 10px var(--vscode-widget-shadow)15,
+        inset 0 1px 0 var(--vscode-focusBorder)25;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated tips background */
+.tips::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 80%;
+    height: 150%;
+    background: radial-gradient(ellipse, 
+        var(--vscode-textLink-foreground)06 0%, 
+        transparent 60%);
+    animation: tipsFloat 15s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes tipsFloat {
+    0%, 100% { transform: rotate(0deg) translate(0, 0); }
+    33% { transform: rotate(5deg) translate(10px, -15px); }
+    66% { transform: rotate(-3deg) translate(-8px, 10px); }
 }
 
 .tips h3 {
-    margin: 0 0 15px 0;
+    margin: 0 0 25px 0;
     color: var(--vscode-editor-foreground);
+    font-size: 1.6em;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(135deg, 
+        var(--vscode-textLink-foreground) 0%, 
+        var(--vscode-focusBorder) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .tips ul {
     margin: 0;
-    padding-left: 20px;
+    padding-left: 0;
+    list-style: none;
+    position: relative;
+    z-index: 2;
 }
 
 .tips li {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     color: var(--vscode-descriptionForeground);
+    font-size: 1.05em;
+    line-height: 1.6;
+    padding-left: 25px;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
+/* Custom bullet points */
+.tips li::before {
+    content: '✨';
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.1em;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.tips li:hover {
+    color: var(--vscode-editor-foreground);
+    transform: translateX(5px);
+}
+
+.tips li:hover::before {
+    opacity: 1;
+    transform: scale(1.2) rotate(10deg);
+}
+
+/* Premium Keyboard Shortcuts */
 .tips kbd {
-    background: var(--vscode-keybindingLabel-background);
+    background: linear-gradient(135deg, 
+        var(--vscode-keybindingLabel-background) 0%, 
+        var(--vscode-keybindingLabel-background)80 100%);
     color: var(--vscode-keybindingLabel-foreground);
     border: 1px solid var(--vscode-keybindingLabel-border);
-    border-radius: 3px;
-    padding: 2px 6px;
-    font-size: 0.85em;
-    font-family: monospace;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.9em;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    box-shadow: 
+        0 2px 4px var(--vscode-widget-shadow)20,
+        inset 0 1px 0 var(--vscode-focusBorder)20;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+.tips kbd:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 
+        0 4px 8px var(--vscode-widget-shadow)30,
+        inset 0 1px 0 var(--vscode-focusBorder)30;
+}
+
+/* Responsive Design for VS Code Panels */
+@media (max-width: 800px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    header h1 {
+        font-size: 2.5em;
+    }
+    
+    .stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        max-width: 300px;
+    }
 }

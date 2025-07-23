@@ -2,11 +2,15 @@
 (function() {
     const vscode = acquireVsCodeApi();
     
+    // Ensure portfolio path is available
+    const portfolioPath = window.portfolioPath || '';
+    
     // Load projects from manifest.json
     async function loadProjects() {
         try {
             // This will be populated by the extension
             const projects = window.portfolioProjects || [];
+            console.log('Loading projects:', projects); // Debug log
             displayProjects(projects);
             updateStats(projects);
         } catch (error) {

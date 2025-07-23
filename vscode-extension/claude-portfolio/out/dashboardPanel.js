@@ -1,76 +1,87 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as http from 'http';
-
-export class DashboardPanel {
-    public static currentPanel: DashboardPanel | undefined;
-    public static readonly viewType = 'claudePortfolioDashboard';
-
-    private readonly _panel: vscode.WebviewPanel;
-    private readonly _extensionUri: vscode.Uri;
-    private readonly _portfolioPath: string;
-    private _disposables: vscode.Disposable[] = [];
-
-    public static createOrShow(extensionUri: vscode.Uri, portfolioPath: string) {
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DashboardPanel = void 0;
+const vscode = __importStar(require("vscode"));
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const http = __importStar(require("http"));
+class DashboardPanel {
+    static createOrShow(extensionUri, portfolioPath) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
-
         if (DashboardPanel.currentPanel) {
             DashboardPanel.currentPanel._panel.reveal(column);
             return;
         }
-
-        const panel = vscode.window.createWebviewPanel(
-            DashboardPanel.viewType,
-            'Claude Portfolio Dashboard',
-            column || vscode.ViewColumn.One,
-            {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                localResourceRoots: [extensionUri]
-            }
-        );
-
+        const panel = vscode.window.createWebviewPanel(DashboardPanel.viewType, 'Claude Portfolio Dashboard', column || vscode.ViewColumn.One, {
+            enableScripts: true,
+            retainContextWhenHidden: true,
+            localResourceRoots: [extensionUri]
+        });
         DashboardPanel.currentPanel = new DashboardPanel(panel, extensionUri, portfolioPath);
     }
-
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, portfolioPath: string) {
+    constructor(panel, extensionUri, portfolioPath) {
+        this._disposables = [];
         this._panel = panel;
         this._extensionUri = extensionUri;
         this._portfolioPath = portfolioPath;
-
         this._update();
-
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-
-        this._panel.webview.onDidReceiveMessage(
-            message => {
-                switch (message.command) {
-                    case 'openProject':
-                        vscode.commands.executeCommand('claude-portfolio.openProject', message.project);
-                        return;
-                    case 'runProject':
-                        vscode.commands.executeCommand('claude-portfolio.runProject', message.project);
-                        return;
-                    case 'openInBrowser':
-                        vscode.commands.executeCommand('claude-portfolio.openProjectInBrowser', message.project);
-                        return;
-                    case 'openInExternalBrowser':
-                        vscode.commands.executeCommand('claude-portfolio.openProjectInExternalBrowser', message.project);
-                        return;
-                    case 'refresh':
-                        this._update();
-                        return;
-                }
-            },
-            null,
-            this._disposables
-        );
+        this._panel.webview.onDidReceiveMessage(message => {
+            switch (message.command) {
+                case 'openProject':
+                    vscode.commands.executeCommand('claude-portfolio.openProject', message.project);
+                    return;
+                case 'runProject':
+                    vscode.commands.executeCommand('claude-portfolio.runProject', message.project);
+                    return;
+                case 'openInBrowser':
+                    vscode.commands.executeCommand('claude-portfolio.openProjectInBrowser', message.project);
+                    return;
+                case 'openInExternalBrowser':
+                    vscode.commands.executeCommand('claude-portfolio.openProjectInExternalBrowser', message.project);
+                    return;
+                case 'refresh':
+                    this._update();
+                    return;
+            }
+        }, null, this._disposables);
     }
-
-    public dispose() {
+    dispose() {
         DashboardPanel.currentPanel = undefined;
         this._panel.dispose();
         while (this._disposables.length) {
@@ -80,8 +91,7 @@ export class DashboardPanel {
             }
         }
     }
-
-    private _getNonce(): string {
+    _getNonce() {
         let text = '';
         const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         for (let i = 0; i < 32; i++) {
@@ -89,45 +99,42 @@ export class DashboardPanel {
         }
         return text;
     }
-
-    private async _getProjectData(): Promise<any[]> {
+    async _getProjectData() {
         try {
             const manifestPath = path.join(this._portfolioPath, 'projects', 'manifest.json');
             if (fs.existsSync(manifestPath)) {
                 const manifestContent = fs.readFileSync(manifestPath, 'utf8');
                 const manifest = JSON.parse(manifestContent);
                 const projects = manifest.projects || [];
-                
                 // Check real-time status for each project
                 await this._updateProjectStatuses(projects);
-                
                 return projects;
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Failed to load project manifest:', error);
         }
         return [];
     }
-
-    private async _updateProjectStatuses(projects: any[]) {
+    async _updateProjectStatuses(projects) {
         const statusPromises = projects.map(async (project) => {
             if (project.localPort) {
                 try {
                     const isRunning = await this._checkPortStatus(project.localPort);
                     project.status = isRunning ? 'active' : 'inactive';
-                } catch (error) {
+                }
+                catch (error) {
                     project.status = 'inactive';
                 }
-            } else {
+            }
+            else {
                 project.status = 'inactive';
             }
             return project;
         });
-
         await Promise.all(statusPromises);
     }
-
-    private _checkPortStatus(port: number): Promise<boolean> {
+    _checkPortStatus(port) {
         return new Promise((resolve) => {
             const req = http.request({
                 hostname: 'localhost',
@@ -139,36 +146,28 @@ export class DashboardPanel {
                 // Only resolve true for successful HTTP status codes
                 resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
             });
-
             req.on('error', () => {
                 resolve(false);
             });
-
             req.on('timeout', () => {
                 req.destroy();
                 resolve(false);
             });
-
             req.end();
         });
     }
-
-    private async _update() {
+    async _update() {
         const webview = this._panel.webview;
         this._panel.title = 'Claude Portfolio Dashboard';
         this._panel.webview.html = await this._getHtmlForWebview(webview);
     }
-
-    private async _getHtmlForWebview(webview: vscode.Webview) {
+    async _getHtmlForWebview(webview) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'dashboard.js'));
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'dashboard.css'));
-        
         // Generate nonce for security
         const nonce = this._getNonce();
-        
         // Load project data with real-time status checking
         const projectData = await this._getProjectData();
-
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -237,3 +236,6 @@ export class DashboardPanel {
         </html>`;
     }
 }
+exports.DashboardPanel = DashboardPanel;
+DashboardPanel.viewType = 'claudePortfolioDashboard';
+//# sourceMappingURL=dashboardPanel.js.map

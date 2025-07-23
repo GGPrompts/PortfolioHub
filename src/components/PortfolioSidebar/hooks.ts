@@ -136,7 +136,7 @@ export const useProjectSelectionState = () => {
 
 export const useTabManagement = () => {
   const [showProjectWizard, setShowProjectWizard] = useState(false)
-  const [activeTabs, setActiveTabs] = useState<string[]>([])
+  const [activeTabs, setActiveTabs] = useState<string[]>(['projects'])
 
   // Define tab configurations
   const tabs = {

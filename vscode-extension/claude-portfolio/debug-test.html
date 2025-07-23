@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium CSS Debug Test</title>
+    <style>
+        /* Test the key premium effects outside of VS Code */
+        :root {
+            --fallback-background: #1e1e1e;
+            --fallback-foreground: #cccccc;
+            --fallback-accent: #007acc;
+            --fallback-success: #4caf50;
+        }
+
+        body {
+            background: #1e1e1e;
+            color: #cccccc;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+        }
+
+        /* Debug indicator */
+        body::after {
+            content: '✅ Premium CSS Effects Test';
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--fallback-success);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+            opacity: 0.8;
+        }
+
+        /* Test card with premium effects */
+        .test-card {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(0, 122, 204, 0.2);
+            border: 1px solid rgba(60, 60, 60, 0.6);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Floating particles effect */
+        .test-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 122, 204, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            box-shadow: 
+                20px -10px 0 rgba(0, 122, 204, 0.4),
+                -15px 25px 0 rgba(0, 122, 204, 0.3),
+                30px 20px 0 rgba(0, 122, 204, 0.5),
+                -25px -15px 0 rgba(0, 122, 204, 0.35);
+            transition: all 0.8s ease;
+            pointer-events: none;
+        }
+
+        .test-card:hover::after {
+            transform: translate(-50%, -50%) scale(1);
+            animation: floatingParticles 4s ease-in-out infinite;
+        }
+
+        @keyframes floatingParticles {
+            0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            25% { transform: translate(-45%, -55%) scale(1.2) rotate(90deg); }
+            50% { transform: translate(-55%, -50%) scale(0.8) rotate(180deg); }
+            75% { transform: translate(-50%, -45%) scale(1.1) rotate(270deg); }
+        }
+
+        .test-card:hover {
+            transform: translateY(-12px) rotateX(8deg) rotateY(-3deg) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.35),
+                0 10px 20px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(0, 122, 204, 0.4),
+                0 0 0 1px rgba(0, 122, 204, 0.3);
+        }
+
+        /* Background animation test */
+        .test-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 122, 204, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 122, 204, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 122, 204, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-background"></div>
+    
+    <h1>VS Code Dashboard Premium CSS Debug Test</h1>
+    
+    <div class="test-card">
+        <h3>Test Card with Premium Effects</h3>
+        <p>Hover over this card to see the premium effects:</p>
+        <ul>
+            <li>✨ Floating particles animation</li>
+            <li>🎯 3D transform on hover</li>
+            <li>🌟 Enhanced shadows and glows</li>
+            <li>🔄 Background blur and glass effect</li>
+        </ul>
+    </div>
+
+    <div class="test-card">
+        <h3>Effects Status Check</h3>
+        <div id="effects-status">
+            <p>If you can see the "Premium CSS Effects Test" indicator in the top-right corner, the CSS is loading correctly.</p>
+            <p>If this card has a glass effect, rounded corners, and glows when you hover, the premium effects are working!</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Premium CSS Debug Test loaded');
+        console.log('Check for:');
+        console.log('1. Green "Premium CSS Effects Test" indicator in top-right');
+        console.log('2. Hover effects on cards (3D transform, particles)');
+        console.log('3. Animated background gradients');
+        console.log('4. Glass effect (backdrop-filter blur)');
+    </script>
+</body>
+</html>

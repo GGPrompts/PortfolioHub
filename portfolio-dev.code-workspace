@@ -104,7 +104,7 @@
 		"claude-portfolio.startPortfolioServer": true,
 		
 		// UI & Theme Settings
-		"workbench.colorTheme": "Default Dark Modern",
+		"workbench.colorTheme": "Monokai Dimmed",
 		"terminal.integrated.cursorBlinking": false
 	},
 	"extensions": {

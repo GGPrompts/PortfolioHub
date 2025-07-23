@@ -717,11 +717,14 @@ class PortfolioWebviewProvider {
             vscode.window.showErrorMessage(`Folder does not exist: ${fullPath}`);
             return;
         }
-        // On Windows, use explorer
+        // On Windows, use explorer securely
         if (process.platform === 'win32') {
-            const terminal = vscode.window.createTerminal('Open Folder');
-            terminal.sendText(`explorer "${fullPath}"`);
-            terminal.dispose();
+            const workspaceRoot = path.join(this._portfolioPath, '..');
+            const success = await securityService_1.VSCodeSecurityService.executeSecureCommand(`explorer "${fullPath}"`, 'Open Folder', workspaceRoot);
+            if (!success) {
+                vscode.window.showErrorMessage('Failed to open folder - command blocked for security');
+                return;
+            }
         }
         else {
             // On other platforms, try to open with VS Code

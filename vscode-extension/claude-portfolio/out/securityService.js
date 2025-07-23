@@ -37,6 +37,7 @@ exports.VSCodeSecurityService = void 0;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
+const security_config_1 = require("./shared/security-config");
 /**
  * VS Code Security Service - Provides secure command execution with workspace trust
  *
@@ -44,6 +45,12 @@ const fs = __importStar(require("fs"));
  * all inputs to prevent command injection and path traversal attacks.
  */
 class VSCodeSecurityService {
+    /**
+     * Validate PowerShell-specific syntax for safe operations
+     */
+    static validatePowerShellSyntax(command) {
+        return security_config_1.SHARED_SECURITY_CONFIG.SAFE_POWERSHELL_PATTERNS.some(pattern => pattern.test(command));
+    }
     /**
      * Checks if the current workspace is trusted and prompts user if not
      * @param operation Description of the operation requiring trust
@@ -79,12 +86,25 @@ class VSCodeSecurityService {
             console.warn('Command validation failed: command is empty');
             return false;
         }
-        // Check for dangerous patterns
+        // 1. Check whitelist first (most permissive)
+        if (this.SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.log(`Command whitelisted: ${trimmedCommand}`);
+            return true;
+        }
+        // 2. Check PowerShell syntax
+        if (trimmedCommand.toLowerCase().includes('powershell') || trimmedCommand.includes('$') ||
+            trimmedCommand.includes('Get-') || trimmedCommand.includes('Stop-Process')) {
+            if (this.validatePowerShellSyntax(trimmedCommand)) {
+                console.log(`PowerShell command validated: ${trimmedCommand}`);
+                return true;
+            }
+        }
+        // 3. Check dangerous patterns (most restrictive)
         if (this.DANGEROUS_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
-            console.warn(`Command blocked due to dangerous pattern: ${trimmedCommand}`);
+            console.warn(`Dangerous pattern detected: ${trimmedCommand}`);
             return false;
         }
-        // Extract the base command (first word)
+        // 4. Check base command allowlist
         const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();
         // Special handling for npm commands
         if (baseCommand === 'npm') {
@@ -102,6 +122,95 @@ class VSCodeSecurityService {
             return false;
         }
         return true;
+    }
+    /**
+     * Enhanced validation with detailed error information
+     * @param command The command to validate
+     * @returns ValidationResult with detailed information
+     */
+    static validateCommandEnhanced(command) {
+        if (!command || typeof command !== 'string') {
+            return {
+                valid: false,
+                reason: 'invalid-input',
+                message: (0, security_config_1.getSecurityErrorMessage)(command || '', 'invalid-input')
+            };
+        }
+        const trimmedCommand = command.trim();
+        if (trimmedCommand.length === 0) {
+            return {
+                valid: false,
+                reason: 'empty-command',
+                message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'empty-command')
+            };
+        }
+        // 1. Check whitelist first (most permissive)
+        if (this.SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.log(`Command whitelisted: ${trimmedCommand}`);
+            return { valid: true };
+        }
+        // 2. Check PowerShell syntax
+        if (trimmedCommand.toLowerCase().includes('powershell') || trimmedCommand.includes('$') ||
+            trimmedCommand.includes('Get-') || trimmedCommand.includes('Stop-Process')) {
+            if (this.validatePowerShellSyntax(trimmedCommand)) {
+                console.log(`PowerShell command validated: ${trimmedCommand}`);
+                return { valid: true };
+            }
+            else {
+                return {
+                    valid: false,
+                    reason: 'powershell-syntax',
+                    message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'powershell-syntax')
+                };
+            }
+        }
+        // 3. Check dangerous patterns (most restrictive)
+        if (this.DANGEROUS_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.warn(`Dangerous pattern detected: ${trimmedCommand}`);
+            return {
+                valid: false,
+                reason: 'dangerous-pattern',
+                message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'dangerous-pattern')
+            };
+        }
+        // 4. Check base command allowlist
+        const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();
+        // Special handling for npm commands
+        if (baseCommand === 'npm') {
+            const isValid = this.validateNpmCommand(trimmedCommand);
+            if (!isValid) {
+                return {
+                    valid: false,
+                    reason: 'not-whitelisted',
+                    message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'not-whitelisted')
+                };
+            }
+            return { valid: true };
+        }
+        // Special handling for PowerShell scripts
+        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\scripts\\')) {
+            const isValid = this.validatePowerShellCommand(trimmedCommand);
+            if (!isValid) {
+                return {
+                    valid: false,
+                    reason: 'powershell-syntax',
+                    message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'powershell-syntax')
+                };
+            }
+            return { valid: true };
+        }
+        // Check if base command is in allowed list
+        const isAllowed = this.ALLOWED_COMMANDS.has(baseCommand) ||
+            this.ALLOWED_COMMANDS.has(baseCommand.replace('.exe', ''));
+        if (!isAllowed) {
+            console.warn(`Command blocked - not in allowed list: ${baseCommand}`);
+            return {
+                valid: false,
+                reason: 'not-whitelisted',
+                message: (0, security_config_1.getSecurityErrorMessage)(trimmedCommand, 'not-whitelisted')
+            };
+        }
+        return { valid: true };
     }
     /**
      * Validates npm-specific commands
@@ -338,28 +447,8 @@ class VSCodeSecurityService {
     }
 }
 exports.VSCodeSecurityService = VSCodeSecurityService;
-VSCodeSecurityService.ALLOWED_COMMANDS = new Set([
-    'npm', 'yarn', 'pnpm', 'node', 'git', 'echo', 'cd', 'ls', 'dir',
-    'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code',
-    'claude', 'gemini', 'python', 'py', 'typescript', 'tsc'
-]);
-VSCodeSecurityService.ALLOWED_NPM_SCRIPTS = new Set([
-    'dev', 'start', 'build', 'test', 'test:coverage', 'install', 'run', 'compile', 'watch',
-    'lint', 'type-check', 'format', 'clean', 'preview', 'serve'
-]);
-VSCodeSecurityService.DANGEROUS_PATTERNS = [
-    /\.\.\//, // Path traversal  
-    /rm\s+-rf/i, // Destructive commands
-    /del\s+\/[sq]/i, // Windows destructive commands
-    /format\s+[c-z]:/i, // Format drive commands
-    /shutdown/i, // System shutdown
-    /reboot/i, // System reboot
-    /halt/i, // System halt
-    /\>\s*nul/i, // Output redirection that might hide malicious output
-    /\&\&\s*(rm|del|format)/i, // Chained destructive commands
-    /;\s*(rm|del|format)/i, // Semicolon chained destructive commands
-    /\|\s*(rm|del|format)/i, // Pipe chained destructive commands
-    /`.*rm.*`/i, // Backtick command injection with rm
-    /\$\(.*rm.*\)/i, // Command substitution with rm
-];
+VSCodeSecurityService.ALLOWED_COMMANDS = new Set(security_config_1.SHARED_SECURITY_CONFIG.ALLOWED_COMMANDS);
+VSCodeSecurityService.ALLOWED_NPM_SCRIPTS = new Set(security_config_1.SHARED_SECURITY_CONFIG.ALLOWED_NPM_SCRIPTS);
+VSCodeSecurityService.DANGEROUS_PATTERNS = security_config_1.SHARED_SECURITY_CONFIG.DANGEROUS_PATTERNS;
+VSCodeSecurityService.SAFE_COMMAND_PATTERNS = security_config_1.SHARED_SECURITY_CONFIG.SAFE_COMMAND_PATTERNS;
 //# sourceMappingURL=securityService.js.map

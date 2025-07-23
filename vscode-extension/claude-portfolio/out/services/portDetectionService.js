@@ -339,6 +339,112 @@ class PortDetectionService {
             keys: Array.from(this.cache.keys())
         };
     }
+    /**
+     * Enhanced refresh that clears caches and re-detects all ports
+     */
+    async refreshAll(projects) {
+        console.log('🔄 Starting enhanced refresh - clearing caches and re-detecting ports...');
+        // Clear all caches
+        this.clearCache();
+        // Get fresh port data
+        const results = await this.checkProjectStatuses(projects);
+        // Log detected ports for debugging
+        results.forEach(result => {
+            const runningPorts = result.ports.filter(p => p.isRunning);
+            if (runningPorts.length > 0) {
+                console.log(`🔍 ${result.projectId}: Running on ports [${runningPorts.map(p => p.port).join(', ')}]${result.warnings.length > 0 ? ' ⚠️ ' + result.warnings.join(', ') : ''}`);
+            }
+        });
+        return results;
+    }
+    /**
+     * Smart port detection for Vite/dev servers that auto-increment ports
+     */
+    async detectActualPort(project) {
+        const basePort = project.localPort;
+        // Define comprehensive port ranges based on common dev server behavior
+        let portsToCheck = [];
+        if (basePort >= 5000 && basePort < 6000) {
+            // Vite typically tries 5173, then 5174, 5175, etc.
+            portsToCheck = [5173, 5174, 5175, 5176, 5177, 5178, 5179, 5180];
+        }
+        else if (basePort >= 3000 && basePort < 4000) {
+            // React/Express apps typically use 3000-3010
+            portsToCheck = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010];
+        }
+        else if (basePort >= 9000) {
+            // Custom ports like GGPrompts
+            const range = Array.from({ length: 10 }, (_, i) => basePort + i);
+            portsToCheck = range;
+        }
+        else {
+            // Generic range around the configured port
+            portsToCheck = [basePort - 2, basePort - 1, basePort, basePort + 1, basePort + 2];
+        }
+        // Check each port for HTTP response
+        for (const port of portsToCheck) {
+            const isRunning = await this.checkHttpResponse(port);
+            if (isRunning) {
+                console.log(`✅ Found ${project.id} running on port ${port}${port !== basePort ? ` (configured: ${basePort})` : ''}`);
+                return port;
+            }
+        }
+        console.log(`❌ No running instance found for ${project.id} in port range [${portsToCheck.join(', ')}]`);
+        return null;
+    }
+    /**
+     * Get comprehensive port status for debugging
+     */
+    async getPortRangeStatus(startPort, endPort) {
+        const results = [];
+        for (let port = startPort; port <= endPort; port++) {
+            const isRunning = await this.checkHttpResponse(port);
+            if (isRunning) {
+                results.push({
+                    port,
+                    isRunning: true,
+                    processName: 'HTTP Server'
+                });
+            }
+        }
+        return results;
+    }
+    /**
+     * Enhanced project status check with smart port detection
+     */
+    async getEnhancedProjectStatus(project) {
+        // First, try the regular detection
+        const allPortProcesses = await this.getAllPortProcesses();
+        const standardStatus = await this.checkSingleProject(project, allPortProcesses);
+        // If no running instance found, try smart port detection
+        if (standardStatus.status === 'inactive') {
+            const actualPort = await this.detectActualPort(project);
+            if (actualPort && actualPort !== project.localPort) {
+                // Found running on different port
+                const actualPortInfo = {
+                    port: actualPort,
+                    isRunning: true,
+                    processName: 'HTTP Server (Auto-detected)'
+                };
+                return {
+                    ...standardStatus,
+                    status: 'active',
+                    ports: [actualPortInfo],
+                    actualPort,
+                    warnings: [`Running on port ${actualPort} instead of configured ${project.localPort} (Vite auto-increment)`]
+                };
+            }
+        }
+        // If found running, check if it's on the expected port
+        const runningPorts = standardStatus.ports.filter(p => p.isRunning);
+        if (runningPorts.length === 1 && runningPorts[0].port !== project.localPort) {
+            return {
+                ...standardStatus,
+                actualPort: runningPorts[0].port
+            };
+        }
+        return standardStatus;
+    }
 }
 exports.PortDetectionService = PortDetectionService;
 //# sourceMappingURL=portDetectionService.js.map

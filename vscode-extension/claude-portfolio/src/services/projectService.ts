@@ -318,7 +318,8 @@ export class ProjectService {
             return resolvedPath;
         } catch (error) {
             // If path validation fails due to security concerns, throw with context
-            throw new Error(`Path security validation failed for project "${project.title || project.id}": ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Path security validation failed for project "${project.title || project.id}": ${errorMessage}`);
         }
     }
 

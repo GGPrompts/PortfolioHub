@@ -19,7 +19,11 @@ This VS Code extension provides native integration with the Claude Development P
 - **Context Menus**: Right-click projects for additional actions
 
 ### ✅ **Project Management**
-- **Real-time Status**: Live port detection and project status monitoring
+- **Real-time Status**: Live port detection and project status monitoring with enhanced refresh
+- **Smart Port Detection**: Advanced detection with Vite auto-increment awareness (5173→5174→5175→etc.)
+  - **Actual Port Detection**: Uses `detectActualPort()` to find real running ports vs. configured ones
+  - **Multiple Instance Warnings**: Shows alerts when projects run on unexpected ports
+  - **Enhanced Status Refresh**: `refreshAll()` with cache clearing for accurate detection
 - **Dual Selection System**:
   - **Checkboxes** (`☑️`): For batch operations (Multi Project Commands)
   - **Hand Indicator** (`👉`): For individual project commands (Project Commands)
@@ -41,7 +45,11 @@ This VS Code extension provides native integration with the Claude Development P
 ## 🏗️ **Architecture Overview**
 
 ### **Modular Service Layer** (`/src/services/`)
-- **PortDetectionService**: Advanced port checking with netstat integration
+- **PortDetectionService**: Advanced port checking with enhanced capabilities:
+  - **Smart Auto-increment Detection**: Handles Vite's port auto-increment behavior (5173→5174→5175)
+  - **Network Diagnostics**: Supports `netstat -ano` patterns and `Select-String` filtering
+  - **Cache Management**: `refreshAll()` method with cache clearing for accurate status
+  - **Enhanced Methods**: `detectActualPort()`, `getEnhancedProjectStatus()` for precise detection
 - **ProjectService**: Unified project operations (CRUD, terminal, browser)
 - **ConfigurationService**: VS Code settings management with validation
 
@@ -124,7 +132,7 @@ code --install-extension claude-portfolio-latest.vsix
 ```
 
 ### **Project Manifest** (`projects/manifest.json`)
-Projects are defined with path resolution:
+Projects are defined with path resolution and fixed port configuration:
 ```json
 {
   "id": "project-name",
@@ -134,6 +142,8 @@ Projects are defined with path resolution:
   "buildCommand": "npm run dev"
 }
 ```
+
+**✅ Recent Fix**: Portfolio app port corrected from 5175 to 5173 in manifest.json to match Vite's default behavior.
 
 **Path Resolution Logic**:
 - `"."` → Portfolio root (`D:\ClaudeWindows\claude-dev-portfolio`)
@@ -181,6 +191,7 @@ DANGEROUS_PATTERNS = [
 - ✅ **Path Traversal**: 100% blocked - Enhanced patterns detect all traversal attempts
 - ✅ **Message Passing**: 100% secure - React validation prevents VS Code bypass
 - ✅ **PowerShell Operations**: Now work correctly (previously over-blocked)
+- ✅ **Network Diagnostics**: Full support for `netstat` and `Select-String` patterns for port detection
 - ✅ **Enhanced Error Messages**: Clear guidance when commands are blocked
 - ✅ **Unified Architecture**: Single source of truth for security rules
 
@@ -191,6 +202,9 @@ DANGEROUS_PATTERNS = [
 ✅ npm run build && npm run deploy                     # Combined commands
 ✅ git add . && git commit -m "message"                # Git workflows
 ✅ taskkill /F /PID 1234                              # Port management
+✅ netstat -ano | Select-String ":300[0-9]"           # Network diagnostics
+✅ netstat -ano | Select-String ":517[3-9]"           # Portfolio port range diagnostics
+✅ cd "D:\Projects\name" && npm run dev               # Combined project commands
 ```
 
 ### **🚫 Still Properly Blocked**
@@ -259,7 +273,10 @@ window.vsCodePortfolio = {
 - **Hot Reload**: Development changes require extension rebuild
 
 ### **State Synchronization**
-- **Project Status**: Real-time port detection shared between web and extension
+- **Project Status**: Real-time port detection with smart auto-increment detection shared between web and extension
+- **Enhanced Refresh**: `refreshAll()` method with cache clearing detects projects running on unexpected ports
+- **Smart Port Resolution**: `detectActualPort()` finds real running ports vs. configured ones
+- **Enhanced Status Methods**: `getEnhancedProjectStatus()` provides comprehensive project state information
 - **Selection State**: Checkbox states managed independently in extension
 - **Command Results**: Terminal output visible in VS Code integrated terminals
 
@@ -288,6 +305,14 @@ window.vsCodePortfolio = {
 - Install Live Preview extension: `ms-vscode.live-server`
 - Check that project is running on expected port
 - Verify firewall/antivirus not blocking localhost connections
+
+**Port Detection Issues**
+- **Enhanced Refresh**: Use the refresh button to trigger `refreshAll()` with cache clearing
+- **Smart Detection**: Extension now detects actual running ports vs. configured ports
+- **Vite Auto-increment**: Automatically handles Vite's port auto-increment (5173→5174→5175)
+- **Network Diagnostics**: Use `netstat -ano | Select-String ":300[0-9]"` for manual port checking
+- **Portfolio Port**: Fixed from 5175 to 5173 in manifest.json to match Vite defaults
+- Kill conflicting process: `powershell "Stop-Process -Id PROCESS_ID -Force"`
 
 ### **Debug Mode**
 Enable debug logging in VS Code settings:

@@ -4,6 +4,9 @@ import { VSCodeSecurityService } from '../securityService';
 import { ConfigurationService } from '../services/configurationService';
 import { DashboardPanel } from '../dashboardPanel';
 import { PortfolioWebviewProvider } from '../portfolioWebviewProvider';
+import { ProjectProvider } from '../projectProvider';
+import { MultiProjectCommandsProvider } from '../multiProjectCommandsProvider';
+import { PortDetectionService } from '../services/portDetectionService';
 
 /**
  * VS Code workspace and extension management commands
@@ -12,7 +15,9 @@ export class WorkspaceCommands {
     constructor(
         private configService: ConfigurationService,
         private portfolioWebviewProvider: PortfolioWebviewProvider,
-        private extensionContext: vscode.ExtensionContext
+        private extensionContext: vscode.ExtensionContext,
+        private projectProvider?: ProjectProvider,
+        private multiProjectCommandsProvider?: MultiProjectCommandsProvider
     ) {}
 
     /**
@@ -96,17 +101,45 @@ export class WorkspaceCommands {
     }
 
     /**
-     * Refresh projects manually
+     * Refresh projects manually with enhanced port detection
      */
-    private refreshProjectsCommand(): void {
+    private async refreshProjectsCommand(): Promise<void> {
         try {
-            console.log('🔄 Manual refresh triggered');
-            vscode.commands.executeCommand('claude-portfolio.refreshProjects');
-            vscode.window.showInformationMessage('Projects refreshed');
+            console.log('🔄 Enhanced manual refresh triggered');
+            
+            if (this.projectProvider) {
+                // Get port detection service for enhanced refresh
+                const portDetectionService = PortDetectionService.getInstance();
+                
+                // Get current projects for enhanced port detection
+                const projects = await this.projectProvider.getProjects();
+                
+                // Use enhanced refresh that clears caches and detects actual ports
+                console.log('🔍 Performing enhanced port detection...');
+                await portDetectionService.refreshAll(projects);
+                
+                // Trigger provider refreshes
+                this.projectProvider.refresh();
+                
+                // Also refresh other providers after a brief delay
+                setTimeout(() => {
+                    this.portfolioWebviewProvider.refreshProjectData();
+                    if (this.multiProjectCommandsProvider) {
+                        this.multiProjectCommandsProvider.refresh();
+                    }
+                }, 500);
+                
+                vscode.window.showInformationMessage('✅ Projects refreshed with enhanced port detection');
+            } else {
+                // Fallback if providers not available
+                console.log('⚠️ ProjectProvider not available, using basic refresh');
+                this.portfolioWebviewProvider.refreshProjectData();
+                vscode.window.showInformationMessage('Projects refreshed (basic mode)');
+            }
         } catch (error) {
             const message = `Error refreshing projects: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
-            console.error('Refresh projects error:', error);
+            console.error('Enhanced refresh error:', error);
         }
     }
 

@@ -45,11 +45,17 @@ class ProjectService {
         this.portDetection = portDetectionService_1.PortDetectionService.getInstance();
     }
     /**
+     * Get the portfolio path
+     */
+    getPortfolioPath() {
+        return this.portfolioPath;
+    }
+    /**
      * Start a single project
      */
     async startProject(project) {
         try {
-            const projectPath = this.getProjectPath(project);
+            const projectPath = await this.getProjectPath(project);
             const command = project.buildCommand || 'npm run dev';
             const workspaceRoot = path.join(this.portfolioPath, '..'); // D:\ClaudeWindows
             const success = await securityService_1.VSCodeSecurityService.executeProjectCommand(projectPath, command, `Run ${project.title}`, workspaceRoot);
@@ -205,7 +211,7 @@ class ProjectService {
      */
     async openProject(project) {
         try {
-            const projectPath = this.getProjectPath(project);
+            const projectPath = await this.getProjectPath(project);
             if (!fs.existsSync(projectPath)) {
                 return {
                     success: false,
@@ -270,28 +276,41 @@ class ProjectService {
         return results;
     }
     /**
-     * Get project file system path
+     * Get project file system path with security validation
      */
-    getProjectPath(project) {
-        if (project.path?.startsWith('D:\\')) {
-            // External project path (absolute)
-            return project.path;
+    async getProjectPath(project) {
+        const workspaceRoot = path.join(this.portfolioPath, '..');
+        try {
+            let resolvedPath;
+            if (project.path?.startsWith('D:\\')) {
+                // External project path (absolute) - validate against workspace
+                resolvedPath = await securityService_1.VSCodeSecurityService.sanitizePath(project.path, workspaceRoot);
+            }
+            else if (project.path === '.') {
+                // Self-reference to portfolio root
+                resolvedPath = await securityService_1.VSCodeSecurityService.sanitizePath(this.portfolioPath, workspaceRoot);
+            }
+            else if (project.path?.startsWith('../Projects/')) {
+                // External project path (relative to portfolio) - validate resolved path
+                const resolved = path.resolve(this.portfolioPath, project.path);
+                resolvedPath = await securityService_1.VSCodeSecurityService.sanitizePath(resolved, workspaceRoot);
+            }
+            else if (project.path?.startsWith('projects/')) {
+                // Internal project path (relative to portfolio root)
+                const projectPath = path.join(this.portfolioPath, project.path);
+                resolvedPath = await securityService_1.VSCodeSecurityService.sanitizePath(projectPath, workspaceRoot);
+            }
+            else {
+                // Default: assume internal project
+                const defaultPath = path.join(this.portfolioPath, 'projects', project.path || project.id);
+                resolvedPath = await securityService_1.VSCodeSecurityService.sanitizePath(defaultPath, workspaceRoot);
+            }
+            return resolvedPath;
         }
-        else if (project.path === '.') {
-            // Self-reference to portfolio root
-            return this.portfolioPath;
-        }
-        else if (project.path?.startsWith('../Projects/')) {
-            // External project path (relative to portfolio)
-            return path.resolve(this.portfolioPath, project.path);
-        }
-        else if (project.path?.startsWith('projects/')) {
-            // Internal project path (relative to portfolio root)
-            return path.join(this.portfolioPath, project.path);
-        }
-        else {
-            // Default: assume internal project
-            return path.join(this.portfolioPath, 'projects', project.path || project.id);
+        catch (error) {
+            // If path validation fails due to security concerns, throw with context
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Path security validation failed for project "${project.title || project.id}": ${errorMessage}`);
         }
     }
     /**

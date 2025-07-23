@@ -35,6 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectCommands = void 0;
 const vscode = __importStar(require("vscode"));
+const path = __importStar(require("path"));
+const securityService_1 = require("../securityService");
 /**
  * Individual project operation commands
  */
@@ -261,10 +263,13 @@ class ProjectCommands {
     async handleAIAssistantSelection(assistantType, project) {
         switch (assistantType) {
             case 'claude-code':
-                // Open terminal and start Claude Code
-                const terminal = vscode.window.createTerminal(`Claude Code - ${project.title}`);
-                terminal.show();
-                terminal.sendText('claude');
+                // Open terminal and start Claude Code securely
+                const workspaceRoot = path.join(this.projectService.getPortfolioPath(), '..');
+                const success = await securityService_1.VSCodeSecurityService.executeSecureCommand('claude', `Claude Code - ${project.title}`, workspaceRoot);
+                if (!success) {
+                    vscode.window.showErrorMessage('Failed to launch Claude Code - command blocked for security');
+                    return;
+                }
                 vscode.window.showInformationMessage(`Opened Claude Code for ${project.title}`);
                 break;
             case 'chatgpt':

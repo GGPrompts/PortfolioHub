@@ -150,7 +150,7 @@ function createCommandHandlers(services, providers, context) {
     const selectionCommands = new selectionCommands_1.SelectionCommands(providers.projectProvider);
     // Inject project commands provider for unified behavior
     selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
-    const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, providers.portfolioWebviewProvider, context);
+    const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, providers.portfolioWebviewProvider, context, providers.projectProvider, providers.multiProjectCommandsProvider);
     return {
         projectCommands,
         batchCommands,
@@ -168,12 +168,18 @@ function registerCommands(context, commands) {
     commands.workspaceCommands.registerCommands(context);
 }
 /**
- * Set up cross-provider communication
+ * Set up cross-provider communication with enhanced port detection
  */
 function setupProviderCommunication(providers) {
     // When project provider refreshes, also refresh webview data AND multi-project commands
     const originalRefresh = providers.projectProvider.refresh.bind(providers.projectProvider);
-    providers.projectProvider.refresh = () => {
+    providers.projectProvider.refresh = async () => {
+        // Use enhanced port detection during refresh
+        const portDetectionService = portDetectionService_1.PortDetectionService.getInstance();
+        const projects = await providers.projectProvider.getProjects();
+        console.log('🔄 Provider communication: Enhanced refresh triggered');
+        await portDetectionService.refreshAll(projects);
+        // Now call the original refresh
         originalRefresh();
         // Trigger webview refresh after a short delay to allow project status to update
         setTimeout(() => {

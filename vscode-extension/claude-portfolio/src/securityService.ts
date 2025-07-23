@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { SHARED_SECURITY_CONFIG, getSecurityErrorMessage, ValidationResult } from '../shared/security-config';
+import { SHARED_SECURITY_CONFIG, getSecurityErrorMessage, ValidationResult } from './shared/security-config';
 
 /**
  * VS Code Security Service - Provides secure command execution with workspace trust

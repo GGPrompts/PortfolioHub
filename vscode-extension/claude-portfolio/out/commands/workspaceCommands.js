@@ -35,16 +35,20 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkspaceCommands = void 0;
 const vscode = __importStar(require("vscode"));
+const path = __importStar(require("path"));
 const securityService_1 = require("../securityService");
 const dashboardPanel_1 = require("../dashboardPanel");
+const portDetectionService_1 = require("../services/portDetectionService");
 /**
  * VS Code workspace and extension management commands
  */
 class WorkspaceCommands {
-    constructor(configService, portfolioWebviewProvider, extensionContext) {
+    constructor(configService, portfolioWebviewProvider, extensionContext, projectProvider, multiProjectCommandsProvider) {
         this.configService = configService;
         this.portfolioWebviewProvider = portfolioWebviewProvider;
         this.extensionContext = extensionContext;
+        this.projectProvider = projectProvider;
+        this.multiProjectCommandsProvider = multiProjectCommandsProvider;
     }
     /**
      * Register all workspace commands
@@ -118,18 +122,41 @@ class WorkspaceCommands {
         }
     }
     /**
-     * Refresh projects manually
+     * Refresh projects manually with enhanced port detection
      */
-    refreshProjectsCommand() {
+    async refreshProjectsCommand() {
         try {
-            console.log('🔄 Manual refresh triggered');
-            vscode.commands.executeCommand('claude-portfolio.refreshProjects');
-            vscode.window.showInformationMessage('Projects refreshed');
+            console.log('🔄 Enhanced manual refresh triggered');
+            if (this.projectProvider) {
+                // Get port detection service for enhanced refresh
+                const portDetectionService = portDetectionService_1.PortDetectionService.getInstance();
+                // Get current projects for enhanced port detection
+                const projects = await this.projectProvider.getProjects();
+                // Use enhanced refresh that clears caches and detects actual ports
+                console.log('🔍 Performing enhanced port detection...');
+                await portDetectionService.refreshAll(projects);
+                // Trigger provider refreshes
+                this.projectProvider.refresh();
+                // Also refresh other providers after a brief delay
+                setTimeout(() => {
+                    this.portfolioWebviewProvider.refreshProjectData();
+                    if (this.multiProjectCommandsProvider) {
+                        this.multiProjectCommandsProvider.refresh();
+                    }
+                }, 500);
+                vscode.window.showInformationMessage('✅ Projects refreshed with enhanced port detection');
+            }
+            else {
+                // Fallback if providers not available
+                console.log('⚠️ ProjectProvider not available, using basic refresh');
+                this.portfolioWebviewProvider.refreshProjectData();
+                vscode.window.showInformationMessage('Projects refreshed (basic mode)');
+            }
         }
         catch (error) {
             const message = `Error refreshing projects: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
-            console.error('Refresh projects error:', error);
+            console.error('Enhanced refresh error:', error);
         }
     }
     /**
@@ -313,12 +340,12 @@ class WorkspaceCommands {
     async openClaudeCommand() {
         try {
             const portfolioPath = this.configService.getPortfolioPath();
-            const terminal = vscode.window.createTerminal({
-                name: 'Claude Code',
-                cwd: portfolioPath
-            });
-            terminal.show();
-            terminal.sendText('claude');
+            const workspaceRoot = path.join(portfolioPath, '..');
+            const success = await securityService_1.VSCodeSecurityService.executeSecureCommand('claude', 'Claude Code', workspaceRoot);
+            if (!success) {
+                vscode.window.showErrorMessage('Failed to launch Claude Code - command blocked for security');
+                return;
+            }
             vscode.window.showInformationMessage('Claude Code opened in terminal');
         }
         catch (error) {

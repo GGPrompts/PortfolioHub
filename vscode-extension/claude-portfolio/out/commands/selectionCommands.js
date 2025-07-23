@@ -42,6 +42,10 @@ class SelectionCommands {
     constructor(projectProvider) {
         this.projectProvider = projectProvider;
     }
+    // Method to inject project commands provider
+    setProjectCommandsProvider(projectCommandsProvider) {
+        this.projectCommandsProvider = projectCommandsProvider;
+    }
     /**
      * Register all selection commands
      */
@@ -83,17 +87,29 @@ class SelectionCommands {
                 return;
             }
             console.log(`🎯 Toggling selection for project: ${project.id} (${project.title})`);
-            // Toggle the selection
+            // 1. Toggle the checkbox selection (for batch operations)
             this.projectProvider.toggleProjectSelection(project.id);
             // Check current selection status
             const isNowSelected = this.projectProvider.isProjectSelected(project.id);
+            // 2. Handle Project Commands panel selection based on checkbox state
+            if (isNowSelected) {
+                // If project is now checked, select it for Project Commands panel
+                this.projectProvider.setCurrentSelectedProject(project);
+                console.log(`👉 Project ${project.title} selected for individual commands`);
+            }
+            else {
+                // If project is now unchecked, clear it from Project Commands panel if it was selected
+                const currentSelected = this.projectProvider.getCurrentSelectedProject();
+                if (currentSelected && currentSelected.id === project.id) {
+                    this.projectProvider.clearCurrentSelection();
+                    console.log(`👉 Cleared individual commands (${project.title} unchecked)`);
+                }
+            }
             // Show feedback
-            const status = isNowSelected ? 'selected' : 'deselected';
+            const status = isNowSelected ? 'checked' : 'unchecked';
             const icon = isNowSelected ? '✓' : '○';
-            console.log(`${icon} Project ${project.title} ${status}`);
-            // Optionally show a brief notification (uncomment if desired)
-            // vscode.window.showInformationMessage(`${icon} ${project.title} ${status}`, { detail: false });
-            // The project provider will automatically refresh the view
+            console.log(`${icon} Project ${project.title} ${status} for batch operations`);
+            // The project provider will automatically refresh both views
         }
         catch (error) {
             const message = `Error toggling project selection: ${error instanceof Error ? error.message : String(error)}`;

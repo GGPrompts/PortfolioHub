@@ -45,6 +45,8 @@ class ProjectProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.projects = [];
         this.selectedProjects = new Set(); // Track checked projects
+        // Single project selection for commands panel (different from checkbox selection)
+        this.currentSelectedProject = null;
         this.loadProjects();
     }
     refresh() {
@@ -83,6 +85,17 @@ class ProjectProvider {
     }
     getSelectedProjectsData() {
         return this.projects.filter(p => this.selectedProjects.has(p.id));
+    }
+    setCurrentSelectedProject(project) {
+        this.currentSelectedProject = project;
+        this._onDidChangeTreeData.fire();
+    }
+    getCurrentSelectedProject() {
+        return this.currentSelectedProject;
+    }
+    clearCurrentSelection() {
+        this.currentSelectedProject = null;
+        this._onDidChangeTreeData.fire();
     }
     clearSelection() {
         this.selectedProjects.clear();
@@ -176,11 +189,13 @@ class ProjectItem extends vscode.TreeItem {
         this.collapsibleState = collapsibleState;
         this.isSelected = isSelected;
         this.provider = provider;
-        // Create label with checkbox
+        // Create label with checkbox and selection indicator
         const checkbox = isSelected ? '☑️' : '☐';
         const statusIndicator = project.status === 'active' ? '●' : '○';
-        this.label = `${checkbox} ${project.title} [${statusIndicator}]`;
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to select/deselect\nDouble-click to open project`;
+        const isCurrentlySelected = provider?.getCurrentSelectedProject()?.id === project.id;
+        const selectionIndicator = isCurrentlySelected ? '👉 ' : '';
+        this.label = `${selectionIndicator}${checkbox} ${project.title} [${statusIndicator}]`;
+        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to: Toggle checkbox AND select for commands\nRight-click for more options`;
         this.description = `Port ${this.project.localPort}`;
         this.contextValue = isSelected ? 'selectedProject' : 'project';
         // Set icon based on status (smaller since we have checkbox)

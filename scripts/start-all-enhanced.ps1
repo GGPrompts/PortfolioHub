@@ -173,7 +173,9 @@ function Show-ServerStatus {
     Write-Host ""
 }
 
-# Project configurations
+# Project configurations (using external Projects directory)
+$externalProjectsPath = "D:\ClaudeWindows\Projects"
+
 $projects = @{
     "Portfolio" = @{
         Path = (Resolve-Path $rootPath).Path
@@ -186,7 +188,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "3D Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/projects/3d-matrix-cards").Path
+        Path = (Resolve-Path "$externalProjectsPath/3d-matrix-cards-updated").Path
         Port = 3005
         EnvVars = @{
             PORT = "3005"
@@ -195,7 +197,7 @@ $projects = @{
         Command = "npm start"
     }
     "Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/projects/matrix-cards").Path
+        Path = (Resolve-Path "$externalProjectsPath/matrix-cards-react").Path
         Port = 3002
         EnvVars = @{
             PORT = "3002"
@@ -205,7 +207,7 @@ $projects = @{
         Command = "npm start"
     }
     "Sleak Card" = @{
-        Path = (Resolve-Path "$rootPath/projects/sleak-card").Path
+        Path = (Resolve-Path "$externalProjectsPath/sleak-card-updated").Path
         Port = 3003
         EnvVars = @{
             PORT = "3003"
@@ -215,7 +217,7 @@ $projects = @{
         Command = "npm start"
     }
     "GGPrompts" = @{
-        Path = (Resolve-Path "$rootPath/projects/ggprompts").Path
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts").Path
         Port = 9323
         EnvVars = @{
             BROWSER = "none"
@@ -224,7 +226,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "GGPrompts Style Guide" = @{
-        Path = (Resolve-Path "$rootPath/projects/ggprompts-style-guide").Path
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts-style-guide").Path
         Port = 3001
         EnvVars = @{
             BROWSER = "none"
@@ -232,8 +234,18 @@ $projects = @{
         }
         Command = "npm run dev"
     }
+    "GGPrompts Professional" = @{
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts-professional").Path
+        Port = 3006
+        EnvVars = @{
+            PORT = "3006"
+            BROWSER = "none"
+            OPEN_BROWSER = "false"
+        }
+        Command = "npm run dev"
+    }
     "3D File System" = @{
-        Path = (Resolve-Path "$rootPath/projects/3d-file-system").Path
+        Path = (Resolve-Path "$externalProjectsPath/3d-file-system").Path
         Port = 3004
         EnvVars = @{
             PORT = "3004"
@@ -274,6 +286,7 @@ Write-Host "  Matrix Cards:           http://localhost:3002" -ForegroundColor Wh
 Write-Host "  Sleak Card:             http://localhost:3003" -ForegroundColor White
 Write-Host "  GGPrompts:              http://localhost:9323" -ForegroundColor White
 Write-Host "  GGPrompts Style Guide:  http://localhost:3001" -ForegroundColor White
+Write-Host "  GGPrompts Professional: http://localhost:3006" -ForegroundColor White
 Write-Host ""
 Write-Host "Script Options:" -ForegroundColor Yellow
 Write-Host "  -OnlyPortfolio    Start only the portfolio" -ForegroundColor Gray

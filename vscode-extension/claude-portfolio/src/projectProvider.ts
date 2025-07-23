@@ -63,6 +63,23 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
         return this.projects.filter(p => this.selectedProjects.has(p.id));
     }
 
+    // Single project selection for commands panel (different from checkbox selection)
+    private currentSelectedProject: any = null;
+
+    setCurrentSelectedProject(project: any): void {
+        this.currentSelectedProject = project;
+        this._onDidChangeTreeData.fire();
+    }
+
+    getCurrentSelectedProject(): any {
+        return this.currentSelectedProject;
+    }
+
+    clearCurrentSelection(): void {
+        this.currentSelectedProject = null;
+        this._onDidChangeTreeData.fire();
+    }
+
     clearSelection(): void {
         this.selectedProjects.clear();
         this._onDidChangeTreeData.fire();
@@ -163,12 +180,14 @@ export class ProjectItem extends vscode.TreeItem {
     ) {
         super(project.title, collapsibleState);
         
-        // Create label with checkbox
+        // Create label with checkbox and selection indicator
         const checkbox = isSelected ? '☑️' : '☐';
         const statusIndicator = project.status === 'active' ? '●' : '○';
-        this.label = `${checkbox} ${project.title} [${statusIndicator}]`;
+        const isCurrentlySelected = provider?.getCurrentSelectedProject()?.id === project.id;
+        const selectionIndicator = isCurrentlySelected ? '👉 ' : '';
+        this.label = `${selectionIndicator}${checkbox} ${project.title} [${statusIndicator}]`;
         
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to select/deselect\nDouble-click to open project`;
+        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to: Toggle checkbox AND select for commands\nRight-click for more options`;
         this.description = `Port ${this.project.localPort}`;
         this.contextValue = isSelected ? 'selectedProject' : 'project';
         

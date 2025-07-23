@@ -6,10 +6,17 @@ import { ProjectCommandsProvider } from '../projectCommandsProvider';
  * Individual project operation commands
  */
 export class ProjectCommands {
+    private projectProvider: any; // Will be injected
+
     constructor(
         private projectService: ProjectService,
         private projectCommandsProvider: ProjectCommandsProvider
     ) {}
+
+    // Method to inject project provider after construction
+    setProjectProvider(projectProvider: any): void {
+        this.projectProvider = projectProvider;
+    }
 
     /**
      * Register all project commands
@@ -165,9 +172,17 @@ export class ProjectCommands {
     private async selectProjectCommand(treeItem: any): Promise<void> {
         try {
             const project = treeItem?.project || treeItem;
-            this.projectCommandsProvider.setSelectedProject(project);
+            
+            // Use the project provider's method to set current selection
+            if (this.projectProvider) {
+                this.projectProvider.setCurrentSelectedProject(project);
+            } else {
+                // Fallback to direct method
+                this.projectCommandsProvider.setSelectedProject(project);
+            }
+            
             vscode.window.showInformationMessage(`📋 Showing commands for ${project.title}`);
-            console.log(`🎯 Right-click selected project: ${project.title} for commands panel`);
+            console.log(`🎯 Selected project: ${project.title} for commands panel`);
         } catch (error) {
             const message = `Error selecting project: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);

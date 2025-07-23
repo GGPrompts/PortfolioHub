@@ -16,7 +16,8 @@ export class VSCodeSecurityService {
     ]);
     
     private static readonly ALLOWED_NPM_SCRIPTS = new Set([
-        'dev', 'start', 'build', 'test', 'test:coverage', 'install', 'run', 'compile', 'watch'
+        'dev', 'start', 'build', 'test', 'test:coverage', 'install', 'run', 'compile', 'watch',
+        'lint', 'type-check', 'format', 'clean', 'preview', 'serve'
     ]);
     
     private static readonly DANGEROUS_PATTERNS = [

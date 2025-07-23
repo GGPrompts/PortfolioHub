@@ -43,6 +43,10 @@ class ProjectCommands {
         this.projectService = projectService;
         this.projectCommandsProvider = projectCommandsProvider;
     }
+    // Method to inject project provider after construction
+    setProjectProvider(projectProvider) {
+        this.projectProvider = projectProvider;
+    }
     /**
      * Register all project commands
      */
@@ -186,9 +190,16 @@ class ProjectCommands {
     async selectProjectCommand(treeItem) {
         try {
             const project = treeItem?.project || treeItem;
-            this.projectCommandsProvider.setSelectedProject(project);
+            // Use the project provider's method to set current selection
+            if (this.projectProvider) {
+                this.projectProvider.setCurrentSelectedProject(project);
+            }
+            else {
+                // Fallback to direct method
+                this.projectCommandsProvider.setSelectedProject(project);
+            }
             vscode.window.showInformationMessage(`📋 Showing commands for ${project.title}`);
-            console.log(`🎯 Right-click selected project: ${project.title} for commands panel`);
+            console.log(`🎯 Selected project: ${project.title} for commands panel`);
         }
         catch (error) {
             const message = `Error selecting project: ${error instanceof Error ? error.message : String(error)}`;

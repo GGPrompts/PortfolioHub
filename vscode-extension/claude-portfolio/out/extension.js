@@ -144,8 +144,12 @@ function registerProviders(context, providers) {
  */
 function createCommandHandlers(services, providers, context) {
     const projectCommands = new projectCommands_1.ProjectCommands(services.projectService, providers.projectCommandsProvider);
+    // Inject project provider for selection management
+    projectCommands.setProjectProvider(providers.projectProvider);
     const batchCommands = new batchCommands_1.BatchCommands(services.projectService, services.configService, providers.projectProvider);
     const selectionCommands = new selectionCommands_1.SelectionCommands(providers.projectProvider);
+    // Inject project commands provider for unified behavior
+    selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
     const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, providers.portfolioWebviewProvider, context);
     return {
         projectCommands,
@@ -167,14 +171,48 @@ function registerCommands(context, commands) {
  * Set up cross-provider communication
  */
 function setupProviderCommunication(providers) {
-    // When project provider refreshes, also refresh webview data
+    // When project provider refreshes, also refresh webview data AND multi-project commands
     const originalRefresh = providers.projectProvider.refresh.bind(providers.projectProvider);
     providers.projectProvider.refresh = () => {
         originalRefresh();
         // Trigger webview refresh after a short delay to allow project status to update
         setTimeout(() => {
             providers.portfolioWebviewProvider.refreshProjectData();
+            providers.multiProjectCommandsProvider.refresh();
         }, 1000);
+    };
+    // Also hook into project selection changes to update multi-project commands immediately
+    const originalToggleSelection = providers.projectProvider.toggleProjectSelection.bind(providers.projectProvider);
+    providers.projectProvider.toggleProjectSelection = (projectId) => {
+        originalToggleSelection(projectId);
+        // Immediately refresh multi-project commands when selection changes
+        providers.multiProjectCommandsProvider.refresh();
+    };
+    const originalClearSelection = providers.projectProvider.clearSelection.bind(providers.projectProvider);
+    providers.projectProvider.clearSelection = () => {
+        originalClearSelection();
+        // Immediately refresh multi-project commands when selection is cleared
+        providers.multiProjectCommandsProvider.refresh();
+    };
+    const originalSelectAll = providers.projectProvider.selectAll.bind(providers.projectProvider);
+    providers.projectProvider.selectAll = () => {
+        originalSelectAll();
+        // Immediately refresh multi-project commands when all are selected
+        providers.multiProjectCommandsProvider.refresh();
+    };
+    // Hook into single project selection for commands panel
+    const originalSetCurrentSelectedProject = providers.projectProvider.setCurrentSelectedProject.bind(providers.projectProvider);
+    providers.projectProvider.setCurrentSelectedProject = (project) => {
+        originalSetCurrentSelectedProject(project);
+        // Update project commands panel when a single project is selected
+        providers.projectCommandsProvider.setSelectedProject(project);
+    };
+    // Hook into clearing project selection for commands panel
+    const originalClearCurrentSelection = providers.projectProvider.clearCurrentSelection.bind(providers.projectProvider);
+    providers.projectProvider.clearCurrentSelection = () => {
+        originalClearCurrentSelection();
+        // Clear project commands panel when no project is selected
+        providers.projectCommandsProvider.clearSelection();
     };
 }
 /**

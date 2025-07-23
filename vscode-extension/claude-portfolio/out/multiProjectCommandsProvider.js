@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BatchCommandItem = exports.MultiProjectCommandsProvider = void 0;
 const vscode = __importStar(require("vscode"));
-const portDetectionService_1 = require("./portDetectionService");
+const portDetectionService_1 = require("./services/portDetectionService");
 class MultiProjectCommandsProvider {
     constructor(projectProvider) {
         this.projectProvider = projectProvider;

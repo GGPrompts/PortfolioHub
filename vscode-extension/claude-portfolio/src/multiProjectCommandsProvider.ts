@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectProvider } from './projectProvider';
-import { PortDetectionService, ProjectStatusInfo } from './portDetectionService';
+import { PortDetectionService, ProjectStatusInfo } from './services/portDetectionService';
 
 interface BatchCommand {
     label: string;

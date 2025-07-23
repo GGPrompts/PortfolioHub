@@ -248,6 +248,59 @@ body {
   box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
 }
 
+/* VS Code Server Button */
+.refresh-icon-btn.vscode-server-btn {
+  background: rgba(0, 123, 255, 0.1);
+  border-color: rgba(0, 123, 255, 0.3);
+  color: #007bff;
+}
+
+.refresh-icon-btn.vscode-server-btn:hover {
+  background: rgba(0, 123, 255, 0.2);
+  border-color: rgba(0, 123, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* VS Code Server Status Indicator */
+.vscode-server-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 6px;
+  color: #007bff;
+  font-size: 14px;
+  height: 36px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.running {
+  background: #00ff88;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  }
+}
+
 /* Eye toggle button - same styling as refresh but without spin animation */
 .eye-toggle-btn {
   background: rgba(0, 255, 136, 0.1);

@@ -1,8 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { usePortfolioStore } from './store/portfolioStore'
+import React, { useCallback, useEffect, useState } from 'react'
+import './App.css'
+import EnhancedProjectViewer from './components/EnhancedProjectViewer'
+import GitUpdateButton from './components/GitUpdateButton'
+import PortfolioSidebar from './components/PortfolioSidebar'
+import ProjectGrid from './components/ProjectGrid'
+import ProjectStatusDashboard from './components/ProjectStatusDashboard'
+import ProjectViewer from './components/ProjectViewer'
+import { RightSidebar } from './components/RightSidebar'
+import ServerToolbar from './components/ServerToolbar'
+import SvgIcon from './components/SvgIcon'
 import { useProjectData } from './hooks/useProjectData'
-import { setPortCheckingEnabled } from './utils/portManager'
+import { usePortfolioStore } from './store/portfolioStore'
+import { getProjectPort, setPortCheckingEnabled } from './utils/portManager'
+import { copyToClipboard, executeCommand, isVSCodeEnvironment, showNotification } from './utils/vsCodeIntegration'
 
 // TypeScript declaration for VS Code integration
 declare global {
@@ -15,17 +26,6 @@ declare global {
     }
   }
 }
-import PortfolioSidebar from './components/PortfolioSidebar'
-import { RightSidebar } from './components/RightSidebar'
-import ProjectGrid from './components/ProjectGrid'
-import ProjectViewer from './components/ProjectViewer'
-import EnhancedProjectViewer from './components/EnhancedProjectViewer'
-import ProjectStatusDashboard from './components/ProjectStatusDashboard'
-import GitUpdateButton from './components/GitUpdateButton'
-import SvgIcon from './components/SvgIcon'
-import ThreeDEye from './components/ThreeDEye'
-import { getRunningProjects, getProjectPort } from './utils/portManager'
-import './App.css'
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -65,6 +65,9 @@ function PortfolioApp() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [livePreviewsEnabled, setLivePreviewsEnabled] = useState(true)
   const [portCheckingDisabled, setPortCheckingDisabled] = useState(false)
+  const [vsCodeServerStatus, setVsCodeServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking')
+  const [runningStatus, setRunningStatus] = useState<{[key: string]: boolean}>({})
+  const [projectPorts, setProjectPorts] = useState<{[key: string]: number | null}>({})
 
   // Sync React Query projects with portfolio store
   useEffect(() => {
@@ -78,6 +81,22 @@ function PortfolioApp() {
   useEffect(() => {
     setPortCheckingEnabled(!portCheckingDisabled)
   }, [portCheckingDisabled])
+
+  // Check VS Code Server status
+  useEffect(() => {
+    const checkVSCodeServerStatus = async () => {
+      try {
+        const response = await fetch('http://localhost:8080', { method: 'HEAD' });
+        setVsCodeServerStatus('running');
+      } catch {
+        setVsCodeServerStatus('stopped');
+      }
+    };
+    
+    checkVSCodeServerStatus();
+    const interval = setInterval(checkVSCodeServerStatus, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, [])
 
   // Handle window resize for responsive detection
   useEffect(() => {
@@ -191,6 +210,41 @@ function PortfolioApp() {
     setProjectPorts(newPortStatus)
   }
 
+  const startVSCodeServer = async () => {
+    // Security-compliant VS Code Server startup
+    const commands = [
+      'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
+      'Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"',
+      'code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms'
+    ];
+    
+    if (isVSCodeEnvironment()) {
+      // Execute commands one by one for security compliance
+      for (const command of commands) {
+        try {
+          await executeCommand(command, 'VS Code Server Setup');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error('Failed to execute command:', command, error);
+          showNotification(`Failed to execute: ${command}`, 'error');
+          return;
+        }
+      }
+      showNotification('VS Code Server starting...');
+      // Update status after a delay
+      setTimeout(() => setVsCodeServerStatus('checking'), 2000);
+    } else {
+      const fullCommand = commands.join('\n');
+      try {
+        await copyToClipboard(fullCommand);
+        alert(`VS Code Server commands copied!\n\n💡 Instructions:\n1. Open PowerShell as Administrator\n2. Paste and run the commands\n3. VS Code Server will start on http://localhost:8080`);
+      } catch (error) {
+        console.error('Failed to copy commands:', error);
+        alert(`VS Code Server commands:\n\n${fullCommand}`);
+      }
+    }
+  }
+
   // Smart responsive layout strategy
   const getLayoutStrategy = () => {
     if (isMobile) {
@@ -247,6 +301,22 @@ function PortfolioApp() {
                   <p>A collection of creative coding experiments and applications</p>
                 </div>
                 <div className="header-actions">
+                  {/* VS Code Server Control */}
+                  {vsCodeServerStatus === 'stopped' && (
+                    <button 
+                      className="refresh-icon-btn vscode-server-btn"
+                      onClick={startVSCodeServer}
+                      title="Start VS Code Server (port 8080)"
+                    >
+                      <SvgIcon name="code" size={16} />
+                    </button>
+                  )}
+                  {vsCodeServerStatus === 'running' && (
+                    <div className="vscode-server-status" title="VS Code Server running on port 8080">
+                      <SvgIcon name="code" size={16} />
+                      <span className="status-dot running"></span>
+                    </div>
+                  )}
                   {/* Unified preview/port toggle - consolidates live preview and port checking */}
                   <button 
                     className={`refresh-icon-btn ${!livePreviewsEnabled ? 'disabled' : ''}`}
@@ -312,6 +382,7 @@ function PortfolioApp() {
                 </div>
               </div>
             </header>
+            <ServerToolbar globalViewMode={globalViewMode} />
             <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
           </>
         ) : selectedProject ? (

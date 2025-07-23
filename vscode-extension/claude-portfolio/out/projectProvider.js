@@ -44,6 +44,7 @@ class ProjectProvider {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.projects = [];
+        this.selectedProjects = new Set(); // Track checked projects
         this.loadProjects();
     }
     refresh() {
@@ -56,13 +57,40 @@ class ProjectProvider {
     }
     getChildren(element) {
         if (!element) {
-            // Return root level projects
-            return Promise.resolve(this.projects.map(project => new ProjectItem(project, vscode.TreeItemCollapsibleState.None)));
+            // Return root level projects with checkbox state
+            return Promise.resolve(this.projects.map(project => new ProjectItem(project, vscode.TreeItemCollapsibleState.None, this.isProjectSelected(project.id), this)));
         }
         return Promise.resolve([]);
     }
     async getProjects() {
         return this.projects;
+    }
+    // Checkbox selection management
+    toggleProjectSelection(projectId) {
+        if (this.selectedProjects.has(projectId)) {
+            this.selectedProjects.delete(projectId);
+        }
+        else {
+            this.selectedProjects.add(projectId);
+        }
+        this._onDidChangeTreeData.fire();
+    }
+    isProjectSelected(projectId) {
+        return this.selectedProjects.has(projectId);
+    }
+    getSelectedProjects() {
+        return Array.from(this.selectedProjects);
+    }
+    getSelectedProjectsData() {
+        return this.projects.filter(p => this.selectedProjects.has(p.id));
+    }
+    clearSelection() {
+        this.selectedProjects.clear();
+        this._onDidChangeTreeData.fire();
+    }
+    selectAll() {
+        this.projects.forEach(p => this.selectedProjects.add(p.id));
+        this._onDidChangeTreeData.fire();
     }
     async loadProjects() {
         const manifestPath = path.join(this.portfolioPath, 'projects', 'manifest.json');
@@ -99,48 +127,74 @@ class ProjectProvider {
     }
     checkPortStatus(port) {
         return new Promise((resolve) => {
-            const req = http.request({
-                hostname: 'localhost',
-                port: port,
-                path: '/favicon.ico',
-                method: 'GET',
-                timeout: 2000
-            }, (res) => {
-                // Accept any response (even 404) as indication server is running
-                resolve(res.statusCode !== undefined);
-            });
-            req.on('error', () => {
-                resolve(false);
-            });
-            req.on('timeout', () => {
-                req.destroy();
-                resolve(false);
-            });
-            req.end();
+            // Try root path first, then favicon.ico as fallback
+            const tryPath = (path) => {
+                const req = http.request({
+                    hostname: 'localhost',
+                    port: port,
+                    path: path,
+                    method: 'GET',
+                    timeout: 3000
+                }, (res) => {
+                    // Accept any response (even 404) as indication server is running
+                    console.log(`🔍 Port ${port}${path} responded with status ${res.statusCode} - SERVER ACTIVE`);
+                    resolve(true);
+                });
+                req.on('error', (error) => {
+                    if (path === '/') {
+                        // If root fails, try favicon.ico
+                        console.log(`🔍 Port ${port}/ failed (${error.code || error.message}), trying /favicon.ico...`);
+                        tryPath('/favicon.ico');
+                    }
+                    else {
+                        console.log(`🔍 Port ${port} error: ${error.code || error.message} - SERVER INACTIVE`);
+                        resolve(false);
+                    }
+                });
+                req.on('timeout', () => {
+                    console.log(`🔍 Port ${port}${path} timeout - trying next path or resolving false`);
+                    req.destroy();
+                    if (path === '/') {
+                        tryPath('/favicon.ico');
+                    }
+                    else {
+                        resolve(false);
+                    }
+                });
+                req.end();
+            };
+            // Start with root path
+            tryPath('/');
         });
     }
 }
 exports.ProjectProvider = ProjectProvider;
 class ProjectItem extends vscode.TreeItem {
-    constructor(project, collapsibleState) {
+    constructor(project, collapsibleState, isSelected = false, provider) {
         super(project.title, collapsibleState);
         this.project = project;
         this.collapsibleState = collapsibleState;
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}`;
+        this.isSelected = isSelected;
+        this.provider = provider;
+        // Create label with checkbox
+        const checkbox = isSelected ? '☑️' : '☐';
+        const statusIndicator = project.status === 'active' ? '●' : '○';
+        this.label = `${checkbox} ${project.title} [${statusIndicator}]`;
+        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to select/deselect\nDouble-click to open project`;
         this.description = `Port ${this.project.localPort}`;
-        this.contextValue = 'project';
-        // Set icon based on status
+        this.contextValue = isSelected ? 'selectedProject' : 'project';
+        // Set icon based on status (smaller since we have checkbox)
         if (this.project.status === 'active') {
             this.iconPath = new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('charts.green'));
         }
         else {
             this.iconPath = new vscode.ThemeIcon('circle-outline');
         }
-        // Make clickable
+        // Single click toggles checkbox, double-click opens project
         this.command = {
-            command: 'claude-portfolio.openProject',
-            title: 'Open Project',
-            arguments: [this.project]
+            command: 'claude-portfolio.toggleProjectSelection',
+            title: 'Toggle Project Selection',
+            arguments: [this] // Pass the TreeItem itself instead of just the project
         };
     }
 }

@@ -3,11 +3,41 @@
 ## Overview
 
 This VS Code extension integrates your Claude Portfolio directly into VS Code, providing:
+
 - 🗂️ **Project Browser**: See all your projects in the sidebar
 - 📊 **Dashboard**: Beautiful webview dashboard with project stats
 - ⚡ **Quick Commands**: Fast access to common tasks
 - 📚 **Cheat Sheet**: Development commands at your fingertips
 - 🚀 **One-Click Actions**: Open, run, and browse projects instantly
+- 🛡️ **Secure Execution**: All commands validated through VSCodeSecurityService
+- 🚀 **ServerToolbar**: Start development servers with one click
+
+## Latest Features (July 2025)
+
+### 🚀 ServerToolbar Integration
+
+The extension now includes a comprehensive server management toolbar:
+
+- **Start All Servers**: Launch both portfolio and VS Code servers simultaneously
+- **Portfolio Server**: Start portfolio dev server using VS Code tasks
+- **VS Code Server**: Start VS Code web server with Simple Browser integration
+- **Real-time Feedback**: Loading indicators and status messages
+- **Secure Execution**: All commands use security validation
+
+### 🔒 Complete Security Overhaul
+
+- **Command Injection Protection**: All terminal commands validated
+- **Path Sanitization**: Project paths normalized and secured
+- **Workspace Trust**: Commands require trusted workspace
+- **Command Whitelisting**: Only approved commands can execute
+- **Individual Command Execution**: Multi-line commands broken into secure parts
+
+### 🎯 Enhanced Live Previews
+
+- **Simple Browser Integration**: Uses VS Code's Simple Browser instead of problematic iframes
+- **Automatic Launch**: Servers automatically open in Simple Browser after startup
+- **3D Project Support**: Smart browser routing for pointer lock compatibility
+- **Background Process Management**: Proper handling of long-running servers
 
 ## Benefits Over iFrame Approach
 

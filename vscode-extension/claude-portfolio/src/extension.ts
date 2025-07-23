@@ -1,13 +1,149 @@
 import * as vscode from 'vscode';
 import { ProjectProvider } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
-import { CommandsProvider } from './commandsProvider';
-import { CheatSheetProvider } from './cheatSheetProvider';
+import { ProjectCommandsProvider } from './projectCommandsProvider';
+import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 import { PortfolioWebviewProvider } from './portfolioWebviewProvider';
 import { PortfolioTaskProvider } from './taskProvider';
 import { VSCodeSecurityService } from './securityService';
+import { PortDetectionService } from './portDetectionService';
 import * as path from 'path';
 import * as fs from 'fs';
+
+// Utility function to open project in VS Code integrated browser
+async function openProjectInVSCodeBrowser(project: any, portToUse: number): Promise<void> {
+    const url = `http://localhost:${portToUse}`;
+    
+    // Check if this is a 3D project that needs external browser for pointer lock
+    const requires3D = project.requires3D === true || 
+                     project.id?.includes('3d') || 
+                     project.title?.toLowerCase().includes('3d');
+    
+    if (requires3D) {
+        console.log(`🎮 Opening 3D project ${project.title} in external browser for pointer lock support`);
+        await vscode.env.openExternal(vscode.Uri.parse(url));
+        vscode.window.showInformationMessage(`Opened ${project.title} in external browser (3D/pointer lock support)`);
+        return;
+    }
+
+    try {
+        // Create webview panel for integrated browser experience
+        console.log(`🌐 Opening ${project.title} in VS Code integrated browser: ${url}`);
+        
+        const panel = vscode.window.createWebviewPanel(
+            'projectPreview',
+            `${project.title} - Port ${portToUse}`,
+            vscode.ViewColumn.Beside,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: []
+            }
+        );
+
+        // Set the webview HTML to load the project
+        panel.webview.html = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${project.title}</title>
+                <style>
+                    body, html {
+                        margin: 0;
+                        padding: 0;
+                        width: 100%;
+                        height: 100vh;
+                        overflow: hidden;
+                        background: #1e1e1e;
+                    }
+                    iframe {
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                    }
+                    .loading {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        color: #cccccc;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+                    .error {
+                        padding: 20px;
+                        text-align: center;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        color: #f48771;
+                        background: #1e1e1e;
+                    }
+                    .spinner {
+                        width: 20px;
+                        height: 20px;
+                        border: 2px solid #555;
+                        border-top: 2px solid #007acc;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Loading ${project.title}...</div>
+                    <small>Port ${portToUse}</small>
+                </div>
+                <iframe 
+                    id="projectFrame" 
+                    src="${url}" 
+                    title="${project.title}"
+                    allow="fullscreen; autoplay; camera; microphone; geolocation"
+                    style="display: none;"
+                    onload="document.getElementById('loading').style.display='none'; this.style.display='block';"
+                    onerror="showError('Failed to load ${project.title}');"
+                ></iframe>
+                <script>
+                    function showError(message) {
+                        const loading = document.getElementById('loading');
+                        loading.innerHTML = '<div class="error">' + message + '<br><small>Make sure the project is running on port ${portToUse}</small></div>';
+                    }
+                    
+                    // Handle iframe load timeout
+                    setTimeout(() => {
+                        const frame = document.getElementById('projectFrame');
+                        if (frame.style.display === 'none') {
+                            showError('Project may not be running on port ${portToUse}');
+                        }
+                    }, 8000);
+                </script>
+            </body>
+            </html>
+        `;
+        
+        vscode.window.showInformationMessage(`✅ Opened ${project.title} in VS Code integrated browser (port ${portToUse})`);
+        console.log(`✅ VS Code integrated browser opened successfully for ${project.title}`);
+        
+    } catch (webviewError) {
+        console.log('❌ VS Code webview failed, trying Simple Browser API:', webviewError);
+        
+        try {
+            // Try the Simple Browser API as fallback
+            await vscode.commands.executeCommand('simpleBrowser.show', url);
+            vscode.window.showInformationMessage(`✅ Opened ${project.title} in VS Code Simple Browser`);
+        } catch (simpleBrowserError) {
+            console.log('❌ Simple Browser also failed, using external browser:', simpleBrowserError);
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            vscode.window.showWarningMessage(`Opened ${project.title} in external browser (VS Code browser unavailable)`);
+        }
+    }
+}
 
 // Helper function to get project path consistently - WITH SECURITY VALIDATION
 function getProjectPath(portfolioPath: string, project: any): string {
@@ -66,15 +202,15 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Create providers
         const projectProvider = new ProjectProvider(portfolioPath);
-        const commandsProvider = new CommandsProvider();
-        const cheatSheetProvider = new CheatSheetProvider();
+        const projectCommandsProvider = new ProjectCommandsProvider();
+        const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
         const portfolioWebviewProvider = new PortfolioWebviewProvider(context.extensionUri, portfolioPath);
         const taskProvider = new PortfolioTaskProvider(portfolioPath);
 
         // Register tree data providers
         vscode.window.registerTreeDataProvider('claudeProjects', projectProvider);
-        vscode.window.registerTreeDataProvider('claudeCommands', commandsProvider);
-        vscode.window.registerTreeDataProvider('claudeCheatSheet', cheatSheetProvider);
+        vscode.window.registerTreeDataProvider('claudeProjectCommands', projectCommandsProvider);
+        vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', multiProjectCommandsProvider);
         
         // Register task provider
         const taskProviderDisposable = vscode.tasks.registerTaskProvider(
@@ -110,6 +246,10 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 // Extract project data from tree item
                 const project = treeItem?.project || treeItem;
+                
+                // Update project commands panel to show commands for this project
+                projectCommandsProvider.setSelectedProject(project);
+                
                 const projectPath = getProjectPath(portfolioPath, project);
                 if (fs.existsSync(projectPath)) {
                     // Add folder to workspace
@@ -125,6 +265,18 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             } catch (error) {
                 vscode.window.showErrorMessage(`Error opening project: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        // Add command to select project for commands panel (triggered by right-click menu)
+        const selectProjectCommand = vscode.commands.registerCommand('claude-portfolio.selectProject', (treeItem) => {
+            try {
+                const project = treeItem?.project || treeItem;
+                projectCommandsProvider.setSelectedProject(project);
+                vscode.window.showInformationMessage(`📋 Showing commands for ${project.title}`);
+                console.log(`🎯 Right-click selected project: ${project.title} for commands panel`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error selecting project: ${error instanceof Error ? error.message : String(error)}`);
             }
         });
 
@@ -191,62 +343,54 @@ export function activate(context: vscode.ExtensionContext) {
                 // Extract project data from tree item
                 const project = treeItem?.project || treeItem;
                 
-                // Get the actual running port from our port detection system
-                let portToUse = project?.localPort;
+                if (!project || !project.id) {
+                    vscode.window.showErrorMessage('No project information found');
+                    return;
+                }
+                
+                console.log(`🌐 Checking status for ${project.title} before opening browser...`);
+                
+                // Use the unified port detection service for consistency
+                const portDetectionService = PortDetectionService.getInstance();
+                const projectStatuses = await portDetectionService.checkProjectStatuses([project]);
+                const projectStatus = projectStatuses.find(status => status.projectId === project.id);
+                
+                if (!projectStatus) {
+                    vscode.window.showErrorMessage(`Unable to determine status for ${project.title}`);
+                    return;
+                }
+                
+                console.log(`📊 Project ${project.id} status: ${projectStatus.status}`, {
+                    ports: projectStatus.ports.map(p => `${p.port}:${p.isRunning ? 'running' : 'stopped'}`),
+                    warnings: projectStatus.warnings
+                });
+                
+                // Find the best port to use
+                let portToUse = project.localPort;
                 let isRunning = false;
                 
-                if (project?.id) {
-                    // Refresh project data to get latest status
-                    await portfolioWebviewProvider.refreshProjectData();
-                    
-                    // Get updated project data with actual ports
-                    const projectData = portfolioWebviewProvider.getCachedProjectData();
-                    const updatedProject = projectData?.projects?.find((p: any) => p.id === project.id);
-                    
-                    if (updatedProject) {
-                        portToUse = updatedProject.actualPort || updatedProject.localPort || project.localPort;
-                        isRunning = updatedProject.status === 'active';
-                        
-                        console.log(`🌐 Opening browser for ${project.id}:`, {
-                            defaultPort: project.localPort,
-                            actualPort: updatedProject.actualPort,
-                            finalPort: portToUse,
-                            isRunning
-                        });
+                if (projectStatus.status === 'active' || projectStatus.status === 'multiple') {
+                    // Find first running port
+                    const runningPort = projectStatus.ports.find(p => p.isRunning);
+                    if (runningPort) {
+                        portToUse = runningPort.port;
+                        isRunning = true;
+                    }
+                }
+                
+                // Show warnings if any exist
+                if (projectStatus.warnings.length > 0) {
+                    console.log(`⚠️ Warnings for ${project.id}:`, projectStatus.warnings);
+                    if (projectStatus.status === 'multiple') {
+                        const runningPorts = projectStatus.ports.filter(p => p.isRunning).map(p => p.port);
+                        vscode.window.showWarningMessage(`${project.title} has multiple instances running on ports: ${runningPorts.join(', ')}. Opening port ${portToUse}.`);
                     }
                 }
                 
                 if (portToUse && isRunning) {
-                    const url = `http://localhost:${portToUse}`;
-                    
-                    try {
-                        // Try VS Code Simple Browser with better configuration for React apps
-                        console.log(`🌐 Opening ${project.title} in VS Code Simple Browser: ${url}`);
-                        
-                        await vscode.commands.executeCommand('simpleBrowser.show', url, {
-                            viewColumn: vscode.ViewColumn.Beside,
-                            preserveFocus: false,
-                            // Additional options that might help with React apps
-                            enableScripts: true,
-                            enableCommands: false,
-                            allowMultipleInstances: true
-                        });
-                        
-                        vscode.window.showInformationMessage(`Opened ${project.title} in VS Code browser (port ${portToUse})`);
-                        console.log(`✅ VS Code Simple Browser opened for ${project.title}`);
-                        
-                    } catch (simpleBrowserError) {
-                        console.log('❌ VS Code Simple Browser failed:', simpleBrowserError);
-                        
-                        // Fallback to external browser
-                        console.log('🔄 Falling back to external Chrome');
-                        await vscode.env.openExternal(vscode.Uri.parse(url));
-                        vscode.window.showInformationMessage(`Opened ${project.title} in external Chrome (Simple Browser failed)`);
-                    }
-                } else if (!isRunning) {
-                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
+                    await openProjectInVSCodeBrowser(project, portToUse);
                 } else {
-                    vscode.window.showErrorMessage('No port information found for this project');
+                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
                 }
             } catch (error) {
                 console.error('Error in openProjectInBrowser:', error);
@@ -259,21 +403,33 @@ export function activate(context: vscode.ExtensionContext) {
                 // Extract project data from tree item
                 const project = treeItem?.project || treeItem;
                 
-                // Get the actual running port from our port detection system
-                let portToUse = project?.localPort;
+                if (!project || !project.id) {
+                    vscode.window.showErrorMessage('No project information found');
+                    return;
+                }
+                
+                console.log(`🌍 Checking status for ${project.title} before opening external browser...`);
+                
+                // Use the unified port detection service for consistency
+                const portDetectionService = PortDetectionService.getInstance();
+                const projectStatuses = await portDetectionService.checkProjectStatuses([project]);
+                const projectStatus = projectStatuses.find(status => status.projectId === project.id);
+                
+                if (!projectStatus) {
+                    vscode.window.showErrorMessage(`Unable to determine status for ${project.title}`);
+                    return;
+                }
+                
+                // Find the best port to use
+                let portToUse = project.localPort;
                 let isRunning = false;
                 
-                if (project?.id) {
-                    // Refresh project data to get latest status
-                    await portfolioWebviewProvider.refreshProjectData();
-                    
-                    // Get updated project data with actual ports
-                    const projectData = portfolioWebviewProvider.getCachedProjectData();
-                    const updatedProject = projectData?.projects?.find((p: any) => p.id === project.id);
-                    
-                    if (updatedProject) {
-                        portToUse = updatedProject.actualPort || updatedProject.localPort || project.localPort;
-                        isRunning = updatedProject.status === 'active';
+                if (projectStatus.status === 'active' || projectStatus.status === 'multiple') {
+                    // Find first running port
+                    const runningPort = projectStatus.ports.find(p => p.isRunning);
+                    if (runningPort) {
+                        portToUse = runningPort.port;
+                        isRunning = true;
                     }
                 }
                 
@@ -282,12 +438,11 @@ export function activate(context: vscode.ExtensionContext) {
                     // Use external browser
                     vscode.env.openExternal(vscode.Uri.parse(url));
                     vscode.window.showInformationMessage(`Opened ${project.title} in external browser (port ${portToUse})`);
-                } else if (!isRunning) {
-                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
                 } else {
-                    vscode.window.showErrorMessage('No port information found for this project');
+                    vscode.window.showWarningMessage(`${project.title} is not currently running. Please start the project first.`);
                 }
             } catch (error) {
+                console.error('Error in openProjectInExternalBrowser:', error);
                 vscode.window.showErrorMessage(`Error opening external browser: ${error instanceof Error ? error.message : String(error)}`);
             }
         });
@@ -487,6 +642,218 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
         // AI Assistant Dropdown Command
+        // Add generic project command execution
+        const projectCommandCommand = vscode.commands.registerCommand('claude-portfolio.projectCommand', async (project, commandType) => {
+            try {
+                if (!project) {
+                    vscode.window.showErrorMessage('No project provided for command');
+                    return;
+                }
+
+                const projectPath = getProjectPath(portfolioPath, project);
+                const workspaceRoot = path.join(portfolioPath, '..'); // D:\ClaudeWindows
+
+                let command = '';
+                let terminalName = '';
+
+                // Determine command based on type (we'll expand this)
+                switch (commandType) {
+                    case 'npm install':
+                        command = 'npm install';
+                        terminalName = `${project.title} - Install`;
+                        break;
+                    case 'npm run build':
+                        command = 'npm run build';
+                        terminalName = `${project.title} - Build`;
+                        break;
+                    case 'npm test':
+                        command = 'npm test';
+                        terminalName = `${project.title} - Test`;
+                        break;
+                    case 'git status':
+                        command = 'git status';
+                        terminalName = `${project.title} - Git Status`;
+                        break;
+                    case 'git pull':
+                        command = 'git pull';
+                        terminalName = `${project.title} - Git Pull`;
+                        break;
+                    default:
+                        vscode.window.showErrorMessage(`Unknown command type: ${commandType}`);
+                        return;
+                }
+
+                const success = await VSCodeSecurityService.executeProjectCommand(
+                    projectPath,
+                    command,
+                    terminalName,
+                    workspaceRoot
+                );
+
+                if (!success) {
+                    vscode.window.showErrorMessage(`Failed to execute secure command: ${command}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error executing project command: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        // Add stop project command
+        // Checkbox selection commands
+        const toggleProjectSelectionCommand = vscode.commands.registerCommand('claude-portfolio.toggleProjectSelection', async (...args) => {
+            try {
+                console.log('🔍 toggleProjectSelection called with args:', args);
+                
+                // Handle different argument formats
+                let project = null;
+                
+                if (args.length > 0) {
+                    const firstArg = args[0];
+                    
+                    // Case 1: TreeItem with project property
+                    if (firstArg && typeof firstArg === 'object' && firstArg.project) {
+                        project = firstArg.project;
+                        console.log('📋 Using project from TreeItem.project:', project.id);
+                    }
+                    // Case 2: Direct project object
+                    else if (firstArg && typeof firstArg === 'object' && firstArg.id) {
+                        project = firstArg;
+                        console.log('📋 Using direct project object:', project.id);
+                    }
+                    // Case 3: Project ID string
+                    else if (typeof firstArg === 'string') {
+                        // Find project by ID
+                        const projects = await projectProvider.getProjects();
+                        project = projects.find(p => p.id === firstArg);
+                        console.log('📋 Found project by ID:', firstArg, project ? 'found' : 'not found');
+                    }
+                }
+                
+                if (!project || !project.id) {
+                    console.error('❌ No valid project found in arguments:', args);
+                    vscode.window.showErrorMessage('Unable to identify project for selection toggle');
+                    return;
+                }
+                
+                // Toggle checkbox selection
+                projectProvider.toggleProjectSelection(project.id);
+                await multiProjectCommandsProvider.refresh();
+                
+                // ALSO update the single project commands panel to show commands for this project
+                projectCommandsProvider.setSelectedProject(project);
+                
+                console.log(`🎯 Successfully selected project: ${project.title} for commands panel`);
+            } catch (error) {
+                console.error('❌ Error in toggleProjectSelection:', error, 'Args:', args);
+                vscode.window.showErrorMessage(`Error toggling selection: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        const clearProjectSelectionCommand = vscode.commands.registerCommand('claude-portfolio.clearProjectSelection', async () => {
+            projectProvider.clearSelection();
+            await multiProjectCommandsProvider.refresh();
+            // Keep the last selected project in the single project commands panel
+            vscode.window.showInformationMessage('Cleared project selection');
+        });
+
+        const selectAllProjectsCommand = vscode.commands.registerCommand('claude-portfolio.selectAllProjects', async () => {
+            projectProvider.selectAll();
+            await multiProjectCommandsProvider.refresh();
+            const count = projectProvider.getSelectedProjects().length;
+            vscode.window.showInformationMessage(`Selected all ${count} projects`);
+        });
+
+        // Batch operation commands
+        const batchStartProjectsCommand = vscode.commands.registerCommand('claude-portfolio.batchStartProjects', async () => {
+            const selectedProjects = projectProvider.getSelectedProjectsData().filter(p => p.status !== 'active');
+            
+            if (selectedProjects.length === 0) {
+                vscode.window.showWarningMessage('No stopped projects selected');
+                return;
+            }
+
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: `Starting ${selectedProjects.length} projects...`,
+                cancellable: false
+            }, async (progress) => {
+                for (let i = 0; i < selectedProjects.length; i++) {
+                    const project = selectedProjects[i];
+                    progress.report({ 
+                        message: `Starting ${project.title}...`,
+                        increment: (100 / selectedProjects.length)
+                    });
+                    
+                    // Start project using existing command
+                    await vscode.commands.executeCommand('claude-portfolio.runProject', project);
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait between starts
+                }
+            });
+            
+            vscode.window.showInformationMessage(`Started ${selectedProjects.length} projects`);
+        });
+
+        const batchStopProjectsCommand = vscode.commands.registerCommand('claude-portfolio.batchStopProjects', async () => {
+            const selectedProjects = projectProvider.getSelectedProjectsData().filter(p => p.status === 'active');
+            
+            if (selectedProjects.length === 0) {
+                vscode.window.showWarningMessage('No running projects selected');
+                return;
+            }
+
+            for (const project of selectedProjects) {
+                await vscode.commands.executeCommand('claude-portfolio.stopProject', project);
+            }
+            
+            vscode.window.showInformationMessage(`Stopped ${selectedProjects.length} projects`);
+        });
+
+        const batchOpenBrowserCommand = vscode.commands.registerCommand('claude-portfolio.batchOpenBrowser', async () => {
+            const selectedProjects = projectProvider.getSelectedProjectsData().filter(p => p.status === 'active');
+            
+            if (selectedProjects.length === 0) {
+                vscode.window.showWarningMessage('No running projects selected');
+                return;
+            }
+
+            for (const project of selectedProjects) {
+                await vscode.commands.executeCommand('claude-portfolio.openProjectInBrowser', project);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between opens
+            }
+            
+            vscode.window.showInformationMessage(`Opened ${selectedProjects.length} projects in browser`);
+        });
+
+        const stopProjectCommand = vscode.commands.registerCommand('claude-portfolio.stopProject', async (treeItem) => {
+            try {
+                const project = treeItem?.project || treeItem;
+                const projectPath = getProjectPath(portfolioPath, project);
+                
+                // Find and kill terminals for this project
+                const terminals = vscode.window.terminals.filter(t => 
+                    t.name.includes(project.title) || t.name.includes(project.id)
+                );
+
+                if (terminals.length > 0) {
+                    for (const terminal of terminals) {
+                        terminal.sendText('\x03'); // Send Ctrl+C
+                        setTimeout(() => terminal.dispose(), 1000);
+                    }
+                    vscode.window.showInformationMessage(`Stopped ${project.title} servers`);
+                    
+                    // Refresh project status
+                    setTimeout(() => {
+                        projectProvider.refresh();
+                        portfolioWebviewProvider.refreshProjectData();
+                    }, 2000);
+                } else {
+                    vscode.window.showWarningMessage(`No running terminals found for ${project.title}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error stopping project: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
         const openAIAssistantCommand = vscode.commands.registerCommand('claude-portfolio.openAIAssistant', async (treeItem) => {
             try {
                 // Extract project data from tree item
@@ -571,6 +938,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Push all disposables
         context.subscriptions.push(
             openProjectCommand,
+            selectProjectCommand,
             showDashboardCommand,
             openPortfolioCommand,
             runProjectCommand,
@@ -593,7 +961,17 @@ export function activate(context: vscode.ExtensionContext) {
             packageExtensionCommand,
             watchExtensionCommand,
             openClaudeCommand,
-            openAIAssistantCommand
+            openAIAssistantCommand,
+            // Project-specific commands
+            projectCommandCommand,
+            stopProjectCommand,
+            // Checkbox and batch commands
+            toggleProjectSelectionCommand,
+            clearProjectSelectionCommand,
+            selectAllProjectsCommand,
+            batchStartProjectsCommand,
+            batchStopProjectsCommand,
+            batchOpenBrowserCommand
         );
 
         console.log('Claude Portfolio extension fully activated!');

@@ -2,6 +2,58 @@
 
 All notable changes to the Claude Windows Portfolio Hub will be documented in this file.
 
+## [2.1.0] - 2025-07-22 - ServerToolbar & Security Update
+
+### 🚀 Major Features Added
+
+#### ServerToolbar Component
+- **One-Click Server Management**: Added comprehensive toolbar for starting development servers
+- **Start All Servers**: Launch both portfolio and VS Code servers simultaneously  
+- **Portfolio Server Button**: Starts portfolio dev server using VS Code tasks
+- **VS Code Server Button**: Starts VS Code web server with Simple Browser integration
+- **Real-time Status**: Loading indicators, progress messages, and user feedback
+- **Responsive Design**: Matrix-themed styling that adapts to mobile/desktop modes
+
+#### Enhanced VS Code Extension Integration
+- **Task-Based Server Startup**: Leverages VS Code's task system for background processes
+- **Simple Browser Auto-Launch**: Automatically opens live previews after server startup
+- **Secure Message Passing**: All React ↔ VS Code communication properly validated
+- **Background Process Management**: Proper handling of long-running development servers
+
+### 🔒 Security Enhancements
+
+#### Complete Security Audit & Fixes
+- **Eliminated Command Injection**: All terminal commands now use secure validation
+- **Path Sanitization**: Project paths validated and normalized before execution
+- **Workspace Trust Validation**: All commands require workspace trust for execution  
+- **Command Whitelisting**: Only approved commands can be executed
+- **Individual Command Execution**: Multi-line commands broken into secure validated parts
+
+#### Enhanced Security Service
+- **VSCodeSecurityService**: Comprehensive security validation for all command execution
+- **Path Validation**: Directory traversal prevention and path normalization
+- **Error Handling**: Clear feedback when security blocks commands
+- **PowerShell Security**: Secure execution of PowerShell commands with validation
+
+### 🐛 Critical Bug Fixes
+
+#### Server Startup Issues
+- **Fixed Multi-line Command Blocking**: Commands now execute individually through security service
+- **Fixed Missing Message Handlers**: Added handlers for `server:startAll`, `server:startPortfolio`, `server:start`
+- **Fixed Background Process Handling**: Long-running processes now use VS Code tasks instead of direct terminal execution
+- **Fixed Security Blocking**: Commands no longer blocked by security validation when properly structured
+
+#### VS Code Extension Issues
+- **Fixed Message Passing**: React components now properly communicate with VS Code extension
+- **Fixed Command Execution**: All project launch commands now use secure execution methods
+- **Fixed Path Handling**: Project paths properly resolved and validated
+- **Fixed Terminal Output**: Commands execute in appropriate terminals with proper feedback
+
+### 📚 Documentation Updates
+- **Updated README**: Current feature set and security information
+- **Security Audit Results**: Comprehensive documentation of security fixes
+- **VS Code Extension README**: Updated with ServerToolbar and security features
+
 ## [2.0.0] - 2024-01-20
 
 ### 🎉 Major Release: VS Code Extension

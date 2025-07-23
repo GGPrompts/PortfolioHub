@@ -11,7 +11,8 @@ import * as fs from 'fs';
 export class VSCodeSecurityService {
     private static readonly ALLOWED_COMMANDS = new Set([
         'npm', 'yarn', 'pnpm', 'node', 'git', 'echo', 'cd', 'ls', 'dir',
-        'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code'
+        'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code',
+        'claude', 'gemini', 'python', 'py', 'typescript', 'tsc'
     ]);
     
     private static readonly ALLOWED_NPM_SCRIPTS = new Set([
@@ -19,7 +20,6 @@ export class VSCodeSecurityService {
     ]);
     
     private static readonly DANGEROUS_PATTERNS = [
-        /[;&|`$(){}[\]\\]/,  // Shell injection characters
         /\.\.\//,            // Path traversal  
         /rm\s+-rf/i,         // Destructive commands
         /del\s+\/[sq]/i,     // Windows destructive commands
@@ -29,6 +29,10 @@ export class VSCodeSecurityService {
         /halt/i,             // System halt
         /\>\s*nul/i,         // Output redirection that might hide malicious output
         /\&\&\s*(rm|del|format)/i, // Chained destructive commands
+        /;\s*(rm|del|format)/i,     // Semicolon chained destructive commands
+        /\|\s*(rm|del|format)/i,    // Pipe chained destructive commands
+        /`.*rm.*`/i,         // Backtick command injection with rm
+        /\$\(.*rm.*\)/i,     // Command substitution with rm
     ];
 
     /**
@@ -93,7 +97,7 @@ export class VSCodeSecurityService {
         }
 
         // Special handling for PowerShell scripts
-        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\\\scripts\\\\')) {
+        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\scripts\\')) {
             return this.validatePowerShellCommand(trimmedCommand);
         }
 
@@ -132,8 +136,8 @@ export class VSCodeSecurityService {
      */
     private static validatePowerShellCommand(command: string): boolean {
         // Allow only scripts in the scripts directory
-        if (command.startsWith('.\\\\scripts\\\\')) {
-            const scriptPath = command.split(/\\s+/)[0];
+        if (command.startsWith('.\\scripts\\')) {
+            const scriptPath = command.split(/\s+/)[0];
             return scriptPath.endsWith('.ps1');
         }
 

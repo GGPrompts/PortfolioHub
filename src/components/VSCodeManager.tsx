@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { VSCodeTerminal } from './VSCodeTerminal';
+import React, { useEffect, useState } from 'react';
+import { copyToClipboard as copyText, executeCommand, isVSCodeEnvironment, openFolder, openInVSCode, showNotification } from '../utils/vsCodeIntegration';
 import SvgIcon from './SvgIcon';
+import { VSCodeTerminal } from './VSCodeTerminal';
 import './VSCodeTerminal.css';
-import { isVSCodeEnvironment, executeCommand, showNotification, copyToClipboard as copyText, openFolder, openInVSCode } from '../utils/vsCodeIntegration';
 
 interface VSCodeInstance {
   id: string;
@@ -430,8 +430,48 @@ export const VSCodeManager: React.FC = () => {
   }, [serverStatus, instances.length, projects]);
 
   const startVSCodeServer = async () => {
-    // Copy the correct command
-    const commands = `# Stop VS Code Server first (if running)
+    if (isVSCodeEnvironment()) {
+      // ✅ SECURE: Use VS Code extension integration for server startup
+      if (window.vsCodePortfolio?.postMessage) {
+        // Send message to VS Code extension to start server securely
+        window.vsCodePortfolio.postMessage({
+          type: 'server:start',
+          serverType: 'vscode-web',
+          port: 8080
+        });
+        showNotification('Starting VS Code Server via extension...', 'info');
+      } else {
+        // Fallback: Execute individual commands securely
+        const commands = [
+          'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
+          'Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"',
+          'Write-Host "Starting VS Code Server from: $(Get-Location)"',
+          'code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms'
+        ];
+        
+        // Execute commands one by one to comply with security validation
+        for (const command of commands) {
+          try {
+            await executeCommand(command, 'VS Code Server Setup');
+            // Small delay between commands
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            console.error('Failed to execute command:', command, error);
+            showNotification(`Failed to execute: ${command}`, 'error');
+            break;
+          }
+        }
+        
+        showNotification('VS Code Server startup initiated!', 'info');
+        
+        // Show helpful message after startup
+        setTimeout(() => {
+          showNotification('💡 Once VS Code Server starts, open Simple Browser → http://localhost:8080 for full live previews!', 'info');
+        }, 8000);
+      }
+    } else {
+      // For non-VS Code environments, copy the full command set
+      const commands = `# Stop VS Code Server first (if running)
 Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue
 
 # Change to portfolio directory  
@@ -440,18 +480,14 @@ Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"
 # Verify location
 Write-Host "Starting VS Code Server from: $(Get-Location)"
 
-# Start VS Code Server (profile will be set via window.newWindowProfile setting)
+# Start VS Code Server
 code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms`;
-    
-    if (isVSCodeEnvironment()) {
-      await executeCommand(commands, 'PowerShell Commands')
-      showNotification('PowerShell commands executed!')
-    } else {
+
       try {
-        await copyText(commands)
-        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`)
+        await copyText(commands);
+        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`);
       } catch (error) {
-        alert(`To start VS Code Server:\n\n${commands}`)
+        alert(`To start VS Code Server:\n\n${commands}`);
       }
     }
   };

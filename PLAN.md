@@ -197,26 +197,51 @@ The portfolio system is **functionally complete** with dual-architecture support
 
 ---
 
-## 🚧 Current Issue: VS Code Live Previews
+## 🎯 **REMAINING ARCHITECTURE IMPROVEMENTS** - Current Development Priority
 
-### 🔧 Active Development (50% Complete)
-**Problem**: VS Code webview iframes can't nest other iframes due to security restrictions
-```
-VS Code Webview (iframe) → Portfolio React App → Project iframe ❌ BLOCKED
-```
+The VS Code extension is functionally complete with all major features working. The remaining todos focus on code organization and maintainability:
 
-**Solution**: Embedded Simple Browser panels instead of nested iframes
-- 🟡 **In Progress**: Implementation in `portfolioWebviewProvider.ts`
-- 📝 **Added**: `_createEmbeddedPreview()` method with mobile/desktop toggle
-- ⏳ **Next**: Wire up React portfolio to trigger embedded previews
+### **📋 Architecture Refactoring Checklist**
 
-### Immediate Tasks
-- [ ] Add `preview:create` message handler in VS Code extension
-- [ ] Update React portfolio to request embedded previews in VS Code context  
-- [ ] Test embedded preview panels with Matrix Cards project
-- [ ] Verify mobile/desktop toggle functionality
-- [ ] Add refresh functionality to embedded previews
-- [ ] Ensure preview panels close when projects stop
+#### **🔧 High Priority: Code Organization**
+- [ ] **Create Core Service Layer** (`/src/services/`)
+  - [ ] Move `PortDetectionService` to core services
+  - [ ] Create unified `ProjectService` for all project operations
+  - [ ] Implement `ConfigurationService` for settings management
+  - [ ] Add `CommandExecutionService` for secure command handling
+
+- [ ] **Extract Command Handlers** (`/src/commands/`)
+  - [ ] Create separate files for each command category:
+    - [ ] `projectCommands.ts` - Start, stop, open browser
+    - [ ] `batchCommands.ts` - Multi-project operations
+    - [ ] `selectionCommands.ts` - Checkbox and selection logic
+    - [ ] `gitCommands.ts` - Version control operations
+    - [ ] `workspaceCommands.ts` - VS Code workspace management
+
+- [ ] **Simplify Extension Entry Point** (`extension.ts`)
+  - [ ] Reduce from 900+ lines to ~200 lines focused on registration
+  - [ ] Move all command implementations to dedicated modules
+  - [ ] Create clear provider initialization structure
+  - [ ] Implement proper dependency injection pattern
+
+#### **🔧 Medium Priority: Utilities & Configuration**
+- [ ] **Unified Configuration Manager**
+  - [ ] Centralize all settings from VS Code configuration
+  - [ ] Implement portfolio path management
+  - [ ] Add user preference handling
+  - [ ] Create configuration validation
+
+- [ ] **Consolidate Path Resolution**
+  - [ ] Create single `PathResolver` utility
+  - [ ] Handle all project path formats (relative, absolute, external)
+  - [ ] Implement security validation in one place
+  - [ ] Add workspace-scoped path operations
+
+### **🎯 Architecture Goals**
+- **Modular Design**: Each service handles a single responsibility  
+- **Testable Code**: Clear interfaces enable unit testing
+- **Maintainable Structure**: Easy to add new features without touching core files
+- **Type Safety**: Full TypeScript coverage with proper interfaces
 
 ---
 

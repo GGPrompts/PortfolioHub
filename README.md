@@ -26,28 +26,29 @@ This portfolio system provides **two separate but synchronized React application
 - **Shared Codebase**: Same React components with smart environment detection
 - **Automatic Fallback**: Code detects context and uses appropriate integration
 
-## 🆕 Latest Breakthrough Features (January 2025)
+## 🆕 Latest Breakthrough Features (July 2025)
 
-### 🎯 Enhanced Right Sidebar: Quick Commands & Cheat Sheet
-- **✅ 50+ PowerShell-Compatible Commands**: Professional developer command library
-- **✅ Three Panel System**: 
-  - **Quick Commands**: VS Code actions, Git operations, Development tasks
-  - **VS Code Terminals**: Integrated terminal management (web version)
-  - **Live Preview**: Project preview controls
-- **✅ Smart Execution**: Direct VS Code API calls in extension, clipboard copy in web
-- **✅ Organized Categories**: VS Code, Git, Development, PowerShell, AI Prompts sections
-- **✅ One-Click Actions**: Execute commands instantly with proper context
+### 🚀 ServerToolbar - One-Click Development Server Management
+- **✅ Start All Servers**: Launch both portfolio and VS Code servers with one click
+- **✅ Portfolio Server**: Start portfolio dev server (npm run dev) via VS Code tasks
+- **✅ VS Code Server**: Start VS Code web server with Simple Browser integration
+- **✅ Real-time Status**: Loading indicators and progress messages
+- **✅ Security Compliant**: All commands use VSCodeSecurityService validation
+- **✅ Auto-Launch Simple Browser**: Automatically opens live previews after server startup
 
-### 🎮 3D Project Support with Smart Browser Selection  
-- **✅ Automatic 3D Detection**: Projects with `requires3D: true` in manifest.json
-- **✅ Smart Browser Routing**: 
-  - **3D Projects**: Force external browser (for pointer lock support)
-  - **Regular Projects**: Use VS Code Simple Browser or iframe
-- **✅ Pointer Lock Compatibility**: Ensures FPS controls work properly
-- **✅ Current 3D Projects**: 3D Matrix Cards, 3D File System Viewer
+### 🔒 Complete Security Audit & Fixes
+- **✅ Eliminated Command Injection**: All terminal commands now use secure validation
+- **✅ Path Sanitization**: Project paths validated and normalized
+- **✅ Workspace Trust**: Commands require workspace trust for execution
+- **✅ Command Whitelisting**: Only approved commands can be executed
+- **✅ Individual Command Execution**: Multi-line commands broken into secure parts
 
-### 🎉 Complete VS Code Extension Integration
-- **✅ Native Command Execution**: All portfolio functions work directly in VS Code
+### 🎯 Enhanced VS Code Integration
+- **✅ Live Preview Support**: Uses VS Code Simple Browser instead of problematic iframes
+- **✅ Task-Based Server Startup**: Leverages VS Code's task system for background processes
+- **✅ Secure Message Passing**: All React ↔ VS Code communication validated
+- **✅ Enhanced Error Handling**: Clear feedback when security blocks commands
+- **✅ Background Process Management**: Proper handling of long-running development servers
 - **✅ Synchronized Status Detection**: Identical port checking across both versions
 - **✅ Live Preview Support**: Embedded iframe functionality in VS Code webview
 - **✅ Project Landing Pages**: Detailed project information with tabbed interface

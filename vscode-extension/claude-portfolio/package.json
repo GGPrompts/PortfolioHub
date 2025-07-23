@@ -78,6 +78,81 @@
         "title": "Open AI Assistant",
         "category": "Claude Portfolio",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "claude-portfolio.projectCommand",
+        "title": "Execute Project Command",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.stopProject", 
+        "title": "Stop Project",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.toggleProjectSelection",
+        "title": "Toggle Project Selection",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.selectProject",
+        "title": "Show Commands",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.clearProjectSelection",
+        "title": "Clear Selection",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.selectAllProjects",
+        "title": "Select All Projects",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchStartProjects",
+        "title": "Start Selected Projects",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchStopProjects",
+        "title": "Stop Selected Projects", 
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchOpenBrowser",
+        "title": "Open Selected in Browser",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchAddToWorkspace",
+        "title": "Add Selected to Workspace",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchNpmInstall",
+        "title": "Install Dependencies (Selected)",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchNpmBuild",
+        "title": "Build Selected Projects",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchNpmTest",
+        "title": "Test Selected Projects",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchGitStatus",
+        "title": "Git Status (Selected)",
+        "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.batchGitPull",
+        "title": "Git Pull (Selected)",
+        "category": "Claude Portfolio"
       }
     ],
     "viewsContainers": {
@@ -97,14 +172,16 @@
           "contextualTitle": "Claude Projects"
         },
         {
-          "id": "claudeCommands",
-          "name": "Quick Commands",
-          "contextualTitle": "Claude Commands"
+          "id": "claudeProjectCommands",
+          "name": "Project Commands",
+          "contextualTitle": "Project Commands",
+          "when": "true"
         },
         {
-          "id": "claudeCheatSheet",
-          "name": "Cheat Sheet",
-          "contextualTitle": "Development Cheat Sheet"
+          "id": "claudeMultiProjectCommands",
+          "name": "Batch Commands",
+          "contextualTitle": "Multi-Project Batch Commands",
+          "when": "true"
         }
       ]
     },
@@ -133,17 +210,22 @@
       "view/item/context": [
         {
           "command": "claude-portfolio.runProject",
-          "when": "view == claudeProjects && viewItem == project",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
           "group": "inline"
         },
         {
           "command": "claude-portfolio.openProjectInBrowser",
-          "when": "view == claudeProjects && viewItem == project",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
           "group": "inline"
         },
         {
+          "command": "claude-portfolio.selectProject",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
+          "group": "1_commands"
+        },
+        {
           "command": "claude-portfolio.openAIAssistant",
-          "when": "view == claudeProjects && viewItem == project",
+          "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject)",
           "group": "2_ai"
         }
       ]

@@ -70,6 +70,9 @@ export const QuickCommandsPanel: React.FC<QuickCommandsPanelProps> = ({ classNam
         
         // Claude Code Commands
         { label: 'Start Claude', command: 'claude', description: 'Start Claude Code session', category: 'Claude Code', type: 'terminal' },
+        { label: 'Continue session', command: 'claude -c', description: 'Continue last Claude Code session', category: 'Claude Code', type: 'terminal' },
+        { label: 'Persistent session', command: 'claude --session-id portfolio-dev-session', description: 'Start persistent Claude session with ID', category: 'Claude Code', type: 'terminal' },
+        { label: 'Resume session', command: 'claude --resume portfolio-dev-session', description: 'Resume persistent Claude session', category: 'Claude Code', type: 'terminal' },
         { label: 'List MCP servers', command: 'claude mcp list', description: 'List configured MCP servers', category: 'Claude Code', type: 'terminal' },
         { label: 'AI commit', command: 'claude commit', description: 'AI-assisted git commit', category: 'Claude Code', type: 'terminal' },
         

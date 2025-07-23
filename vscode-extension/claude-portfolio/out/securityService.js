@@ -91,7 +91,7 @@ class VSCodeSecurityService {
             return this.validateNpmCommand(trimmedCommand);
         }
         // Special handling for PowerShell scripts
-        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\\\scripts\\\\')) {
+        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\scripts\\')) {
             return this.validatePowerShellCommand(trimmedCommand);
         }
         // Check if base command is in allowed list
@@ -123,8 +123,8 @@ class VSCodeSecurityService {
      */
     static validatePowerShellCommand(command) {
         // Allow only scripts in the scripts directory
-        if (command.startsWith('.\\\\scripts\\\\')) {
-            const scriptPath = command.split(/\\s+/)[0];
+        if (command.startsWith('.\\scripts\\')) {
+            const scriptPath = command.split(/\s+/)[0];
             return scriptPath.endsWith('.ps1');
         }
         // For powershell.exe commands, only allow specific safe patterns
@@ -340,13 +340,13 @@ class VSCodeSecurityService {
 exports.VSCodeSecurityService = VSCodeSecurityService;
 VSCodeSecurityService.ALLOWED_COMMANDS = new Set([
     'npm', 'yarn', 'pnpm', 'node', 'git', 'echo', 'cd', 'ls', 'dir',
-    'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code'
+    'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code',
+    'claude', 'gemini', 'python', 'py', 'typescript', 'tsc'
 ]);
 VSCodeSecurityService.ALLOWED_NPM_SCRIPTS = new Set([
     'dev', 'start', 'build', 'test', 'install', 'run', 'compile', 'watch'
 ]);
 VSCodeSecurityService.DANGEROUS_PATTERNS = [
-    /[;&|`$(){}[\]\\]/, // Shell injection characters
     /\.\.\//, // Path traversal  
     /rm\s+-rf/i, // Destructive commands
     /del\s+\/[sq]/i, // Windows destructive commands
@@ -356,5 +356,9 @@ VSCodeSecurityService.DANGEROUS_PATTERNS = [
     /halt/i, // System halt
     /\>\s*nul/i, // Output redirection that might hide malicious output
     /\&\&\s*(rm|del|format)/i, // Chained destructive commands
+    /;\s*(rm|del|format)/i, // Semicolon chained destructive commands
+    /\|\s*(rm|del|format)/i, // Pipe chained destructive commands
+    /`.*rm.*`/i, // Backtick command injection with rm
+    /\$\(.*rm.*\)/i, // Command substitution with rm
 ];
 //# sourceMappingURL=securityService.js.map

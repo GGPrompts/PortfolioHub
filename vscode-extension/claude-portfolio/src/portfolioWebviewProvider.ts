@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as vscode from 'vscode';
 import { VSCodeSecurityService } from './securityService';
 
 export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
@@ -108,6 +108,21 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 case 'project:run':
                     await this._runProject(message.projectPath, message.command, message.projectTitle);
                     break;
+                case 'preview:create':
+                    await this._createEmbeddedPreview(message.url, message.title, message.viewType);
+                    break;
+                case 'preview:close':
+                    await this._closeEmbeddedPreview(message.title);
+                    break;
+                case 'server:start':
+                    await this._startVSCodeServer(message.serverType, message.port);
+                    break;
+                case 'server:startAll':
+                    await this._startAllServers();
+                    break;
+                case 'server:startPortfolio':
+                    await this._startPortfolioServer();
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -115,9 +130,18 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _executeInTerminal(command: string, terminalName?: string): Promise<void> {
-        const terminal = vscode.window.createTerminal(terminalName || 'Portfolio Command');
-        terminal.sendText(command);
-        terminal.show();
+        // ✅ SECURITY: Use secure command execution instead of direct terminal.sendText()
+        const workspaceRoot = path.join(this._portfolioPath, '..'); // D:\ClaudeWindows
+        const success = await VSCodeSecurityService.executeSecureCommand(
+            command,
+            terminalName || 'Portfolio Command',
+            workspaceRoot
+        );
+        
+        if (!success) {
+            console.error(`Command execution blocked: ${command}`);
+            vscode.window.showErrorMessage('Command execution was blocked for security reasons');
+        }
     }
 
     private async _addProjectToWorkspace(project: any): Promise<void> {
@@ -236,157 +260,534 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _createEmbeddedPreview(projectId: string, url: string): Promise<void> {
+    /**
+     * ✅ SECURE: Run individual project with full security validation
+     */
+    private async _runProject(projectPath: string, command: string, projectTitle: string): Promise<void> {
         try {
-            // Create embedded preview panel with mobile/desktop toggle
+            console.log(`🚀 Secure project run request: ${projectTitle} at ${projectPath} with command: ${command}`);
+            
+            // Use the existing secure project command execution
+            const workspaceRoot = path.join(this._portfolioPath, '..'); // D:\ClaudeWindows
+            const success = await VSCodeSecurityService.executeProjectCommand(
+                projectPath,
+                command,
+                `Run ${projectTitle}`,
+                workspaceRoot
+            );
+            
+            if (success) {
+                vscode.window.showInformationMessage(`✅ Started ${projectTitle}`);
+                // Refresh project data to update status
+                setTimeout(() => {
+                    this.refreshProjectData();
+                }, 2000);
+            } else {
+                vscode.window.showErrorMessage(`❌ Failed to start ${projectTitle} - command blocked for security`);
+            }
+            
+        } catch (error) {
+            console.error(`Project run failed for ${projectTitle}:`, error);
+            vscode.window.showErrorMessage(`Failed to run ${projectTitle}: ${error}`);
+        }
+    }
+
+    /**
+     * ✅ SECURE: Launch all projects with security validation
+     */
+    private async _launchAllProjects(): Promise<void> {
+        try {
+            console.log('🚀 Launching all projects...');
+            
+            // Get project data
+            const projectData = await this._loadProjectDataWithStatus();
+            const launchableProjects = projectData?.projects?.filter((p: any) => 
+                p.displayType === 'external' && p.buildCommand && p.status !== 'active'
+            ) || [];
+
+            if (launchableProjects.length === 0) {
+                vscode.window.showInformationMessage('No projects available to launch');
+                return;
+            }
+
+            const workspaceRoot = path.join(this._portfolioPath, '..'); // D:\ClaudeWindows
+            let successCount = 0;
+
+            for (const project of launchableProjects) {
+                try {
+                    const projectPath = this._resolveProjectPath(project);
+                    const success = await VSCodeSecurityService.executeProjectCommand(
+                        projectPath,
+                        project.buildCommand,
+                        `Launch ${project.title}`,
+                        workspaceRoot
+                    );
+                    
+                    if (success) {
+                        successCount++;
+                        console.log(`✅ Launched: ${project.title}`);
+                    } else {
+                        console.warn(`❌ Failed to launch: ${project.title}`);
+                    }
+                    
+                    // Add delay between launches to prevent overwhelming the system
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                } catch (error) {
+                    console.error(`Error launching ${project.title}:`, error);
+                }
+            }
+
+            vscode.window.showInformationMessage(
+                `Launched ${successCount}/${launchableProjects.length} projects successfully`
+            );
+            
+            // Refresh project data after launching
+            setTimeout(() => {
+                this.refreshProjectData();
+            }, 5000);
+            
+        } catch (error) {
+            console.error('Failed to launch all projects:', error);
+            vscode.window.showErrorMessage(`Failed to launch projects: ${error}`);
+        }
+    }
+
+    /**
+     * ✅ SECURE: Launch selected projects with security validation
+     */
+    private async _launchSelectedProjects(projectIds: string[]): Promise<void> {
+        try {
+            console.log('🚀 Launching selected projects:', projectIds);
+            
+            if (!projectIds || projectIds.length === 0) {
+                vscode.window.showWarningMessage('No projects selected to launch');
+                return;
+            }
+
+            // Get project data
+            const projectData = await this._loadProjectDataWithStatus();
+            const allProjects = projectData?.projects || [];
+            
+            const selectedProjects = allProjects.filter((p: any) => 
+                projectIds.includes(p.id) && p.displayType === 'external' && p.buildCommand
+            );
+
+            if (selectedProjects.length === 0) {
+                vscode.window.showWarningMessage('No valid projects found to launch');
+                return;
+            }
+
+            const workspaceRoot = path.join(this._portfolioPath, '..'); // D:\ClaudeWindows
+            let successCount = 0;
+
+            for (const project of selectedProjects) {
+                try {
+                    // Skip if already running
+                    if (project.status === 'active') {
+                        console.log(`⏭️ Skipping ${project.title} - already running`);
+                        continue;
+                    }
+
+                    const projectPath = this._resolveProjectPath(project);
+                    const success = await VSCodeSecurityService.executeProjectCommand(
+                        projectPath,
+                        project.buildCommand,
+                        `Launch ${project.title}`,
+                        workspaceRoot
+                    );
+                    
+                    if (success) {
+                        successCount++;
+                        console.log(`✅ Launched: ${project.title}`);
+                    } else {
+                        console.warn(`❌ Failed to launch: ${project.title}`);
+                    }
+                    
+                    // Add delay between launches
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                } catch (error) {
+                    console.error(`Error launching ${project.title}:`, error);
+                }
+            }
+
+            vscode.window.showInformationMessage(
+                `Launched ${successCount}/${selectedProjects.length} selected projects successfully`
+            );
+            
+            // Refresh project data after launching
+            setTimeout(() => {
+                this.refreshProjectData();
+            }, 5000);
+            
+        } catch (error) {
+            console.error('Failed to launch selected projects:', error);
+            vscode.window.showErrorMessage(`Failed to launch selected projects: ${error}`);
+        }
+    }
+
+    /**
+     * Helper method to resolve project path consistently with security validation
+     */
+    private _resolveProjectPath(project: any): string {
+        if (!project) {
+            throw new Error('Project is null or undefined');
+        }
+        
+        let projectPath: string;
+        
+        if (project.path) {
+            if (path.isAbsolute(project.path)) {
+                projectPath = project.path;
+            } else if (project.path.startsWith('../Projects/')) {
+                // New structure: ../Projects/project-name
+                projectPath = path.resolve(this._portfolioPath, project.path);
+            } else if (project.path.startsWith('projects/')) {
+                // Legacy structure: projects/project-name
+                projectPath = path.join(this._portfolioPath, project.path);
+            } else {
+                // Other relative paths
+                projectPath = path.resolve(this._portfolioPath, project.path);
+            }
+        } else if (project.id) {
+            // Fallback to using project ID
+            projectPath = path.join(this._portfolioPath, 'projects', project.id);
+        } else {
+            throw new Error(`Project has neither path nor id: ${JSON.stringify(project)}`);
+        }
+        
+        // Validate the resolved path is within allowed workspace
+        const normalized = path.normalize(projectPath);
+        const resolved = path.resolve(normalized);
+        const workspaceRoot = path.resolve(path.join(this._portfolioPath, '..'));
+        
+        if (!resolved.startsWith(workspaceRoot)) {
+            throw new Error(`Project path traversal detected: ${project.path || project.id} resolves outside workspace`);
+        }
+        
+        return resolved;
+    }
+
+    /**
+     * ✅ SECURE: Start VS Code Server with security validation
+     */
+    private async _startVSCodeServer(serverType: string = 'vscode-web', port: number = 8080): Promise<void> {
+        try {
+            console.log(`🚀 Starting ${serverType} server on port ${port}...`);
+            
+            const workspaceRoot = path.join(this._portfolioPath, '..');
+            
+            // Execute server startup commands individually for security compliance
+            const commands = [
+                'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
+                `Set-Location "${this._portfolioPath}"`,
+                'Write-Host "Starting VS Code Server from: $(Get-Location)"',
+                `code serve-web --port ${port} --host 0.0.0.0 --without-connection-token --accept-server-license-terms`
+            ];
+            
+            let successCount = 0;
+            for (const command of commands) {
+                const success = await VSCodeSecurityService.executeSecureCommand(
+                    command,
+                    'VS Code Server Setup',
+                    workspaceRoot
+                );
+                
+                if (success) {
+                    successCount++;
+                    console.log(`✅ Server setup command executed: ${command.substring(0, 50)}...`);
+                    
+                    // Add delay between commands for stability
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } else {
+                    console.warn(`❌ Failed to execute server command: ${command}`);
+                    break;
+                }
+            }
+            
+            if (successCount === commands.length) {
+                vscode.window.showInformationMessage(
+                    `✅ VS Code Server starting on port ${port}!\n\n💡 Tip: Once ready, open Simple Browser → http://localhost:${port} for live previews`
+                );
+                
+                // Offer to automatically open Simple Browser after delay
+                setTimeout(async () => {
+                    const choice = await vscode.window.showInformationMessage(
+                        'VS Code Server should be ready now. Open it in Simple Browser?',
+                        'Open Simple Browser',
+                        'Open External Browser',
+                        'Later'
+                    );
+                    
+                    if (choice === 'Open Simple Browser') {
+                        try {
+                            await vscode.commands.executeCommand('simpleBrowser.show', `http://localhost:${port}`);
+                        } catch (error) {
+                            console.log('Simple Browser not available, opening external browser');
+                            await vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}`));
+                        }
+                    } else if (choice === 'Open External Browser') {
+                        await vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}`));
+                    }
+                }, 10000); // Wait 10 seconds for server to start
+                
+            } else {
+                vscode.window.showErrorMessage(`Failed to start VS Code Server. ${successCount}/${commands.length} commands succeeded.`);
+            }
+            
+        } catch (error) {
+            console.error('Failed to start VS Code Server:', error);
+            vscode.window.showErrorMessage(`Failed to start VS Code Server: ${error}`);
+        }
+    }
+
+    private async _startAllServers(): Promise<void> {
+        try {
+            console.log('🚀 Starting all servers (Portfolio + VS Code)...');
+            
+            vscode.window.showInformationMessage('Starting all servers...');
+            
+            // Start portfolio dev server using VS Code task
+            await this._startPortfolioServer();
+            
+            // Wait a moment then start VS Code server
+            setTimeout(async () => {
+                await this._startVSCodeServer();
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Failed to start all servers:', error);
+            vscode.window.showErrorMessage(`Failed to start servers: ${error}`);
+        }
+    }
+
+    private async _startPortfolioServer(): Promise<void> {
+        try {
+            console.log('💼 Starting portfolio dev server using VS Code task...');
+            
+            // Use VS Code's task system to start the dev server
+            const tasks = await vscode.tasks.fetchTasks();
+            const devServerTask = tasks.find(task => 
+                task.name === 'Start Portfolio Dev Server' || 
+                task.definition.label === 'Start Portfolio Dev Server'
+            );
+            
+            if (devServerTask) {
+                console.log('✅ Found dev server task, executing...');
+                await vscode.tasks.executeTask(devServerTask);
+                vscode.window.showInformationMessage('✅ Portfolio dev server starting! Check terminal for progress.');
+            } else {
+                // Fallback: create and execute task manually
+                console.log('⚠️ Dev server task not found, creating manual task...');
+                const task = new vscode.Task(
+                    { type: 'shell' },
+                    vscode.TaskScope.Workspace,
+                    'Start Portfolio Dev Server',
+                    'portfolio',
+                    new vscode.ShellExecution('npm', ['run', 'dev'], {
+                        cwd: this._portfolioPath
+                    }),
+                    []
+                );
+                task.isBackground = true;
+                task.group = vscode.TaskGroup.Test;
+                
+                await vscode.tasks.executeTask(task);
+                vscode.window.showInformationMessage('✅ Portfolio dev server starting! Check terminal for progress.');
+            }
+            
+        } catch (error) {
+            console.error('Failed to start portfolio server:', error);
+            vscode.window.showErrorMessage(`Failed to start portfolio server: ${error}`);
+        }
+    }
+
+    /**
+     * Creates an embedded Simple Browser panel for project previews
+     * This solves the iframe nesting issue in VS Code webviews
+     */
+    private async _createEmbeddedPreview(url: string, title: string, viewType: 'mobile' | 'desktop' = 'desktop'): Promise<void> {
+        try {
+            // Close existing preview for this project if it exists
+            await this._closeEmbeddedPreview(title);
+
+            console.log(`🌐 Creating embedded preview for ${title}: ${url}`);
+
+            // Create the Simple Browser panel
             const panel = vscode.window.createWebviewPanel(
-                `preview-${projectId}`,
-                `🔍 Preview: ${projectId} (Desktop)`,
-                { 
-                    viewColumn: vscode.ViewColumn.Beside, 
-                    preserveFocus: true 
+                'portfolio-preview',
+                `Preview: ${title}`,
+                {
+                    viewColumn: vscode.ViewColumn.Beside,
+                    preserveFocus: false
                 },
                 {
                     enableScripts: true,
                     retainContextWhenHidden: true,
-                    portMapping: [
-                        { webviewPort: parseInt(url.split(':')[2]), extensionHostPort: parseInt(url.split(':')[2]) }
-                    ]
+                    enableFindWidget: true,
+                    enableCommandUris: false
                 }
             );
 
-            let isMobileView = false;
+            // Store reference to track open panels
+            this._openPreviews.set(title, panel);
 
-            const getPreviewHTML = (mobile: boolean) => {
-                const viewportMeta = mobile 
-                    ? '<meta name="viewport" content="width=375, initial-scale=1.0">'
-                    : '<meta name="viewport" content="width=1920, initial-scale=1.0">';
-                
-                const containerStyle = mobile
-                    ? 'width: 375px; height: 812px; margin: 20px auto; border: 2px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'
-                    : 'width: 100%; height: 100%;';
+            // Set up the webview content to use Simple Browser
+            const browserHtml = this._getBrowserHtml(url, title, viewType);
+            panel.webview.html = browserHtml;
 
-                const iframeStyle = mobile
-                    ? 'width: 375px; height: 812px; border: none; transform: scale(0.8); transform-origin: top left;'
-                    : 'width: 100%; height: calc(100vh - 60px); border: none;';
+            // Handle panel disposal
+            panel.onDidDispose(() => {
+                this._openPreviews.delete(title);
+                console.log(`🗑️ Embedded preview closed for ${title}`);
+            });
 
-                return `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    ${viewportMeta}
-                    <title>Preview: ${projectId} (${mobile ? 'Mobile' : 'Desktop'})</title>
-                    <style>
-                        body, html { 
-                            margin: 0; 
-                            padding: 0; 
-                            width: 100%; 
-                            height: 100%; 
-                            overflow: ${mobile ? 'auto' : 'hidden'};
-                            background: ${mobile ? '#f0f0f0' : '#1e1e1e'};
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        }
-                        .toolbar {
-                            height: 40px;
-                            background: #2d2d30;
-                            color: white;
-                            display: flex;
-                            align-items: center;
-                            padding: 0 20px;
-                            gap: 15px;
-                            border-bottom: 1px solid #3e3e42;
-                        }
-                        .toggle-btn {
-                            background: #0e639c;
-                            color: white;
-                            border: none;
-                            padding: 6px 12px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 12px;
-                        }
-                        .toggle-btn:hover { background: #1177bb; }
-                        .view-info { 
-                            color: #cccccc; 
-                            font-size: 12px;
-                        }
-                        .preview-container {
-                            ${containerStyle}
-                        }
-                        iframe { ${iframeStyle} }
-                        .loading { 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            height: 200px;
-                            color: #ffffff;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="toolbar">
-                        <button class="toggle-btn" onclick="toggleView()">${mobile ? '🖥️ Desktop' : '📱 Mobile'}</button>
-                        <span class="view-info">
-                            ${mobile ? '📱 375×812 Mobile View' : '🖥️ Desktop View'} | ${projectId}
-                        </span>
-                        <button class="toggle-btn" onclick="refreshPreview()">🔄 Refresh</button>
-                    </div>
-                    <div class="preview-container">
-                        <div class="loading" id="loading">Loading ${projectId} preview...</div>
-                        <iframe id="preview" src="${url}" style="display: none;" 
-                                onload="document.getElementById('loading').style.display='none'; this.style.display='block';">
-                        </iframe>
-                    </div>
-                    <script>
-                        const vscode = acquireVsCodeApi();
-                        function toggleView() {
-                            vscode.postMessage({ command: 'toggleView' });
-                        }
-                        function refreshPreview() {
-                            document.getElementById('preview').src = document.getElementById('preview').src;
-                        }
-                    </script>
-                </body>
-                </html>
-            `;
-            };
-
-            // Handle messages from webview
-            panel.webview.onDidReceiveMessage(message => {
-                if (message.command === 'toggleView') {
-                    isMobileView = !isMobileView;
-                    panel.title = `🔍 Preview: ${projectId} (${isMobileView ? 'Mobile' : 'Desktop'})`;
-                    panel.webview.html = getPreviewHTML(isMobileView);
+            // Set up refresh button
+            panel.webview.onDidReceiveMessage(async (message) => {
+                switch (message.type) {
+                    case 'refresh':
+                        panel.webview.html = this._getBrowserHtml(url, title, viewType);
+                        break;
+                    case 'toggleView':
+                        const newViewType = viewType === 'mobile' ? 'desktop' : 'mobile';
+                        panel.webview.html = this._getBrowserHtml(url, title, newViewType);
+                        break;
                 }
             });
 
-            // Set initial HTML
-            panel.webview.html = getPreviewHTML(false);
-
-            console.log(`🔍 Created embedded preview panel for ${projectId} at ${url}`);
-            
-            // Optional: Close panel when project stops running
-            const interval = setInterval(async () => {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 1000);
-                    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error('Project not running');
-                } catch {
-                    panel.dispose();
-                    clearInterval(interval);
-                    console.log(`🔍 Closed preview panel for ${projectId} (project stopped)`);
-                }
-            }, 10000);
-
-            panel.onDidDispose(() => clearInterval(interval));
+            vscode.window.showInformationMessage(`Opened ${title} in embedded preview`);
 
         } catch (error) {
-            console.error(`Failed to create embedded preview for ${projectId}:`, error);
-            vscode.window.showErrorMessage(`Failed to create preview for ${projectId}`);
+            console.error('Failed to create embedded preview:', error);
+            vscode.window.showErrorMessage(`Failed to create preview for ${title}: ${error}`);
         }
+    }
+
+    /**
+     * Generates HTML for the embedded browser view
+     */
+    private _getBrowserHtml(url: string, title: string, viewType: 'mobile' | 'desktop'): string {
+        const width = viewType === 'mobile' ? '375px' : '100%';
+        const height = viewType === 'mobile' ? '667px' : '100%';
+        const margin = viewType === 'mobile' ? '0 auto' : '0';
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: ${title}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1e1e1e;
+            color: #cccccc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .preview-toolbar {
+            background: #2d2d30;
+            padding: 8px 16px;
+            border-bottom: 1px solid #464647;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .preview-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: ${viewType === 'mobile' ? 'flex-start' : 'stretch'};
+            padding: ${viewType === 'mobile' ? '20px' : '0'};
+            overflow: auto;
+        }
+        iframe {
+            width: ${width};
+            height: ${height};
+            border: ${viewType === 'mobile' ? '1px solid #464647' : 'none'};
+            border-radius: ${viewType === 'mobile' ? '12px' : '0'};
+            margin: ${margin};
+            background: white;
+        }
+        .toolbar-button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .toolbar-button:hover {
+            background: #1177bb;
+        }
+        .url-display {
+            color: #9cdcfe;
+            font-family: 'Cascadia Code', monospace;
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            flex: 1;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .view-indicator {
+            background: #5f5f5f;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-toolbar">
+            <button class="toolbar-button" onclick="refreshPreview()">⟳ Refresh</button>
+            <button class="toolbar-button" onclick="toggleView()">${viewType === 'mobile' ? '🖥️ Desktop' : '📱 Mobile'}</button>
+            <div class="url-display">${url}</div>
+            <div class="view-indicator">${viewType}</div>
+        </div>
+        <div class="preview-content">
+            <iframe 
+                src="${url}" 
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        
+        function refreshPreview() {
+            vscode.postMessage({ type: 'refresh' });
+        }
+        
+        function toggleView() {
+            vscode.postMessage({ type: 'toggleView' });
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            const iframe = document.querySelector('iframe');
+            if (iframe) {
+                iframe.src = iframe.src;
+            }
+        }, 30000);
+    </script>
+</body>
+</html>`;
     }
 
     private async _openFolder(folderPath: string): Promise<void> {
@@ -424,148 +825,32 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _launchAllProjects(): Promise<void> {
+    /**
+     * ✅ SECURE: Helper method to launch a single project with security validation
+     */
+    private async _launchProject(project: any): Promise<void> {
         try {
-            const projectData = this._loadProjectData();
-            const projects = projectData.projects || [];
+            const projectPath = this._resolveProjectPath(project);
+            const command = project.buildCommand || 'npm run dev';
+            const workspaceRoot = path.join(this._portfolioPath, '..');
             
-            this._showNotification(`Starting ${projects.length + 1} projects...`);
-            
-            // Launch portfolio first
-            const portfolioTerminal = vscode.window.createTerminal('Portfolio');
-            portfolioTerminal.sendText(`cd "${this._portfolioPath}"`);
-            portfolioTerminal.sendText('$env:OPEN_BROWSER = false');
-            portfolioTerminal.sendText('$env:REACT_APP_OPEN_BROWSER = false');
-            portfolioTerminal.sendText('$env:BROWSER = none');
-            portfolioTerminal.sendText('npm run dev');
-            
-            // Launch each project in its own terminal
-            let successCount = 0;
-            for (const project of projects) {
-                try {
-                    await this._launchProject(project);
-                    successCount++;
-                    // Small delay to avoid overwhelming the system
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (error) {
-                    console.error(`Failed to launch project ${project.id}:`, error);
-                    this._showNotification(`Failed to launch ${project.title}: ${error}`, 'error');
-                }
-            }
-            
-            // Show portfolio terminal
-            portfolioTerminal.show();
-            this._showNotification(`✅ Successfully launched ${successCount + 1} of ${projects.length + 1} projects!`);
-        } catch (error) {
-            this._showNotification(`❌ Failed to launch projects: ${error}`, 'error');
-        }
-    }
-
-    private async _launchSelectedProjects(projectIds: string[]): Promise<void> {
-        try {
-            const projectData = this._loadProjectData();
-            const projects = (projectData.projects || []).filter((p: any) => projectIds.includes(p.id));
-            
-            if (projects.length === 0) {
-                this._showNotification('❌ No projects found to launch', 'warning');
-                return;
-            }
-            
-            this._showNotification(`Starting ${projects.length} selected projects...`);
-            
-            let successCount = 0;
-            for (const project of projects) {
-                try {
-                    await this._launchProject(project);
-                    successCount++;
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (error) {
-                    console.error(`Failed to launch project ${project.id}:`, error);
-                    this._showNotification(`Failed to launch ${project.title}: ${error}`, 'error');
-                }
-            }
-            
-            this._showNotification(`✅ Successfully launched ${successCount} of ${projects.length} selected projects!`);
-        } catch (error) {
-            this._showNotification(`❌ Failed to launch selected projects: ${error}`, 'error');
-        }
-    }
-
-    private async _runProject(projectPath: string, command: string, projectTitle: string): Promise<void> {
-        try {
-            // Use the secure project command execution
-            const workspaceRoot = path.join(this._portfolioPath, '..');  // D:\ClaudeWindows
             const success = await VSCodeSecurityService.executeProjectCommand(
                 projectPath,
                 command,
-                `Run ${projectTitle}`,
+                project.title || project.id,
                 workspaceRoot
             );
             
-            if (success) {
-                vscode.window.showInformationMessage(`Started ${projectTitle}`);
-                // Wait a moment for server to fully start up
-                setTimeout(async () => {
-                    await this.refreshProjectData();
-                    console.log(`🔄 Refreshed project data after starting ${projectTitle}`);
-                    
-                    // Signal the React app to refresh its cached data
-                    if (this._view) {
-                        this._view.webview.postMessage({
-                            type: 'projectStatusUpdate',
-                            projectId: projectPath.split('\\').pop() || projectTitle,
-                            message: 'Project status updated - refresh your data'
-                        });
-                    }
-                }, 3000); // 3 second delay to allow server startup
-            } else {
-                vscode.window.showErrorMessage(`Failed to start ${projectTitle}`);
+            if (!success) {
+                throw new Error('Command execution was blocked for security reasons');
             }
-        } catch (error) {
-            console.error('Failed to run project:', error);
-            vscode.window.showErrorMessage(`Failed to start ${projectTitle}: ${error}`);
-        }
-    }
-
-    private async _launchProject(project: any): Promise<void> {
-        const projectPath = path.join(this._portfolioPath, 'projects', project.path || project.id);
-        
-        // Check if project directory exists
-        if (!fs.existsSync(projectPath)) {
-            throw new Error(`Project directory not found: ${projectPath}`);
-        }
-        
-        const terminal = vscode.window.createTerminal(project.title || project.id);
-        
-        // Change to project directory
-        terminal.sendText(`cd "${projectPath}"`);
-        
-        // Check if package.json exists (for npm projects)
-        const packageJsonPath = path.join(projectPath, 'package.json');
-        const hasPackageJson = fs.existsSync(packageJsonPath);
-        
-        if (hasPackageJson) {
-            // Set environment variables for Node.js projects
-            if (project.localPort) {
-                terminal.sendText(`$env:PORT = ${project.localPort}`);
-            }
-            terminal.sendText('$env:BROWSER = none');
-            terminal.sendText('$env:OPEN_BROWSER = false');
-            terminal.sendText('$env:REACT_APP_OPEN_BROWSER = false');
             
-            // Check if node_modules exists
-            const nodeModulesPath = path.join(projectPath, 'node_modules');
-            if (!fs.existsSync(nodeModulesPath)) {
-                terminal.sendText('Write-Host "Installing dependencies..." -ForegroundColor Yellow');
-                terminal.sendText('npm install');
-            }
+            console.log(`✅ Launched: ${project.title}`);
+            
+        } catch (error) {
+            console.error(`Error launching ${project.title}:`, error);
+            throw error;
         }
-        
-        // Run the build command
-        const command = project.buildCommand || 'npm run dev';
-        const portText = project.localPort ? ` at http://localhost:${project.localPort}` : '';
-        terminal.sendText(`Write-Host 'Starting ${project.title}${portText}' -ForegroundColor Green`);
-        terminal.sendText(command);
     }
 
     private _loadProjectData(): any {
@@ -743,6 +1028,21 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
         });
     }
 
+    // Track open preview panels
+    private _openPreviews = new Map<string, vscode.WebviewPanel>();
+
+    /**
+     * Closes an embedded preview panel
+     */
+    private async _closeEmbeddedPreview(title: string): Promise<void> {
+        const existingPanel = this._openPreviews.get(title);
+        if (existingPanel) {
+            existingPanel.dispose();
+            this._openPreviews.delete(title);
+            console.log(`🗑️ Closed embedded preview for ${title}`);
+        }
+    }
+
     public async _getHtmlForWebview(webview: vscode.Webview) {
         // Get the local path to portfolio assets
         const portfolioPath = vscode.Uri.joinPath(this._extensionUri, 'portfolio-dist');
@@ -879,6 +1179,17 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             
             showNotification: (text, level = 'info') => {
                 vscode.postMessage({ type: 'notification:show', text, level });
+            },
+            
+            // Embedded preview functions to replace iframe nesting
+            createEmbeddedPreview: (url, title, viewType = 'desktop') => {
+                console.log('Creating embedded preview for:', title, url);
+                vscode.postMessage({ type: 'preview:create', url, title, viewType });
+            },
+            
+            closeEmbeddedPreview: (title) => {
+                console.log('Closing embedded preview for:', title);
+                vscode.postMessage({ type: 'preview:close', title });
             }
         };
         

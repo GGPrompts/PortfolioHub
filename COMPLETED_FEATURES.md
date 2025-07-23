@@ -30,6 +30,18 @@
   - Added automatic status refresh with 3-second startup delay
   - Real-time communication bridge between VS Code extension and React app
   - All "Run" buttons now execute commands securely without browser validation conflicts
+- ✅ **Advanced Checkbox System & Multi-Project Operations (July 2025)**: Complete batch operation system
+  - Multi-project selection with visual checkboxes in VS Code sidebar
+  - Comprehensive batch commands (start, stop, browser, dependencies, git operations)
+  - Enhanced port detection with netstat integration and duplicate process detection
+  - Warning system for port conflicts and multiple instances
+  - Unified PortDetectionService across all providers for consistent status detection
+- ✅ **Integrated VS Code Browser (July 2025)**: Seamless project preview in VS Code
+  - Custom webview panels replace external browser for all project commands
+  - Professional loading UI with dark theme and error handling
+  - Smart 3D project detection for external browser when pointer lock required
+  - Enhanced iframe permissions for modern web features
+  - Robust fallback chain: webview → Simple Browser → external browser
 
 ### Enhanced Right Sidebar System - COMPLETED JANUARY 2025
 **Status**: 🎉 **ENHANCED RIGHT SIDEBAR FULLY IMPLEMENTED**

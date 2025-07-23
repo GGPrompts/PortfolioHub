@@ -8,6 +8,7 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
     readonly onDidChangeTreeData: vscode.Event<ProjectItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     private projects: any[] = [];
+    private selectedProjects: Set<string> = new Set(); // Track checked projects
 
     constructor(private portfolioPath: string) {
         this.loadProjects();
@@ -25,10 +26,12 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
 
     getChildren(element?: ProjectItem): Thenable<ProjectItem[]> {
         if (!element) {
-            // Return root level projects
+            // Return root level projects with checkbox state
             return Promise.resolve(this.projects.map(project => new ProjectItem(
                 project,
-                vscode.TreeItemCollapsibleState.None
+                vscode.TreeItemCollapsibleState.None,
+                this.isProjectSelected(project.id),
+                this
             )));
         }
         return Promise.resolve([]);
@@ -36,6 +39,38 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
 
     async getProjects(): Promise<any[]> {
         return this.projects;
+    }
+
+    // Checkbox selection management
+    toggleProjectSelection(projectId: string): void {
+        if (this.selectedProjects.has(projectId)) {
+            this.selectedProjects.delete(projectId);
+        } else {
+            this.selectedProjects.add(projectId);
+        }
+        this._onDidChangeTreeData.fire();
+    }
+
+    isProjectSelected(projectId: string): boolean {
+        return this.selectedProjects.has(projectId);
+    }
+
+    getSelectedProjects(): string[] {
+        return Array.from(this.selectedProjects);
+    }
+
+    getSelectedProjectsData(): any[] {
+        return this.projects.filter(p => this.selectedProjects.has(p.id));
+    }
+
+    clearSelection(): void {
+        this.selectedProjects.clear();
+        this._onDidChangeTreeData.fire();
+    }
+
+    selectAll(): void {
+        this.projects.forEach(p => this.selectedProjects.add(p.id));
+        this._onDidChangeTreeData.fire();
     }
 
     private async loadProjects() {
@@ -75,27 +110,46 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
 
     private checkPortStatus(port: number): Promise<boolean> {
         return new Promise((resolve) => {
-            const req = http.request({
-                hostname: 'localhost',
-                port: port,
-                path: '/favicon.ico',
-                method: 'GET',
-                timeout: 2000
-            }, (res) => {
-                // Accept any response (even 404) as indication server is running
-                resolve(res.statusCode !== undefined);
-            });
+            // Try root path first, then favicon.ico as fallback
+            const tryPath = (path: string) => {
+                const req = http.request({
+                    hostname: 'localhost',
+                    port: port,
+                    path: path,
+                    method: 'GET',
+                    timeout: 3000
+                }, (res) => {
+                    // Accept any response (even 404) as indication server is running
+                    console.log(`🔍 Port ${port}${path} responded with status ${res.statusCode} - SERVER ACTIVE`);
+                    resolve(true);
+                });
 
-            req.on('error', () => {
-                resolve(false);
-            });
+                req.on('error', (error: any) => {
+                    if (path === '/') {
+                        // If root fails, try favicon.ico
+                        console.log(`🔍 Port ${port}/ failed (${error.code || error.message}), trying /favicon.ico...`);
+                        tryPath('/favicon.ico');
+                    } else {
+                        console.log(`🔍 Port ${port} error: ${error.code || error.message} - SERVER INACTIVE`);
+                        resolve(false);
+                    }
+                });
 
-            req.on('timeout', () => {
-                req.destroy();
-                resolve(false);
-            });
+                req.on('timeout', () => {
+                    console.log(`🔍 Port ${port}${path} timeout - trying next path or resolving false`);
+                    req.destroy();
+                    if (path === '/') {
+                        tryPath('/favicon.ico');
+                    } else {
+                        resolve(false);
+                    }
+                });
 
-            req.end();
+                req.end();
+            };
+
+            // Start with root path
+            tryPath('/');
         });
     }
 }
@@ -103,25 +157,33 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
 export class ProjectItem extends vscode.TreeItem {
     constructor(
         public readonly project: any,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+        public readonly isSelected: boolean = false,
+        public readonly provider?: ProjectProvider
     ) {
         super(project.title, collapsibleState);
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}`;
-        this.description = `Port ${this.project.localPort}`;
-        this.contextValue = 'project';
         
-        // Set icon based on status
+        // Create label with checkbox
+        const checkbox = isSelected ? '☑️' : '☐';
+        const statusIndicator = project.status === 'active' ? '●' : '○';
+        this.label = `${checkbox} ${project.title} [${statusIndicator}]`;
+        
+        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to select/deselect\nDouble-click to open project`;
+        this.description = `Port ${this.project.localPort}`;
+        this.contextValue = isSelected ? 'selectedProject' : 'project';
+        
+        // Set icon based on status (smaller since we have checkbox)
         if (this.project.status === 'active') {
             this.iconPath = new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('charts.green'));
         } else {
             this.iconPath = new vscode.ThemeIcon('circle-outline');
         }
 
-        // Make clickable
+        // Single click toggles checkbox, double-click opens project
         this.command = {
-            command: 'claude-portfolio.openProject',
-            title: 'Open Project',
-            arguments: [this.project]
+            command: 'claude-portfolio.toggleProjectSelection',
+            title: 'Toggle Project Selection',
+            arguments: [this] // Pass the TreeItem itself instead of just the project
         };
     }
 }

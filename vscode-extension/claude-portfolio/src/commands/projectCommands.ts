@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ProjectService } from '../services/projectService';
 import { ProjectCommandsProvider } from '../projectCommandsProvider';
+import { VSCodeSecurityService } from '../securityService';
 
 /**
  * Individual project operation commands
@@ -250,10 +252,19 @@ export class ProjectCommands {
     private async handleAIAssistantSelection(assistantType: string, project: any): Promise<void> {
         switch (assistantType) {
             case 'claude-code':
-                // Open terminal and start Claude Code
-                const terminal = vscode.window.createTerminal(`Claude Code - ${project.title}`);
-                terminal.show();
-                terminal.sendText('claude');
+                // Open terminal and start Claude Code securely
+                const workspaceRoot = path.join(this.projectService.getPortfolioPath(), '..');
+                const success = await VSCodeSecurityService.executeSecureCommand(
+                    'claude',
+                    `Claude Code - ${project.title}`,
+                    workspaceRoot
+                );
+                
+                if (!success) {
+                    vscode.window.showErrorMessage('Failed to launch Claude Code - command blocked for security');
+                    return;
+                }
+                
                 vscode.window.showInformationMessage(`Opened Claude Code for ${project.title}`);
                 break;
 

@@ -141,6 +141,12 @@ class PortfolioWebviewProvider {
                 case 'server:startPortfolio':
                     await this._startPortfolioServer();
                     break;
+                case 'livePreview:open':
+                    await this._openLivePreview(message.url, message.title, message.projectId);
+                    break;
+                case 'livePreview:openMultiple':
+                    await this._openMultipleLivePreviews(message.projects);
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -156,9 +162,22 @@ class PortfolioWebviewProvider {
         }
     }
     async _addProjectToWorkspace(project) {
-        const projectPath = path.isAbsolute(project.path)
-            ? project.path
-            : path.join(this._portfolioPath, project.path || project.id);
+        let projectPath;
+        if (path.isAbsolute(project.path)) {
+            projectPath = project.path;
+        }
+        else if (project.path === '.') {
+            projectPath = this._portfolioPath;
+        }
+        else if (project.path?.startsWith('../Projects/')) {
+            projectPath = path.resolve(this._portfolioPath, project.path);
+        }
+        else if (project.path?.startsWith('projects/')) {
+            projectPath = path.join(this._portfolioPath, project.path);
+        }
+        else {
+            projectPath = path.join(this._portfolioPath, 'projects', project.path || project.id);
+        }
         const projectUri = vscode.Uri.file(projectPath);
         if (!fs.existsSync(projectPath)) {
             vscode.window.showErrorMessage(`Project path does not exist: ${projectPath}`);
@@ -384,17 +403,21 @@ class PortfolioWebviewProvider {
             if (path.isAbsolute(project.path)) {
                 projectPath = project.path;
             }
+            else if (project.path === '.') {
+                // Self-reference to portfolio root
+                projectPath = this._portfolioPath;
+            }
             else if (project.path.startsWith('../Projects/')) {
-                // New structure: ../Projects/project-name
+                // External project path (relative to portfolio)
                 projectPath = path.resolve(this._portfolioPath, project.path);
             }
             else if (project.path.startsWith('projects/')) {
-                // Legacy structure: projects/project-name
+                // Internal project path (relative to portfolio root)
                 projectPath = path.join(this._portfolioPath, project.path);
             }
             else {
-                // Other relative paths
-                projectPath = path.resolve(this._portfolioPath, project.path);
+                // Default: assume internal project
+                projectPath = path.join(this._portfolioPath, 'projects', project.path);
             }
         }
         else if (project.id) {
@@ -1076,6 +1099,72 @@ class PortfolioWebviewProvider {
     <script type="module" nonce="${nonce}" src="${jsUri}"></script>
 </body>
 </html>`;
+    }
+    /**
+     * Opens a project in VS Code Live Preview extension
+     */
+    async _openLivePreview(url, title, projectId) {
+        try {
+            console.log(`🔴 Opening Live Preview for ${title} at ${url}`);
+            // Check if Live Preview extension is available
+            const livePreviewExtension = vscode.extensions.getExtension('ms-vscode.live-server');
+            if (livePreviewExtension && livePreviewExtension.isActive) {
+                // Use Live Preview extension - open external server
+                await vscode.commands.executeCommand('livePreview.start.externalServer', {
+                    serverPath: url,
+                    serverName: title
+                });
+                vscode.window.showInformationMessage(`🔴 Live Preview opened for ${title}`);
+                console.log(`✅ Live Preview started for ${title} using Live Preview extension`);
+            }
+            else if (livePreviewExtension && !livePreviewExtension.isActive) {
+                // Extension exists but not active - activate it
+                await livePreviewExtension.activate();
+                await vscode.commands.executeCommand('livePreview.start.externalServer', {
+                    serverPath: url,
+                    serverName: title
+                });
+                vscode.window.showInformationMessage(`🔴 Live Preview opened for ${title}`);
+                console.log(`✅ Live Preview started for ${title} after activating extension`);
+            }
+            else {
+                // Fallback to VS Code Simple Browser
+                await vscode.commands.executeCommand('simpleBrowser.show', url);
+                vscode.window.showInformationMessage(`Opened ${title} in Simple Browser. Install Live Preview extension for better experience.`, 'Install Live Preview').then(selection => {
+                    if (selection === 'Install Live Preview') {
+                        vscode.commands.executeCommand('workbench.extensions.search', 'ms-vscode.live-server');
+                    }
+                });
+                console.log(`✅ Opened ${title} in Simple Browser (Live Preview not available)`);
+            }
+        }
+        catch (error) {
+            console.error('Failed to open Live Preview:', error);
+            // Final fallback to external browser
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            vscode.window.showErrorMessage(`Failed to open Live Preview for ${title}. Opened in external browser instead.`);
+        }
+    }
+    /**
+     * Opens multiple projects in Live Preview
+     */
+    async _openMultipleLivePreviews(projects) {
+        try {
+            console.log(`🔴 Opening ${projects.length} Live Previews...`);
+            const results = await Promise.allSettled(projects.map(project => this._openLivePreview(project.url, project.title, project.projectId)));
+            const successful = results.filter(r => r.status === 'fulfilled').length;
+            const failed = results.filter(r => r.status === 'rejected').length;
+            if (failed > 0) {
+                vscode.window.showWarningMessage(`Opened ${successful}/${projects.length} Live Previews. ${failed} failed to open.`);
+            }
+            else {
+                vscode.window.showInformationMessage(`🔴 Successfully opened ${successful} Live Previews`);
+            }
+        }
+        catch (error) {
+            console.error('Failed to open multiple Live Previews:', error);
+            vscode.window.showErrorMessage('Failed to open multiple Live Previews');
+        }
     }
 }
 exports.PortfolioWebviewProvider = PortfolioWebviewProvider;

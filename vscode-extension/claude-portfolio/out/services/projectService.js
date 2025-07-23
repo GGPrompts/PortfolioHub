@@ -277,8 +277,20 @@ class ProjectService {
             // External project path (absolute)
             return project.path;
         }
+        else if (project.path === '.') {
+            // Self-reference to portfolio root
+            return this.portfolioPath;
+        }
+        else if (project.path?.startsWith('../Projects/')) {
+            // External project path (relative to portfolio)
+            return path.resolve(this.portfolioPath, project.path);
+        }
+        else if (project.path?.startsWith('projects/')) {
+            // Internal project path (relative to portfolio root)
+            return path.join(this.portfolioPath, project.path);
+        }
         else {
-            // Internal project path (relative to projects folder)
+            // Default: assume internal project
             return path.join(this.portfolioPath, 'projects', project.path || project.id);
         }
     }

@@ -297,12 +297,23 @@ function setupPeriodicRefresh(
  * Helper function to get project path (used by legacy code - can be removed later)
  */
 export function getProjectPath(portfolioPath: string, project: any): string {
+    const path = require('path');
+    
     if (project.path?.startsWith('D:\\')) {
         // External project path (absolute)
         return project.path;
+    } else if (project.path === '.') {
+        // Self-reference to portfolio root
+        return portfolioPath;
+    } else if (project.path?.startsWith('../Projects/')) {
+        // External project path (relative to portfolio)
+        return path.resolve(portfolioPath, project.path);
+    } else if (project.path?.startsWith('projects/')) {
+        // Internal project path (relative to portfolio root)
+        return path.join(portfolioPath, project.path);
     } else {
-        // Internal project path (relative to projects folder)
-        return require('path').join(portfolioPath, 'projects', project.path || project.id);
+        // Default: assume internal project
+        return path.join(portfolioPath, 'projects', project.path || project.id);
     }
 }
 

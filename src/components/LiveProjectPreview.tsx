@@ -110,6 +110,14 @@ export default function LiveProjectPreview({
       const projectPath = getProjectPath()
       const command = project.buildCommand || 'npm run dev'
       
+      // Validate command before sending to VS Code extension
+      const { SecureCommandRunner } = await import('../services/securityService')
+      if (!SecureCommandRunner.validateCommand(command)) {
+        console.error(`Command blocked for security reasons: ${command}`)
+        showNotification('Command blocked - security validation failed', 'error')
+        return
+      }
+      
       // Send message to VS Code extension to run project securely
       window.vsCodePortfolio?.postMessage?.({
         type: 'project:run',

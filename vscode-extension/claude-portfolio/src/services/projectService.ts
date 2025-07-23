@@ -16,11 +16,18 @@ export class ProjectService {
     constructor(private portfolioPath: string) {}
 
     /**
+     * Get the portfolio path
+     */
+    getPortfolioPath(): string {
+        return this.portfolioPath;
+    }
+
+    /**
      * Start a single project
      */
     async startProject(project: any): Promise<ProjectOperationResult> {
         try {
-            const projectPath = this.getProjectPath(project);
+            const projectPath = await this.getProjectPath(project);
             const command = project.buildCommand || 'npm run dev';
             const workspaceRoot = path.join(this.portfolioPath, '..');  // D:\ClaudeWindows
             
@@ -198,7 +205,7 @@ export class ProjectService {
      */
     async openProject(project: any): Promise<ProjectOperationResult> {
         try {
-            const projectPath = this.getProjectPath(project);
+            const projectPath = await this.getProjectPath(project);
             
             if (!fs.existsSync(projectPath)) {
                 return {
@@ -280,15 +287,38 @@ export class ProjectService {
     }
 
     /**
-     * Get project file system path
+     * Get project file system path with security validation
      */
-    private getProjectPath(project: any): string {
-        if (project.path?.startsWith('D:\\')) {
-            // External project path (absolute)
-            return project.path;
-        } else {
-            // Internal project path (relative to projects folder)
-            return path.join(this.portfolioPath, 'projects', project.path || project.id);
+    private async getProjectPath(project: any): Promise<string> {
+        const workspaceRoot = path.join(this.portfolioPath, '..');
+        
+        try {
+            let resolvedPath: string;
+            
+            if (project.path?.startsWith('D:\\')) {
+                // External project path (absolute) - validate against workspace
+                resolvedPath = await VSCodeSecurityService.sanitizePath(project.path, workspaceRoot);
+            } else if (project.path === '.') {
+                // Self-reference to portfolio root
+                resolvedPath = await VSCodeSecurityService.sanitizePath(this.portfolioPath, workspaceRoot);
+            } else if (project.path?.startsWith('../Projects/')) {
+                // External project path (relative to portfolio) - validate resolved path
+                const resolved = path.resolve(this.portfolioPath, project.path);
+                resolvedPath = await VSCodeSecurityService.sanitizePath(resolved, workspaceRoot);
+            } else if (project.path?.startsWith('projects/')) {
+                // Internal project path (relative to portfolio root)
+                const projectPath = path.join(this.portfolioPath, project.path);
+                resolvedPath = await VSCodeSecurityService.sanitizePath(projectPath, workspaceRoot);
+            } else {
+                // Default: assume internal project
+                const defaultPath = path.join(this.portfolioPath, 'projects', project.path || project.id);
+                resolvedPath = await VSCodeSecurityService.sanitizePath(defaultPath, workspaceRoot);
+            }
+            
+            return resolvedPath;
+        } catch (error) {
+            // If path validation fails due to security concerns, throw with context
+            throw new Error(`Path security validation failed for project "${project.title || project.id}": ${error.message}`);
         }
     }
 

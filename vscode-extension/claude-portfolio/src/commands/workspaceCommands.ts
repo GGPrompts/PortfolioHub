@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { VSCodeSecurityService } from '../securityService';
 import { ConfigurationService } from '../services/configurationService';
 import { DashboardPanel } from '../dashboardPanel';
@@ -324,13 +325,19 @@ export class WorkspaceCommands {
     private async openClaudeCommand(): Promise<void> {
         try {
             const portfolioPath = this.configService.getPortfolioPath();
-            const terminal = vscode.window.createTerminal({
-                name: 'Claude Code',
-                cwd: portfolioPath
-            });
+            const workspaceRoot = path.join(portfolioPath, '..');
             
-            terminal.show();
-            terminal.sendText('claude');
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                'claude',
+                'Claude Code',
+                workspaceRoot
+            );
+            
+            if (!success) {
+                vscode.window.showErrorMessage('Failed to launch Claude Code - command blocked for security');
+                return;
+            }
+            
             vscode.window.showInformationMessage('Claude Code opened in terminal');
         } catch (error) {
             const message = `Error opening Claude: ${error instanceof Error ? error.message : String(error)}`;

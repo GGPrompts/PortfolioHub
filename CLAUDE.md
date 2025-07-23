@@ -87,12 +87,15 @@ Before adding any new command execution:
 - `src/hooks/useProjectData.ts` - React Query data management
 - `src/utils/optimizedPortManager.ts` - Cached port checking
 
-### Current Status
-This is the root directory for all Claude-assisted development projects. The portfolio app serves as a central hub to view, launch, and manage all projects with a clean, professional interface and comprehensive development tools.
+### Current Status - WEB VERSION
+This CLAUDE.md focuses on the **standalone web application** version of the portfolio. The web app serves as a central hub to view, launch, and manage all projects with a clean, professional interface.
+
+**⚠️ IMPORTANT**: This documentation is for the **web version only**. For VS Code extension development, use [vscode-extension/CLAUDE.md](vscode-extension/CLAUDE.md) to avoid conflicts.
 
 **Security Status**: ✅ **FULLY HARDENED** - All command injection vulnerabilities fixed (July 22, 2025)
-**Portfolio Status**: ✅ **VS Code Extension Integration COMPLETED** - See [COMPLETED_FEATURES.md](COMPLETED_FEATURES.md) for details
-**Architecture Status**: ✅ **ENTERPRISE-GRADE REFACTORING COMPLETED** - Modular architecture implemented (January 23, 2025)
+**Web App Status**: ✅ **PRODUCTION READY** - Standalone web interface with clipboard commands
+**VS Code Extension Status**: ✅ **PRODUCTION READY** - See [vscode-extension/CLAUDE.md](vscode-extension/CLAUDE.md) for details
+**Architecture Status**: ✅ **DUAL-ENVIRONMENT ARCHITECTURE** - Web + Extension working independently
 
 🏗️ **LATEST ARCHITECTURE OVERHAUL (January 23, 2025)**:
 - ✅ **987-line extension.ts reduced to 268 lines** (73% code reduction!)
@@ -156,11 +159,21 @@ D:\ClaudeWindows\
 **Installation Location:** `%USERPROFILE%\.claude\` (Windows)
 **Repository Location:** `D:\ClaudeWindows\ClaudeGlobalCommands\`
 
-#### VS Code Extension Quick Reference
-- **Extension Location**: `vscode-extension/claude-portfolio/`
-- **Current Package**: `claude-portfolio-iframe-fix.vsix` (installed and working)
-- **Key Integration File**: `src/utils/vsCodeIntegration.ts`
-- **Reinstall Script**: `.\reinstall.ps1`
+#### Dual React App Architecture
+The portfolio system now supports **two distinct environments**:
+
+**🌐 Web Version** (this directory):
+- **Purpose**: Standalone web application for portfolio browsing
+- **Access**: `npm run dev` → http://localhost:5173
+- **Features**: Full portfolio interface with clipboard-based command execution
+- **Context**: Use this CLAUDE.md when working on web app features
+
+**🔌 VS Code Extension** (`vscode-extension/` directory):
+- **Purpose**: Native VS Code integration with direct API access
+- **Access**: Claude Portfolio activity bar icon in VS Code
+- **Features**: Tree views, native commands, Live Preview integration
+- **Context**: Use `vscode-extension/CLAUDE.md` when working on extension features
+- **Documentation**: [VS Code Extension CLAUDE.md](vscode-extension/CLAUDE.md)
 
 #### Recent Enhancements (January 2025)
 - **✅ Enhanced Right Sidebar**: 50+ professional developer commands with smart execution
@@ -196,19 +209,26 @@ All projects are now located in `D:\ClaudeWindows\Projects\` for context isolati
 
 ### Key Development Commands
 
-**Quick Start:**
+**Web App Quick Start:**
 ```bash
 # Install dependencies
 npm install
 
-# Start portfolio hub (runs on port 5173+, auto-assigned by Vite)
+# Start web portfolio (port 5173+, auto-assigned by Vite)
 npm run dev
 
 # Start all projects in tabbed Windows Terminal (recommended)
-.\scripts\start-all-tabbed.ps1
+.\scripts\start-all-enhanced.ps1
 
 # Create new project
 .\scripts\create-project.ps1 -ProjectName "my-new-project" -Description "Project description"
+```
+
+**⚠️ VS Code Extension Development:**
+```bash
+# For extension work, use the dedicated documentation:
+cd vscode-extension
+# See vscode-extension/CLAUDE.md for extension-specific commands
 ```
 
 **PowerShell Script Options:**

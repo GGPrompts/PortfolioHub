@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { SHARED_SECURITY_CONFIG, getSecurityErrorMessage, ValidationResult } from '../shared/security-config';
 
 /**
  * VS Code Security Service - Provides secure command execution with workspace trust
@@ -9,32 +10,17 @@ import * as fs from 'fs';
  * all inputs to prevent command injection and path traversal attacks.
  */
 export class VSCodeSecurityService {
-    private static readonly ALLOWED_COMMANDS = new Set([
-        'npm', 'yarn', 'pnpm', 'node', 'git', 'echo', 'cd', 'ls', 'dir',
-        'powershell.exe', 'cmd.exe', 'Write-Host', 'explorer', 'code',
-        'claude', 'gemini', 'python', 'py', 'typescript', 'tsc'
-    ]);
-    
-    private static readonly ALLOWED_NPM_SCRIPTS = new Set([
-        'dev', 'start', 'build', 'test', 'test:coverage', 'install', 'run', 'compile', 'watch',
-        'lint', 'type-check', 'format', 'clean', 'preview', 'serve'
-    ]);
-    
-    private static readonly DANGEROUS_PATTERNS = [
-        /\.\.\//,            // Path traversal  
-        /rm\s+-rf/i,         // Destructive commands
-        /del\s+\/[sq]/i,     // Windows destructive commands
-        /format\s+[c-z]:/i,  // Format drive commands
-        /shutdown/i,         // System shutdown
-        /reboot/i,           // System reboot
-        /halt/i,             // System halt
-        /\>\s*nul/i,         // Output redirection that might hide malicious output
-        /\&\&\s*(rm|del|format)/i, // Chained destructive commands
-        /;\s*(rm|del|format)/i,     // Semicolon chained destructive commands
-        /\|\s*(rm|del|format)/i,    // Pipe chained destructive commands
-        /`.*rm.*`/i,         // Backtick command injection with rm
-        /\$\(.*rm.*\)/i,     // Command substitution with rm
-    ];
+    private static readonly ALLOWED_COMMANDS = new Set(SHARED_SECURITY_CONFIG.ALLOWED_COMMANDS);
+    private static readonly ALLOWED_NPM_SCRIPTS = new Set(SHARED_SECURITY_CONFIG.ALLOWED_NPM_SCRIPTS);
+    private static readonly DANGEROUS_PATTERNS = SHARED_SECURITY_CONFIG.DANGEROUS_PATTERNS;
+    private static readonly SAFE_COMMAND_PATTERNS = SHARED_SECURITY_CONFIG.SAFE_COMMAND_PATTERNS;
+
+    /**
+     * Validate PowerShell-specific syntax for safe operations
+     */
+    private static validatePowerShellSyntax(command: string): boolean {
+        return SHARED_SECURITY_CONFIG.SAFE_POWERSHELL_PATTERNS.some(pattern => pattern.test(command));
+    }
 
     /**
      * Checks if the current workspace is trusted and prompts user if not
@@ -83,13 +69,28 @@ export class VSCodeSecurityService {
             return false;
         }
 
-        // Check for dangerous patterns
+        // 1. Check whitelist first (most permissive)
+        if (this.SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.log(`Command whitelisted: ${trimmedCommand}`);
+            return true;
+        }
+        
+        // 2. Check PowerShell syntax
+        if (trimmedCommand.toLowerCase().includes('powershell') || trimmedCommand.includes('$') || 
+            trimmedCommand.includes('Get-') || trimmedCommand.includes('Stop-Process')) {
+            if (this.validatePowerShellSyntax(trimmedCommand)) {
+                console.log(`PowerShell command validated: ${trimmedCommand}`);
+                return true;
+            }
+        }
+        
+        // 3. Check dangerous patterns (most restrictive)
         if (this.DANGEROUS_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
-            console.warn(`Command blocked due to dangerous pattern: ${trimmedCommand}`);
+            console.warn(`Dangerous pattern detected: ${trimmedCommand}`);
             return false;
         }
-
-        // Extract the base command (first word)
+        
+        // 4. Check base command allowlist
         const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();  
         
         // Special handling for npm commands
@@ -112,6 +113,105 @@ export class VSCodeSecurityService {
         }
 
         return true;
+    }
+
+    /**
+     * Enhanced validation with detailed error information
+     * @param command The command to validate
+     * @returns ValidationResult with detailed information
+     */
+    static validateCommandEnhanced(command: string): ValidationResult {
+        if (!command || typeof command !== 'string') {
+            return { 
+                valid: false, 
+                reason: 'invalid-input', 
+                message: getSecurityErrorMessage(command || '', 'invalid-input')
+            };
+        }
+
+        const trimmedCommand = command.trim();
+        if (trimmedCommand.length === 0) {
+            return { 
+                valid: false, 
+                reason: 'empty-command', 
+                message: getSecurityErrorMessage(trimmedCommand, 'empty-command')
+            };
+        }
+
+        // 1. Check whitelist first (most permissive)
+        if (this.SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.log(`Command whitelisted: ${trimmedCommand}`);
+            return { valid: true };
+        }
+        
+        // 2. Check PowerShell syntax
+        if (trimmedCommand.toLowerCase().includes('powershell') || trimmedCommand.includes('$') || 
+            trimmedCommand.includes('Get-') || trimmedCommand.includes('Stop-Process')) {
+            if (this.validatePowerShellSyntax(trimmedCommand)) {
+                console.log(`PowerShell command validated: ${trimmedCommand}`);
+                return { valid: true };
+            } else {
+                return { 
+                    valid: false, 
+                    reason: 'powershell-syntax', 
+                    message: getSecurityErrorMessage(trimmedCommand, 'powershell-syntax')
+                };
+            }
+        }
+        
+        // 3. Check dangerous patterns (most restrictive)
+        if (this.DANGEROUS_PATTERNS.some(pattern => pattern.test(trimmedCommand))) {
+            console.warn(`Dangerous pattern detected: ${trimmedCommand}`);
+            return { 
+                valid: false, 
+                reason: 'dangerous-pattern', 
+                message: getSecurityErrorMessage(trimmedCommand, 'dangerous-pattern')
+            };
+        }
+        
+        // 4. Check base command allowlist
+        const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();  
+        
+        // Special handling for npm commands
+        if (baseCommand === 'npm') {
+            const isValid = this.validateNpmCommand(trimmedCommand);
+            if (!isValid) {
+                return { 
+                    valid: false, 
+                    reason: 'not-whitelisted', 
+                    message: getSecurityErrorMessage(trimmedCommand, 'not-whitelisted')
+                };
+            }
+            return { valid: true };
+        }
+
+        // Special handling for PowerShell scripts
+        if (baseCommand === 'powershell.exe' || trimmedCommand.startsWith('.\\scripts\\')) {
+            const isValid = this.validatePowerShellCommand(trimmedCommand);
+            if (!isValid) {
+                return { 
+                    valid: false, 
+                    reason: 'powershell-syntax', 
+                    message: getSecurityErrorMessage(trimmedCommand, 'powershell-syntax')
+                };
+            }
+            return { valid: true };
+        }
+
+        // Check if base command is in allowed list
+        const isAllowed = this.ALLOWED_COMMANDS.has(baseCommand) || 
+                         this.ALLOWED_COMMANDS.has(baseCommand.replace('.exe', ''));
+
+        if (!isAllowed) {
+            console.warn(`Command blocked - not in allowed list: ${baseCommand}`);
+            return { 
+                valid: false, 
+                reason: 'not-whitelisted', 
+                message: getSecurityErrorMessage(trimmedCommand, 'not-whitelisted')
+            };
+        }
+
+        return { valid: true };
     }
 
     /**

@@ -25,12 +25,18 @@ export class ProjectCommandsProvider implements vscode.TreeDataProvider<ProjectC
         this.selectedProject = project;
         this.updateCommands();
         this._onDidChangeTreeData.fire();
+        
+        // Update the view title to show which project is selected
+        this.updateViewTitle();
     }
 
     clearSelection() {
         this.selectedProject = null;
         this.commands = [];
         this._onDidChangeTreeData.fire();
+        
+        // Reset view title when no project is selected
+        this.updateViewTitle();
     }
 
     private updateCommands() {
@@ -145,6 +151,11 @@ export class ProjectCommandsProvider implements vscode.TreeDataProvider<ProjectC
         });
     }
 
+    private updateViewTitle() {
+        // Note: VS Code tree view titles can't be dynamically updated
+        // Instead, we'll show the selected project as a header item in the tree
+    }
+
     getTreeItem(element: ProjectCommandItem): vscode.TreeItem {
         return element;
     }
@@ -163,22 +174,35 @@ export class ProjectCommandsProvider implements vscode.TreeDataProvider<ProjectC
         }
 
         if (!element) {
+            const items: ProjectCommandItem[] = [];
+            
+            // Add header showing selected project with hand emoji
+            items.push(new ProjectCommandItem(
+                `👉 Selected: ${this.selectedProject.title}`,
+                '',
+                'header',
+                'circle-filled',
+                `Commands for ${this.selectedProject.title} (${this.selectedProject.status})`,
+                vscode.TreeItemCollapsibleState.None,
+                true
+            ));
+            
             // Group commands by category
             const categories = [...new Set(this.commands.map(c => c.category))];
-            return Promise.resolve(
-                categories.map(cat => new ProjectCommandItem(
-                    cat,
-                    '',
-                    cat,
-                    'folder',
-                    `${cat} commands for ${this.selectedProject.title}`,
-                    vscode.TreeItemCollapsibleState.Expanded,
-                    true
-                ))
-            );
-        } else if (element.isCategory) {
-            // Return commands for this category
-            const categoryCommands = this.commands.filter(c => c.category === element.label);
+            items.push(...categories.map(cat => new ProjectCommandItem(
+                cat,
+                '',
+                cat,
+                'folder',
+                `${cat} commands for ${this.selectedProject.title}`,
+                vscode.TreeItemCollapsibleState.Expanded,
+                true
+            )));
+            
+            return Promise.resolve(items);
+        } else if (element.isCategory && element.category !== 'header') {
+            // Return commands for this category (exclude header)
+            const categoryCommands = this.commands.filter(c => c.category === element.category);
             return Promise.resolve(
                 categoryCommands.map(cmd => new ProjectCommandItem(
                     cmd.label,

@@ -1,28 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Project } from '../store/portfolioStore'
 import { optimizedPortManager } from '../utils/optimizedPortManager'
-
-// Check if running in VS Code environment
-const isVSCodeEnvironment = (): boolean => {
-  return !!(window as any).vsCodePortfolio?.postMessage
-}
+import { isVSCodeEnvironment } from '../utils/vsCodeIntegration'
 
 /**
- * Fetch project data from manifest or VS Code injection
+ * Fetch project data from manifest (unified architecture always uses manifest)
  */
 async function fetchProjectData(): Promise<Project[]> {
-  // Check if running in VS Code webview with injected data
-  if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.projectData) {
-    console.log('📦 Using VS Code injected project data (timestamp:', (window as any).vsCodePortfolio.lastUpdated, ')')
-    const injectedData = (window as any).vsCodePortfolio.projectData
-    
-    if (injectedData && injectedData.projects && Array.isArray(injectedData.projects)) {
-      return injectedData.projects
-    }
-  }
-  
-  // Fallback to manifest file
-  console.log('📦 Loading from manifest file')
+  console.log('📦 Loading project data from manifest (unified architecture)')
   try {
     const response = await fetch('/projects/manifest.json')
     if (!response.ok) {
@@ -45,28 +30,15 @@ async function fetchProjectData(): Promise<Project[]> {
 
 /**
  * Fetch project status (running/stopped) for all projects
+ * In unified architecture, always use optimized port checking
  */
 async function fetchProjectStatus(projects: Project[]): Promise<Map<string, boolean>> {
   if (projects.length === 0) {
     return new Map()
   }
 
-  // Check if we're in VS Code webview and use injected data
-  if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.projectData) {
-    const vsCodeProjects = (window as any).vsCodePortfolio.projectData.projects || []
-    const statusMap = new Map<string, boolean>()
-    
-    for (const project of projects) {
-      const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-      const isRunning = vsCodeProject?.status === 'active' || false
-      statusMap.set(project.id, isRunning)
-    }
-    
-    return statusMap
-  } else {
-    // Fallback to optimized batch port checking
-    return await optimizedPortManager.checkProjectPorts(projects)
-  }
+  console.log(`🔍 Checking status for ${projects.length} projects using optimized port manager`)
+  return await optimizedPortManager.checkProjectPorts(projects)
 }
 
 /**
@@ -84,7 +56,7 @@ export function useProjectData() {
     queryKey: ['projects'],
     queryFn: fetchProjectData,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: isVSCodeEnvironment() ? 60 * 1000 : 3 * 60 * 1000, // 1 minute for VS Code, 3 minutes for web
+    refetchInterval: 2 * 60 * 1000, // 2 minutes for all environments
     refetchOnWindowFocus: false,
     retry: 2,
   })
@@ -99,7 +71,7 @@ export function useProjectData() {
     queryFn: () => fetchProjectStatus(projects),
     enabled: projects.length > 0, // Only run when we have projects
     staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: isVSCodeEnvironment() ? 10 * 1000 : 5 * 1000, // 10 seconds for VS Code, 5 seconds for web
+    refetchInterval: 5 * 1000, // 5 seconds for all environments
     refetchOnWindowFocus: false,
     retry: 1,
   })
@@ -108,57 +80,26 @@ export function useProjectData() {
    * Force refresh of project data (clears cache and refetches)
    */
   const refreshProjectData = async () => {
-    console.log('🔄 Refreshing project data - clearing all caches')
+    console.log('🔄 Refreshing project data - clearing all caches (unified architecture)')
     
     // Clear port cache for fresh data
     optimizedPortManager.clearCache()
     
-    // In VS Code environment, signal that we want fresh data by updating timestamp
-    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio) {
-      console.log('🔄 Requesting fresh VS Code project data')
-      
-      // Request fresh data from VS Code extension
-      if ((window as any).vsCodePortfolio.postMessage) {
-        (window as any).vsCodePortfolio.postMessage({
-          type: 'refresh:projects',
-          timestamp: Date.now()
-        })
-      }
-      
-      // Wait a moment for VS Code to update the injected data
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Invalidate with specific timestamp to force refresh
-      await queryClient.invalidateQueries({ queryKey: ['projects'] })
-      await queryClient.invalidateQueries({ queryKey: ['projectStatus', projects] })
-      
-      // Also manually refetch to ensure immediate update
-      await refetchProjects()
-      await refetchStatus()
-    } else {
-      // Standard refresh for web version
-      await queryClient.invalidateQueries({ queryKey: ['projects'] })
-      await queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
-    }
+    // Standard refresh for unified architecture
+    await queryClient.invalidateQueries({ queryKey: ['projects'] })
+    await queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
+    
+    // Manual refetch to ensure immediate update
+    await refetchProjects()
+    await refetchStatus()
   }
 
   /**
    * Refresh only project status (lighter operation)
    */
   const refreshProjectStatus = async () => {
+    console.log('🔄 Refreshing project status (unified architecture)')
     optimizedPortManager.clearCache()
-    
-    // In VS Code environment, request fresh status data
-    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.postMessage) {
-      (window as any).vsCodePortfolio.postMessage({
-        type: 'refresh:status',
-        timestamp: Date.now()
-      })
-      
-      // Wait a moment for VS Code to update the injected data
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-    
     await refetchStatus()
   }
 

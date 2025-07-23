@@ -119,8 +119,8 @@ function PortfolioApp() {
       }
     }
 
-    // Listen for messages from VS Code extension
-    if (window.vsCodePortfolio?.isVSCodeWebview) {
+    // Listen for messages from VS Code extension  
+    if (isVSCodeEnvironment()) {
       window.addEventListener('message', handleVSCodeMessage)
       return () => window.removeEventListener('message', handleVSCodeMessage)
     }

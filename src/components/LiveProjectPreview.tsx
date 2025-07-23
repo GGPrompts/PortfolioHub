@@ -23,9 +23,9 @@ export default function LiveProjectPreview({
   livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
   
-  // In VS Code webview, get project status from injected data
+  // In VS Code environment, get project status from injected data (if available)
   const getVSCodeProjectStatus = () => {
-    if (!window.vsCodePortfolio?.isVSCodeWebview) return { isRunning, port }
+    if (!isVSCodeEnvironment() || !window.vsCodePortfolio?.projectData) return { isRunning, port }
     
     const vsCodeProjects = window.vsCodePortfolio.projectData?.projects || []
     const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
@@ -365,7 +365,7 @@ export default function LiveProjectPreview({
 
   // Auto-enable live preview when project starts running and global previews are enabled
   useEffect(() => {
-    const isVSCode = window.vsCodePortfolio?.isVSCodeWebview
+    const isVSCode = isVSCodeEnvironment()
     console.log(`🖼️ LivePreview ${project.id} state check:`, {
       actualIsRunning,
       actualPort,
@@ -376,13 +376,14 @@ export default function LiveProjectPreview({
     })
     
     if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled) {
-      setIsRefreshing(true)
+      setIsRefreshing(false) // Start without refresh indicator
       console.log(`✅ Enabling live preview for ${project.id} on port ${actualPort}`)
       // Small delay to let the server fully start
       setTimeout(() => {
         setShowLivePreview(true)
-        setPreviewLoaded(false)
-      }, 2000)
+        setPreviewLoaded(false) // Will be set to true by iframe onLoad
+        setIsRefreshing(false)
+      }, 1500) // Reduced from 2000ms
     }
     if (!actualIsRunning || !livePreviewsEnabled) {
       if (showLivePreview) {
@@ -423,6 +424,9 @@ export default function LiveProjectPreview({
                 setIsRefreshing(false)
                 clearInterval(checkInterval)
               }
+            } else if (previewLoaded) {
+              // Clear interval if already loaded
+              clearInterval(checkInterval)
             }
           }, 500)
           
@@ -431,13 +435,13 @@ export default function LiveProjectPreview({
         }
       }, 100)
       
-      // Shorter timeout fallback - stop spinner after 3 seconds
+      // Shorter timeout fallback - stop spinner after 2 seconds
       const loadTimeout = setTimeout(() => {
-        const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
-        console.warn(`⚠️ LivePreview ${project.id} timeout - assuming loaded ${isVSCode ? '(VS Code)' : '(Web)'}`)
+        const isVSCode = isVSCodeEnvironment()
+        console.warn(`⚠️ LivePreview ${project.id} timeout - forcing loaded state ${isVSCode ? '(VS Code Enhanced)' : '(Web Application)'}`)
         setPreviewLoaded(true)
         setIsRefreshing(false)
-      }, 3000)
+      }, 2000) // Reduced from 3000ms to 2000ms
       
       return () => clearTimeout(loadTimeout)
     }
@@ -446,8 +450,8 @@ export default function LiveProjectPreview({
   const handleIframeLoad = () => {
     setPreviewLoaded(true)
     setIsRefreshing(false)
-    const isVSCode = (window as any).vsCodePortfolio?.isVSCodeWebview
-    console.log(`✅ LivePreview ${project.id} iframe loaded successfully ${isVSCode ? '(VS Code)' : '(Web)'}`)
+    const isVSCode = isVSCodeEnvironment()
+    console.log(`✅ LivePreview ${project.id} iframe loaded successfully ${isVSCode ? '(VS Code Enhanced)' : '(Web Application)'}`)
   }
 
   const handleIframeError = () => {
@@ -513,6 +517,7 @@ export default function LiveProjectPreview({
               {isVSCodeEnvironment() ? (
                 // VS Code uses regular iframe (CSP allows localhost)
                 <iframe
+                  ref={iframeRef}
                   src={previewUrl}
                   style={{
                     width: '100%',
@@ -523,6 +528,8 @@ export default function LiveProjectPreview({
                   title={`${project.title} Preview`}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"
                   allow={project.permissions?.join('; ')}
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
                 />
               ) : (
                 // Regular iframe for web mode

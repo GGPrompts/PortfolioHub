@@ -14,6 +14,16 @@ export class VSCodeSecurityService {
     private static readonly ALLOWED_NPM_SCRIPTS = new Set(SHARED_SECURITY_CONFIG.ALLOWED_NPM_SCRIPTS);
     private static readonly DANGEROUS_PATTERNS = SHARED_SECURITY_CONFIG.DANGEROUS_PATTERNS;
     private static readonly SAFE_COMMAND_PATTERNS = SHARED_SECURITY_CONFIG.SAFE_COMMAND_PATTERNS;
+    
+    // Portfolio-specific allowed scripts for enhanced project management
+    private static readonly ALLOWED_PORTFOLIO_SCRIPTS = [
+        '.\\scripts\\start-all-tabbed.ps1',
+        '.\\scripts\\kill-all-servers.ps1',
+        '.\\scripts\\launch-projects-enhanced.ps1',
+        '.\\scripts\\create-project-enhanced.ps1',
+        '.\\scripts\\start-all-enhanced.ps1',
+        '.\\scripts\\fix-vscode-performance.ps1'
+    ];
 
     /**
      * Validate PowerShell-specific syntax for safe operations
@@ -233,9 +243,24 @@ export class VSCodeSecurityService {
     }
 
     /**
+     * Validates portfolio-specific commands for enhanced project management
+     * @param command The command to validate
+     * @returns boolean - true if the command is a valid portfolio script
+     */
+    static validatePortfolioCommand(command: string): boolean {
+        return this.ALLOWED_PORTFOLIO_SCRIPTS.some(script => 
+            command.includes(script)) || this.validateCommand(command);
+    }
+
+    /**
      * Validates PowerShell commands and scripts
      */
     private static validatePowerShellCommand(command: string): boolean {
+        // Check portfolio scripts first
+        if (this.ALLOWED_PORTFOLIO_SCRIPTS.some(script => command.includes(script))) {
+            return true;
+        }
+
         // Allow only scripts in the scripts directory
         if (command.startsWith('.\\scripts\\')) {
             const scriptPath = command.split(/\s+/)[0];

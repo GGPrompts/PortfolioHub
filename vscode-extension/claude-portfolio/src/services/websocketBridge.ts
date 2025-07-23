@@ -171,6 +171,18 @@ export class WebSocketBridgeService {
                 case 'refresh-projects':
                     return await this.handleRefreshProjects(id);
 
+                case 'project-launch-all':
+                    return await this.handleProjectLaunchAll(id);
+
+                case 'project-kill-all':
+                    return await this.handleProjectKillAll(id);
+
+                case 'enhanced-project-launch':
+                    return await this.handleEnhancedProjectLaunch(id, data);
+
+                case 'project-status-sync':
+                    return await this.handleProjectStatusSync(id);
+
                 default:
                     return {
                         id,
@@ -621,6 +633,120 @@ export class WebSocketBridgeService {
         } catch (error) {
             console.error('Failed to find project by ID:', error);
             return null;
+        }
+    }
+
+    private async handleProjectLaunchAll(id: string | undefined): Promise<BridgeResponse> {
+        try {
+            const workspaceRoot = path.join(this.portfolioPath, '..');
+            const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1';
+            
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                command,
+                'Launch All Projects',
+                workspaceRoot
+            );
+
+            return {
+                id,
+                success,
+                message: success ? 'All projects launch command executed' : 'Launch all projects command blocked'
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to launch all projects'
+            };
+        }
+    }
+
+    private async handleProjectKillAll(id: string | undefined): Promise<BridgeResponse> {
+        try {
+            const workspaceRoot = path.join(this.portfolioPath, '..');
+            const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1';
+            
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                command,
+                'Kill All Projects',
+                workspaceRoot
+            );
+
+            return {
+                id,
+                success,
+                message: success ? 'All projects kill command executed' : 'Kill all projects command blocked'
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to kill all projects'
+            };
+        }
+    }
+
+    private async handleEnhancedProjectLaunch(id: string | undefined, data: any): Promise<BridgeResponse> {
+        try {
+            const { projectIds, forceRestart } = data;
+            const workspaceRoot = path.join(this.portfolioPath, '..');
+            
+            // Build enhanced launch command
+            const baseCommand = 'cd D:\\ClaudeWindows\\claude-dev-portfolio';
+            const scriptCommand = '.\\scripts\\launch-projects-enhanced.ps1';
+            const projectArgs = projectIds ? `-ProjectIds "${projectIds.join(',')}"` : '';
+            const forceArgs = forceRestart ? '-ForceRestart' : '';
+            
+            const command = `${baseCommand}; ${scriptCommand} ${projectArgs} ${forceArgs}`.trim();
+            
+            const success = await VSCodeSecurityService.executeSecureCommand(
+                command,
+                'Enhanced Project Launch',
+                workspaceRoot
+            );
+
+            return {
+                id,
+                success,
+                message: success ? 'Enhanced project launch executed' : 'Enhanced project launch blocked'
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Enhanced project launch failed'
+            };
+        }
+    }
+
+    private async handleProjectStatusSync(id: string | undefined): Promise<BridgeResponse> {
+        try {
+            // Load all projects and get their current status
+            const projects = await this.loadProjectsFromManifest();
+            const statuses = await this.portDetectionService.checkProjectStatuses(projects);
+            
+            // Broadcast status update to all connected clients
+            this.broadcast({
+                type: 'project-status-update',
+                data: {
+                    projects: projects,
+                    statuses: statuses,
+                    timestamp: Date.now()
+                }
+            });
+
+            return {
+                id,
+                success: true,
+                result: { projects, statuses },
+                message: 'Project status synchronized'
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to sync project status'
+            };
         }
     }
 }

@@ -116,8 +116,17 @@ export function useProjectData() {
     // In VS Code environment, signal that we want fresh data by updating timestamp
     if (isVSCodeEnvironment() && (window as any).vsCodePortfolio) {
       console.log('🔄 Requesting fresh VS Code project data')
-      // Force React Query to see this as new data by updating query key
-      const timestamp = Date.now()
+      
+      // Request fresh data from VS Code extension
+      if ((window as any).vsCodePortfolio.postMessage) {
+        (window as any).vsCodePortfolio.postMessage({
+          type: 'refresh:projects',
+          timestamp: Date.now()
+        })
+      }
+      
+      // Wait a moment for VS Code to update the injected data
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Invalidate with specific timestamp to force refresh
       await queryClient.invalidateQueries({ queryKey: ['projects'] })
@@ -138,6 +147,18 @@ export function useProjectData() {
    */
   const refreshProjectStatus = async () => {
     optimizedPortManager.clearCache()
+    
+    // In VS Code environment, request fresh status data
+    if (isVSCodeEnvironment() && (window as any).vsCodePortfolio?.postMessage) {
+      (window as any).vsCodePortfolio.postMessage({
+        type: 'refresh:status',
+        timestamp: Date.now()
+      })
+      
+      // Wait a moment for VS Code to update the injected data
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+    
     await refetchStatus()
   }
 

@@ -155,6 +155,16 @@ class PortfolioWebviewProvider {
                     // Start a specific project by ID
                     await this._startProjectById(message.projectId);
                     break;
+                case 'refresh:projects':
+                    // Refresh project data and inject fresh data into webview
+                    console.log('🔄 Refreshing VS Code project data on request');
+                    await this._refreshAndInjectProjectData();
+                    break;
+                case 'refresh:status':
+                    // Refresh only project status
+                    console.log('🔄 Refreshing VS Code project status on request');
+                    await this._refreshProjectStatus();
+                    break;
                 default:
                     console.log('Unhandled message type:', message.type);
             }
@@ -1213,6 +1223,40 @@ class PortfolioWebviewProvider {
         catch (error) {
             console.error('Failed to open multiple Live Previews:', error);
             vscode.window.showErrorMessage('Failed to open multiple Live Previews');
+        }
+    }
+    /**
+     * Refresh and inject fresh project data into webview
+     */
+    async _refreshAndInjectProjectData() {
+        console.log('🔄 Refreshing and injecting fresh project data');
+        // Force reload of project data with fresh status
+        this._cachedProjectData = null;
+        const freshData = await this._loadProjectDataWithStatus();
+        this._cachedProjectData = freshData;
+        console.log('🔄 Fresh project data loaded:', freshData.projects?.map((p) => `${p.id}: ${p.status}`));
+        // Update the webview with the fresh data by regenerating HTML
+        if (this._view) {
+            const html = await this._getHtmlForWebview(this._view.webview);
+            this._view.webview.html = html;
+            console.log('🔄 Webview updated with fresh project data');
+        }
+    }
+    /**
+     * Refresh only project status (lighter operation)
+     */
+    async _refreshProjectStatus() {
+        console.log('🔄 Refreshing project status only');
+        if (this._cachedProjectData?.projects) {
+            // Update statuses of existing projects
+            await this._updateProjectStatuses(this._cachedProjectData.projects);
+            console.log('🔄 Project statuses refreshed:', this._cachedProjectData.projects?.map((p) => `${p.id}: ${p.status}`));
+            // Update the webview with the updated status data
+            if (this._view) {
+                const html = await this._getHtmlForWebview(this._view.webview);
+                this._view.webview.html = html;
+                console.log('🔄 Webview updated with fresh status data');
+            }
         }
     }
 }

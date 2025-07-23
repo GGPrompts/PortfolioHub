@@ -30,7 +30,6 @@ export class OptimizedPortManager {
     private readonly CACHE_TTL_FAILED = 5000; // 5 seconds for failed checks
     private readonly MAX_RETRY_COUNT = 3;
     private readonly REQUEST_TIMEOUT = 2000; // 2 second timeout
-    private checkController?: AbortController;
     
     // Singleton pattern for memory efficiency
     private static instance: OptimizedPortManager;
@@ -105,16 +104,15 @@ export class OptimizedPortManager {
      */
     private async performPortCheck(port: number): Promise<boolean> {
         try {
-            // Cancel any existing check
-            this.checkController?.abort();
-            this.checkController = new AbortController();
+            // Create individual AbortController for this specific port check
+            const portController = new AbortController();
 
             const timeoutPromise = new Promise<never>((_, reject) => {
                 const timeoutId = setTimeout(() => reject(new Error('Port check timeout')), this.REQUEST_TIMEOUT);
-                this.checkController?.signal.addEventListener('abort', () => clearTimeout(timeoutId));
+                portController.signal.addEventListener('abort', () => clearTimeout(timeoutId));
             });
 
-            const checkPromise = this.doPortCheck(port, this.checkController.signal);
+            const checkPromise = this.doPortCheck(port, portController.signal);
             
             const result = await Promise.race([checkPromise, timeoutPromise]);
             return result;
@@ -133,23 +131,76 @@ export class OptimizedPortManager {
      */
     private async doPortCheck(port: number, signal: AbortSignal): Promise<boolean> {
         try {
-            const response = await fetch(`http://localhost:${port}`, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                signal,
-                cache: 'no-cache'
-            });
+            console.log(`🔍 Checking port ${port}...`);
             
-            // If we get a response (even CORS blocked), server is running
-            return true;
+            // Try multiple approaches to detect the server
+            const approaches = [
+                // Approach 1: GET with no-cors (matches VS Code extension method)
+                async () => {
+                    const response = await fetch(`http://localhost:${port}`, {
+                        method: 'GET',
+                        mode: 'no-cors',
+                        signal,
+                        cache: 'no-cache'
+                    });
+                    console.log(`✅ Port ${port} GET no-cors succeeded:`, response.type, response.status);
+                    return true;
+                },
+                
+                // Approach 2: HEAD with no-cors (fallback)
+                async () => {
+                    const response = await fetch(`http://localhost:${port}`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal,
+                        cache: 'no-cache'
+                    });
+                    console.log(`✅ Port ${port} HEAD no-cors succeeded:`, response.type, response.status);
+                    return true;
+                },
+                
+                // Approach 3: Try favicon.ico (like VS Code extension does)
+                async () => {
+                    const response = await fetch(`http://localhost:${port}/favicon.ico`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal,
+                        cache: 'no-cache'
+                    });
+                    console.log(`✅ Port ${port} favicon.ico succeeded:`, response.type, response.status);
+                    return true;
+                }
+            ];
+            
+            // Try approaches in sequence
+            for (let i = 0; i < approaches.length; i++) {
+                try {
+                    const result = await approaches[i]();
+                    if (result) {
+                        console.log(`✅ Port ${port} detected using approach ${i + 1}`);
+                        return true;
+                    }
+                } catch (error: any) {
+                    console.log(`⚠️ Port ${port} approach ${i + 1} failed:`, error.name, error.message);
+                    if (i === approaches.length - 1) {
+                        // Last approach failed, throw the error
+                        throw error;
+                    }
+                }
+            }
+            
+            return false;
+            
         } catch (error: any) {
             // Check if request was aborted
             if (signal.aborted) {
                 throw error;
             }
 
+            console.log(`❌ Port ${port} all approaches failed:`, error.name, error.message);
+
             // Network errors usually mean the server is not running
-            if (error.name === 'TypeError' || error.code === 'ECONNREFUSED') {
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
                 return false;
             }
 
@@ -201,6 +252,9 @@ export class OptimizedPortManager {
             .filter(p => p.localPort)
             .map(p => p.localPort!);
 
+        console.log(`📊 Checking ${projects.length} projects, ${portsToCheck.length} have ports:`, 
+            projects.map(p => `${p.id}:${p.localPort}`));
+
         if (portsToCheck.length === 0) {
             return new Map();
         }
@@ -212,8 +266,10 @@ export class OptimizedPortManager {
             if (project.localPort) {
                 const isRunning = portResults.get(project.localPort) || false;
                 projectResults.set(project.id, isRunning);
+                console.log(`📊 Project ${project.id} (port ${project.localPort}): ${isRunning ? '✅ RUNNING' : '❌ STOPPED'}`);
             } else {
                 projectResults.set(project.id, false);
+                console.log(`📊 Project ${project.id}: ❌ NO PORT CONFIGURED`);
             }
         });
 
@@ -268,7 +324,9 @@ export class OptimizedPortManager {
      * Cancel any ongoing port checks
      */
     cancelChecks(): void {
-        this.checkController?.abort();
+        // Individual port checks use their own AbortControllers
+        // This method is kept for interface compatibility
+        console.log('🚫 Port checks use individual controllers - no global cancellation needed');
     }
 
     /**

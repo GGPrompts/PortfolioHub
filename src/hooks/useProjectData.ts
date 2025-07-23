@@ -70,8 +70,8 @@ export function useProjectData() {
     queryKey: ['projectStatus', projects],
     queryFn: () => fetchProjectStatus(projects),
     enabled: projects.length > 0, // Only run when we have projects
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 5 * 1000, // 5 seconds for all environments
+    staleTime: 60 * 1000, // 60 seconds (increased from 30)
+    refetchInterval: 15 * 1000, // 15 seconds (increased from 5) to reduce spam
     refetchOnWindowFocus: false,
     retry: 1,
   })
@@ -84,14 +84,19 @@ export function useProjectData() {
     
     // Clear port cache for fresh data
     optimizedPortManager.clearCache()
+    console.log('🧹 Port manager cache cleared')
     
-    // Standard refresh for unified architecture
-    await queryClient.invalidateQueries({ queryKey: ['projects'] })
-    await queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
+    // Clear React Query cache completely
+    await queryClient.clear()
+    console.log('🧹 React Query cache cleared')
     
     // Manual refetch to ensure immediate update
+    console.log('🔄 Refetching projects...')
     await refetchProjects()
+    console.log('🔄 Refetching status...')
     await refetchStatus()
+    
+    console.log('✅ All data refreshed')
   }
 
   /**

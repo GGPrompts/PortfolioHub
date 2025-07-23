@@ -362,6 +362,46 @@ React App (localhost:5173) → Smart Detection → Environment Adaptation
 
 ## Troubleshooting
 
+### 🔍 **Port Detection Issues**
+**Problem**: React app shows incorrect project status (e.g., "1/8 running" when more projects are actually running)
+**Symptoms**:
+- Console spam with `AbortError: signal is aborted without reason`
+- Projects showing as offline in React app but online in VS Code sidebar
+- Excessive fetch requests to ports (every 5 seconds)
+
+**Root Cause**: 
+- Shared `AbortController` causing concurrent port checks to cancel each other
+- React Query polling too aggressively (5s interval)
+- Multiple fetch requests interfering with browser's connection limits
+
+**Solution Applied** (January 23, 2025):
+```typescript
+// Fixed in optimizedPortManager.ts
+// Before: Single shared AbortController
+private checkController?: AbortController; // ❌ Caused conflicts
+
+// After: Individual controllers per port check  
+const portController = new AbortController(); // ✅ Isolated checks
+```
+
+**React Query Timing Optimized**:
+```typescript
+// useProjectData.ts - Reduced polling frequency
+staleTime: 60 * 1000,        // 60s (was 30s)
+refetchInterval: 15 * 1000,  // 15s (was 5s) 
+```
+
+**Debug Commands**:
+```javascript
+// Test individual ports in browser console
+fetch('http://localhost:3002', {method: 'GET', mode: 'no-cors'})
+  .then(r => console.log('✅ Success:', r.type))
+  .catch(e => console.log('❌ Failed:', e));
+
+// Check React Query cache
+console.log('Status cache:', queryClient.getQueryData(['projectStatus']));
+```
+
 ### 🌉 **WebSocket Bridge Issues**
 **Problem**: React app shows "📱 Web Application" instead of "🔗 VS Code Enhanced"
 **Solution**:

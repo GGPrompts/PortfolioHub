@@ -18,16 +18,10 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        // Send message to VS Code extension
-        window.parent?.postMessage({
-          type: 'server:startAll'
-        }, '*')
-        
-        setStatusMessage('Starting portfolio and VS Code servers...')
-        setTimeout(() => {
-          setStatusMessage('Servers starting in background - check terminal for progress')
-          setTimeout(() => setStatusMessage(''), 3000)
-        }, 2000)
+        // Use VS Code command directly - no security issues
+        await executeCommand('claude-portfolio.startAllServers')
+        setStatusMessage('All servers starting - check terminals for progress')
+        setTimeout(() => setStatusMessage(''), 3000)
       } else {
         // Use executeCommand for non-VS Code environment
         await executeCommand('npm run dev')
@@ -49,15 +43,10 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        window.parent?.postMessage({
-          type: 'server:startPortfolio'
-        }, '*')
-        
-        setStatusMessage('Portfolio server starting...')
-        setTimeout(() => {
-          setStatusMessage('Portfolio server started - check terminal')
-          setTimeout(() => setStatusMessage(''), 3000)
-        }, 2000)
+        // Use VS Code command directly - no security issues
+        await executeCommand('claude-portfolio.startPortfolioServer')
+        setStatusMessage('Portfolio server starting - check terminal for URL')
+        setTimeout(() => setStatusMessage(''), 3000)
       } else {
         await executeCommand('npm run dev')
         setStatusMessage('Portfolio dev server started!')
@@ -78,15 +67,10 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
     
     try {
       if (isVSCodeEnvironment()) {
-        window.parent?.postMessage({
-          type: 'server:start'
-        }, '*')
-        
-        setStatusMessage('VS Code server starting...')
-        setTimeout(() => {
-          setStatusMessage('VS Code server started - Simple Browser will open')
-          setTimeout(() => setStatusMessage(''), 3000)
-        }, 2000)
+        // Use VS Code command directly - no security issues
+        await executeCommand('claude-portfolio.startVSCodeServer')
+        setStatusMessage('VS Code server started - Simple Browser will open')
+        setTimeout(() => setStatusMessage(''), 3000)
       } else {
         setStatusMessage('VS Code server requires VS Code environment')
         setTimeout(() => setStatusMessage(''), 3000)

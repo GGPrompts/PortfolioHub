@@ -58,14 +58,16 @@ class MultiProjectCommandsProvider {
     }
     async updateCommands() {
         const selectedProjects = this.projectProvider.getSelectedProjectsData();
-        if (selectedProjects.length === 0) {
-            this.commands = [];
-            this.projectStatuses = [];
-            return;
+        // Always get project statuses, even if none selected
+        if (selectedProjects.length > 0) {
+            // Get enhanced status information with duplicate detection
+            this.projectStatuses = await this.portDetectionService.checkProjectStatuses(selectedProjects);
+            // Filter to only selected projects
+            const selectedStatuses = this.projectStatuses.filter(status => selectedProjects.some(p => p.id === status.projectId));
         }
-        // Get enhanced status information with duplicate detection
-        this.projectStatuses = await this.portDetectionService.checkProjectStatuses(selectedProjects);
-        // Filter to only selected projects
+        else {
+            this.projectStatuses = [];
+        }
         const selectedStatuses = this.projectStatuses.filter(status => selectedProjects.some(p => p.id === status.projectId));
         const runningCount = selectedStatuses.filter(s => s.status === 'active').length;
         const stoppedCount = selectedStatuses.filter(s => s.status === 'inactive').length;
@@ -184,6 +186,78 @@ class MultiProjectCommandsProvider {
                 description: 'Check status of portfolio development ports',
                 category: 'Portfolio'
             },
+            // Development Commands (from React QuickCommandsPanel)
+            {
+                label: 'Start Dev Server',
+                command: 'claude-portfolio.startDev',
+                icon: 'play',
+                description: 'Start portfolio development server (npm run dev)',
+                category: 'Development'
+            },
+            {
+                label: 'Build React App',
+                command: 'claude-portfolio.buildReact',
+                icon: 'package',
+                description: 'Build the React portfolio app (npm run build)',
+                category: 'Development'
+            },
+            {
+                label: 'Install Dependencies',
+                command: 'claude-portfolio.npmInstall',
+                icon: 'cloud-download',
+                description: 'Install npm dependencies (npm install)',
+                category: 'Development'
+            },
+            {
+                label: 'Kill All Servers',
+                command: 'claude-portfolio.killAllServers',
+                icon: 'debug-stop',
+                description: 'Kill all running development servers',
+                category: 'Development'
+            },
+            {
+                label: 'Start All Projects',
+                command: 'claude-portfolio.startAllProjects',
+                icon: 'run-all',
+                description: 'Start all project development servers',
+                category: 'Development'
+            },
+            // VS Code Commands (commonly used from React app)
+            {
+                label: 'New Terminal',
+                command: 'terminal.new',
+                icon: 'terminal',
+                description: 'Create a new integrated terminal',
+                category: 'VS Code'
+            },
+            {
+                label: 'Split Terminal',
+                command: 'terminal.split',
+                icon: 'split-horizontal',
+                description: 'Split the current terminal',
+                category: 'VS Code'
+            },
+            {
+                label: 'Reload Window',
+                command: 'workbench.action.reloadWindow',
+                icon: 'refresh',
+                description: 'Reload VS Code window',
+                category: 'VS Code'
+            },
+            {
+                label: 'Open Folder',
+                command: 'workbench.action.files.openFolder',
+                icon: 'folder-opened',
+                description: 'Open a folder in VS Code',
+                category: 'VS Code'
+            },
+            {
+                label: 'Command Palette',
+                command: 'workbench.action.showCommands',
+                icon: 'symbol-event',
+                description: 'Show command palette (Ctrl+Shift+P)',
+                category: 'VS Code'
+            },
             // Selection Management
             {
                 label: `Clear Selection`,
@@ -221,9 +295,6 @@ class MultiProjectCommandsProvider {
     }
     getChildren(element) {
         const selectedCount = this.projectProvider.getSelectedProjects().length;
-        if (selectedCount === 0) {
-            return Promise.resolve([new BatchCommandItem('Select projects to see batch commands', '', '', 'info', 'Use checkboxes above to select multiple projects', vscode.TreeItemCollapsibleState.None, true)]);
-        }
         if (!element) {
             const items = [];
             // Header showing selection count
@@ -233,9 +304,26 @@ class MultiProjectCommandsProvider {
             if (projectsWithWarnings.length > 0) {
                 items.push(new BatchCommandItem(`⚠️ ${projectsWithWarnings.length} Issues Detected`, '', 'Warnings', 'warning', 'Click to see details', vscode.TreeItemCollapsibleState.Collapsed, true));
             }
-            // Group commands by category
-            const categories = [...new Set(this.commands.map(c => c.category))];
-            items.push(...categories.map(cat => new BatchCommandItem(cat, '', cat, 'folder', `${cat} commands for selected projects`, vscode.TreeItemCollapsibleState.Expanded, true)));
+            // Always show core categories (Portfolio, Development, VS Code)
+            const alwaysShowCategories = ['Portfolio', 'Development', 'VS Code'];
+            const allCategories = [...new Set(this.commands.map(c => c.category))];
+            // Add always-show categories first
+            alwaysShowCategories.forEach(cat => {
+                if (allCategories.includes(cat)) {
+                    const description = cat === 'Portfolio' ? 'Portfolio server and project management' :
+                        cat === 'Development' ? 'Development tools and build commands' :
+                            cat === 'VS Code' ? 'VS Code workspace commands' :
+                                `${cat} commands`;
+                    items.push(new BatchCommandItem(cat, '', cat, 'folder', description, vscode.TreeItemCollapsibleState.Expanded, true));
+                }
+            });
+            // Add project-specific categories only when projects are selected
+            if (selectedCount > 0) {
+                const projectSpecificCategories = allCategories.filter(cat => !alwaysShowCategories.includes(cat));
+                projectSpecificCategories.forEach(cat => {
+                    items.push(new BatchCommandItem(cat, '', cat, 'folder', `${cat} commands for selected projects`, vscode.TreeItemCollapsibleState.Expanded, true));
+                });
+            }
             return Promise.resolve(items);
         }
         else if (element.category === 'Warnings') {

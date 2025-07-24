@@ -38,7 +38,7 @@ exports.deactivate = deactivate;
 exports.getProjectPath = getProjectPath;
 const vscode = __importStar(require("vscode"));
 const projectProvider_1 = require("./projectProvider");
-const projectCommandsProvider_1 = require("./projectCommandsProvider");
+// ProjectCommandsProvider removed - commands now accessible via command palette only
 const multiProjectCommandsProvider_1 = require("./multiProjectCommandsProvider");
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 const taskProvider_1 = require("./taskProvider");
@@ -130,7 +130,7 @@ function initializeServices() {
 function createProviders(services, context) {
     const portfolioPath = services.configService.getPortfolioPath();
     const projectProvider = new projectProvider_1.ProjectProvider(portfolioPath);
-    const projectCommandsProvider = new projectCommandsProvider_1.ProjectCommandsProvider();
+    // projectCommandsProvider removed - commands now accessible via command palette only
     const multiProjectCommandsProvider = new multiProjectCommandsProvider_1.MultiProjectCommandsProvider(projectProvider);
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new taskProvider_1.PortfolioTaskProvider(portfolioPath);
@@ -138,7 +138,7 @@ function createProviders(services, context) {
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
     return {
         projectProvider,
-        projectCommandsProvider,
+        // projectCommandsProvider removed
         multiProjectCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
@@ -172,7 +172,7 @@ function registerProviders(context, providers) {
         });
     });
     context.subscriptions.push(projectTreeView);
-    vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
+    // claudeProjectCommands panel removed - commands now accessible via command palette only
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
@@ -184,13 +184,15 @@ function registerProviders(context, providers) {
  * Create command handlers
  */
 function createCommandHandlers(services, providers, context) {
-    const projectCommands = new projectCommands_1.ProjectCommands(services.projectService, providers.projectCommandsProvider);
+    const projectCommands = new projectCommands_1.ProjectCommands(services.projectService
+    // projectCommandsProvider removed - commands now accessible via command palette only
+    );
     // Inject project provider for selection management
     projectCommands.setProjectProvider(providers.projectProvider);
     const batchCommands = new batchCommands_1.BatchCommands(services.projectService, services.configService, providers.projectProvider);
     const selectionCommands = new selectionCommands_1.SelectionCommands(providers.projectProvider);
     // Inject project commands provider for unified behavior
-    selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
+    // projectCommandsProvider removed - commands now accessible via command palette only
     const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, null, // portfolioWebviewProvider removed - replaced with WebSocket bridge
     context, providers.projectProvider, providers.multiProjectCommandsProvider);
     return {
@@ -257,15 +259,13 @@ function setupProviderCommunication(providers) {
     const originalSetCurrentSelectedProject = providers.projectProvider.setCurrentSelectedProject.bind(providers.projectProvider);
     providers.projectProvider.setCurrentSelectedProject = (project) => {
         originalSetCurrentSelectedProject(project);
-        // Update project commands panel when a single project is selected
-        providers.projectCommandsProvider.setSelectedProject(project);
+        // Project commands panel removed - commands now accessible via command palette only
     };
     // Hook into clearing project selection for commands panel
     const originalClearCurrentSelection = providers.projectProvider.clearCurrentSelection.bind(providers.projectProvider);
     providers.projectProvider.clearCurrentSelection = () => {
         originalClearCurrentSelection();
-        // Clear project commands panel when no project is selected
-        providers.projectCommandsProvider.clearSelection();
+        // Project commands panel removed - commands now accessible via command palette only
     };
 }
 /**

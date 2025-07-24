@@ -104,7 +104,7 @@
       "title": "Sleak Card Component",
       "description": "Modern React card system with water effects, flip animations, and multiple color variants. Mobile-optimized with playing card proportions.",
       "displayType": "external",
-      "localPort": 3000,
+      "localPort": 3003,
       "buildCommand": "npm start",
       "path": "../Projects/sleak-card-updated",
       "thumbnail": "thumbnails/sleak-card.png",

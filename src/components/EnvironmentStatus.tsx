@@ -5,12 +5,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { getEnvironmentMode, getConnectionStatus, getEnvironmentCapabilities } from '../utils/vsCodeIntegration';
+import { connectToVSCode, disconnectFromVSCode, showBrowserNotification } from '../services/environmentBridge';
 import type { EnvironmentMode } from '../services/environmentBridge';
 
 const EnvironmentStatus: React.FC = () => {
   const [mode, setMode] = useState<EnvironmentMode>('web-local');
   const [status, setStatus] = useState<string>('Initializing...');
   const [capabilities, setCapabilities] = useState<any>({});
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     const updateStatus = () => {
@@ -50,6 +52,40 @@ const EnvironmentStatus: React.FC = () => {
     return enabled ? '✅' : '❌';
   };
 
+  const handleConnectToVSCode = async () => {
+    setIsConnecting(true);
+    try {
+      const success = await connectToVSCode();
+      if (success) {
+        // Update status immediately
+        setTimeout(() => {
+          setMode(getEnvironmentMode());
+          setStatus(getConnectionStatus());
+          setCapabilities(getEnvironmentCapabilities());
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Connection failed:', error);
+      showBrowserNotification('Failed to connect to VS Code - ensure extension is running', 'error');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnectFromVSCode = () => {
+    disconnectFromVSCode();
+    // Update status immediately
+    setTimeout(() => {
+      setMode(getEnvironmentMode());
+      setStatus(getConnectionStatus());
+      setCapabilities(getEnvironmentCapabilities());
+    }, 500);
+  };
+
+  const testNotification = () => {
+    showBrowserNotification('🎉 Notification test! This appears in both VS Code and browser when connected.', 'info');
+  };
+
   return (
     <div className="environment-status">
       <div className="status-header">
@@ -77,6 +113,36 @@ const EnvironmentStatus: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="connection-controls">
+        {mode === 'vscode-local' ? (
+          <>
+            <button 
+              onClick={handleDisconnectFromVSCode}
+              className="disconnect-btn"
+              title="Disconnect from VS Code Extension"
+            >
+              🔌 Disconnect
+            </button>
+            <button 
+              onClick={testNotification}
+              className="test-btn"
+              title="Test dual notifications (VS Code + Browser)"
+            >
+              🔔 Test
+            </button>
+          </>
+        ) : (
+          <button 
+            onClick={handleConnectToVSCode}
+            disabled={isConnecting}
+            className="connect-btn"
+            title="Connect to VS Code Extension (ensure extension is running)"
+          >
+            {isConnecting ? '⏳ Connecting...' : '🔗 Connect to VS Code'}
+          </button>
+        )}
+      </div>
 
       <style jsx>{`
         .environment-status {
@@ -121,6 +187,56 @@ const EnvironmentStatus: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 2px;
+        }
+
+        .connection-controls {
+          display: flex;
+          gap: 4px;
+          margin-top: 6px;
+        }
+
+        .connect-btn, .disconnect-btn, .test-btn {
+          background: ${mode === 'vscode-local' ? '#007ACC' : '#28a745'};
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 10px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          flex: 1;
+        }
+
+        .connect-btn:hover {
+          background: #218838;
+        }
+
+        .disconnect-btn {
+          background: #dc3545;
+        }
+
+        .disconnect-btn:hover {
+          background: #c82333;
+        }
+
+        .test-btn {
+          background: #17a2b8;
+        }
+
+        .test-btn:hover {
+          background: #138496;
+        }
+
+        .connect-btn:disabled {
+          background: #6c757d;
+          cursor: not-allowed;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        /* Global styles for toast notifications */
+        .notification-toast {
+          z-index: 10001 !important; /* Ensure above other elements */
         }
       `}</style>
     </div>

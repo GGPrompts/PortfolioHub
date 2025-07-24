@@ -39,13 +39,11 @@ const vscode = __importStar(require("vscode"));
  * Project selection and checkbox management commands
  */
 class SelectionCommands {
+    // projectCommandsProvider removed - commands now accessible via command palette only
     constructor(projectProvider) {
         this.projectProvider = projectProvider;
     }
-    // Method to inject project commands provider
-    setProjectCommandsProvider(projectCommandsProvider) {
-        this.projectCommandsProvider = projectCommandsProvider;
-    }
+    // setProjectCommandsProvider removed - commands now accessible via command palette only
     /**
      * Register all selection commands
      */

@@ -103,13 +103,10 @@
 
 
 .livePreview {
-  width: 100%;
-  height: 100%;
   border: none;
-  transform: scale(1);
-  transform-origin: top left;
   transition: opacity 0.3s ease;
   opacity: 0;
+  /* Size and transform are now set via inline styles for proper scaling */
 }
 
 .livePreview.loaded {
@@ -312,21 +309,13 @@
   /* Device-specific styling applied via parent selectors */
 }
 
-/* Scale indicator */
-.scaleIndicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 255, 136, 0.9);
-  color: #000;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
+/* Scale text in status bar (moved from overlay) */
+.scaleText {
+  color: rgba(0, 255, 136, 0.8);
+  font-size: 12px;
+  font-weight: 500;
   font-family: 'Courier New', monospace;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
-  border: 1px solid rgba(0, 255, 136, 0.6);
+  margin-left: 8px;
 }
 
 /* Project Info - Separated from monitor */
@@ -622,12 +611,15 @@
   transform: translateY(-1px);
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments for larger preview containers */
 @media (max-width: 768px) {
   .previewContainer {
     /* Allow container to scale down proportionally on mobile screens */
     max-width: 100%;
     margin: 0 auto;
+    /* Scale down the larger containers on small screens */
+    transform: scale(0.8);
+    transform-origin: center top;
   }
   
   .livePreviewWrapper {
@@ -644,8 +636,14 @@
     margin-bottom: 8px;
   }
   
-  .scaleIndicator {
-    font-size: 9px;
-    padding: 1px 4px;
+  .scaleText {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .previewContainer {
+    /* Further scale down on very small screens */
+    transform: scale(0.7);
   }
 }

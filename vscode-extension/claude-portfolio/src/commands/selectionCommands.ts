@@ -5,14 +5,11 @@ import { ProjectProvider } from '../projectProvider';
  * Project selection and checkbox management commands
  */
 export class SelectionCommands {
-    private projectCommandsProvider: any; // Will be injected
+    // projectCommandsProvider removed - commands now accessible via command palette only
 
     constructor(private projectProvider: ProjectProvider) {}
 
-    // Method to inject project commands provider
-    setProjectCommandsProvider(projectCommandsProvider: any): void {
-        this.projectCommandsProvider = projectCommandsProvider;
-    }
+    // setProjectCommandsProvider removed - commands now accessible via command palette only
 
     /**
      * Register all selection commands

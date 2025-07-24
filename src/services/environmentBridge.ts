@@ -347,6 +347,25 @@ ${command}`;
         }
     }
 
+    async getProjectStatus(projectId: string): Promise<boolean> {
+        if (this.mode === 'vscode-local') {
+            try {
+                const response = await this.sendMessage({
+                    type: 'project-status',
+                    projectId
+                });
+                return response.success && response.result?.isRunning || false;
+            } catch (error) {
+                console.error('Project status check failed:', error);
+                return false;
+            }
+        } else {
+            // In web mode, we can't directly check VS Code status
+            // Return false as fallback
+            return false;
+        }
+    }
+
     async openInVSCode(projectPath: string): Promise<boolean> {
         if (this.mode === 'vscode-local') {
             try {
@@ -511,34 +530,225 @@ ${command}`;
 
     private showNotification(text: string, level: 'info' | 'warning' | 'error' = 'info'): void {
         if (this.mode === 'vscode-local') {
-            // Send to VS Code for native notifications
+            // Send to VS Code for native notifications AND show in browser as backup
             try {
                 this.sendMessage({
                     type: 'notification',
                     data: { text, level }
                 });
+                // Also show in browser for dual notification support
+                this.browserNotification(text, level, true); // true = VS Code mode
             } catch (error) {
                 // Fallback to browser alert
-                this.browserNotification(text, level);
+                this.browserNotification(text, level, false);
             }
         } else {
-            // Browser notifications
-            this.browserNotification(text, level);
+            // Browser notifications only
+            this.browserNotification(text, level, false);
         }
     }
 
-    private browserNotification(text: string, level: 'info' | 'warning' | 'error'): void {
+    private browserNotification(text: string, level: 'info' | 'warning' | 'error', isVSCodeMode: boolean = false): void {
         console.log(`Notification (${level}): ${text}`);
         
-        // You can integrate with your existing notification system here
-        // For now, using browser alerts as fallback
+        // 1. Console logging with appropriate level
+        const prefix = isVSCodeMode ? '[VS Code + Browser] ' : '[Browser] ';
         if (level === 'error') {
-            console.error(`❌ ${text}`);
+            console.error(`❌ ${prefix}${text}`);
         } else if (level === 'warning') {
-            console.warn(`⚠️ ${text}`);
+            console.warn(`⚠️ ${prefix}${text}`);
         } else {
-            console.info(`ℹ️ ${text}`);
+            console.info(`ℹ️ ${prefix}${text}`);
         }
+        
+        // 2. Browser native notifications (if supported and permitted)
+        this.showNativeNotification(text, level, isVSCodeMode);
+        
+        // 3. Custom toast notification for visual feedback
+        this.showToastNotification(text, level, isVSCodeMode);
+    }
+    
+    private async showNativeNotification(text: string, level: 'info' | 'warning' | 'error', isVSCodeMode: boolean): Promise<void> {
+        if (!('Notification' in window)) {
+            return; // Browser doesn't support notifications
+        }
+        
+        try {
+            // Request permission if not already granted
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    return;
+                }
+            }
+            
+            if (Notification.permission === 'granted') {
+                const title = isVSCodeMode ? 'Claude Portfolio (VS Code + Browser)' : 'Claude Portfolio';
+                const icon = level === 'error' ? '❌' : level === 'warning' ? '⚠️' : 'ℹ️';
+                
+                new Notification(`${icon} ${title}`, {
+                    body: text,
+                    icon: '/favicon.ico', // Assuming you have a favicon
+                    tag: 'claude-portfolio', // Replaces previous notifications
+                    requireInteraction: level === 'error' // Keep error notifications visible
+                });
+            }
+        } catch (error) {
+            console.warn('Native notification failed:', error);
+        }
+    }
+    
+    private showToastNotification(text: string, level: 'info' | 'warning' | 'error', isVSCodeMode: boolean): void {
+        // Create a toast notification element that appears in the React app
+        const toastId = `toast-${Date.now()}`;
+        const existingToast = document.getElementById(toastId);
+        
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = `notification-toast notification-${level}`;
+        
+        const icon = level === 'error' ? '❌' : level === 'warning' ? '⚠️' : level === 'info' ? 'ℹ️' : '🔔';
+        const modeLabel = isVSCodeMode ? ' (VS Code + Browser)' : '';
+        
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span class="toast-icon">${icon}</span>
+                <div class="toast-text">
+                    <div class="toast-title">Claude Portfolio${modeLabel}</div>
+                    <div class="toast-message">${text}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+        
+        // Add styles if not already added
+        this.ensureToastStyles();
+        
+        // Add to page
+        document.body.appendChild(toast);
+        
+        // Auto-remove after delay (longer for errors)
+        const delay = level === 'error' ? 8000 : level === 'warning' ? 6000 : 4000;
+        setTimeout(() => {
+            if (document.getElementById(toastId)) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, delay);
+    }
+    
+    private ensureToastStyles(): void {
+        if (document.getElementById('claude-toast-styles')) {
+            return; // Styles already added
+        }
+        
+        const styles = document.createElement('style');
+        styles.id = 'claude-toast-styles';
+        styles.textContent = `
+            .notification-toast {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                min-width: 320px;
+                max-width: 500px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+                transform: translateX(0);
+                transition: all 0.3s ease;
+                animation: slideIn 0.3s ease;
+                border-left: 4px solid #007acc;
+            }
+            
+            .notification-toast.notification-error {
+                border-left-color: #d73a49;
+            }
+            
+            .notification-toast.notification-warning {
+                border-left-color: #f9c74f;
+            }
+            
+            .notification-toast.notification-info {
+                border-left-color: #007acc;
+            }
+            
+            .toast-content {
+                display: flex;
+                align-items: flex-start;
+                padding: 16px;
+                gap: 12px;
+            }
+            
+            .toast-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+            
+            .toast-text {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .toast-title {
+                font-weight: 600;
+                font-size: 14px;
+                color: #24292e;
+                margin-bottom: 4px;
+            }
+            
+            .toast-message {
+                font-size: 13px;
+                color: #586069;
+                line-height: 1.4;
+                word-wrap: break-word;
+            }
+            
+            .toast-close {
+                background: none;
+                border: none;
+                font-size: 18px;
+                color: #586069;
+                cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                flex-shrink: 0;
+            }
+            
+            .toast-close:hover {
+                background: #f1f3f4;
+                color: #24292e;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            /* Stack multiple toasts */
+            .notification-toast:nth-child(n+2) {
+                margin-top: 70px;
+            }
+        `;
+        
+        document.head.appendChild(styles);
     }
 
     // Getter methods for React components
@@ -559,18 +769,43 @@ ${command}`;
         return this.wsConnection?.readyState === WebSocket.OPEN || false;
     }
 
-    async getConnectionStatus(): Promise<string> {
+    getConnectionStatus(): string {
         switch (this.mode) {
             case 'vscode-local':
                 return this.isConnected() ? '🔗 VS Code Connected' : '❌ VS Code Disconnected';
             case 'web-local':
-                const serverRunning = await this.checkRemoteVSCodeServer();
-                return serverRunning ? '📋 Smart Clipboard (VS Code Server Detected)' : '📋 Basic Clipboard Mode';
+                return '📋 Web Application Mode';
             case 'remote':
                 return '🌍 Remote Mode';
             default:
                 return '❓ Unknown';
         }
+    }
+    
+    // New method for manual VS Code connection
+    async attemptVSCodeConnection(): Promise<boolean> {
+        console.log('🔄 Manually attempting VS Code connection...');
+        this.connectionAttempted = false; // Reset connection flag
+        const newMode = await this.initialize();
+        
+        if (newMode === 'vscode-local') {
+            this.showNotification('✅ Successfully connected to VS Code!', 'info');
+            return true;
+        } else {
+            this.showNotification('❌ VS Code connection failed - ensure VS Code extension is running', 'warning');
+            return false;
+        }
+    }
+    
+    // Method to disconnect from VS Code (for testing or manual control)
+    disconnectFromVSCode(): void {
+        if (this.wsConnection) {
+            this.wsConnection.close();
+            this.wsConnection = null;
+        }
+        this.mode = 'web-local';
+        this.updateCapabilities(false);
+        this.showNotification('🔌 Disconnected from VS Code - switched to Web Application mode', 'info');
     }
 }
 
@@ -579,5 +814,12 @@ export const environmentBridge = new EnvironmentBridge();
 
 // Initialize on module load
 environmentBridge.initialize();
+
+// Export additional methods for React components
+export const connectToVSCode = () => environmentBridge.attemptVSCodeConnection();
+export const disconnectFromVSCode = () => environmentBridge.disconnectFromVSCode();
+export const showBrowserNotification = (text: string, level: 'info' | 'warning' | 'error' = 'info') => {
+    environmentBridge['showNotification'](text, level);
+};
 
 export default environmentBridge;

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ProjectProvider, ProjectItem } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
-import { ProjectCommandsProvider } from './projectCommandsProvider';
+// ProjectCommandsProvider removed - commands now accessible via command palette only
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
@@ -36,7 +36,7 @@ interface ExtensionServices {
  */
 interface ExtensionProviders {
     projectProvider: ProjectProvider;
-    projectCommandsProvider: ProjectCommandsProvider;
+    // projectCommandsProvider removed - commands now accessible via command palette only
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     taskProvider: PortfolioTaskProvider;
@@ -150,7 +150,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const portfolioPath = services.configService.getPortfolioPath();
 
     const projectProvider = new ProjectProvider(portfolioPath);
-    const projectCommandsProvider = new ProjectCommandsProvider();
+    // projectCommandsProvider removed - commands now accessible via command palette only
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
@@ -159,7 +159,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
 
     return {
         projectProvider,
-        projectCommandsProvider,
+        // projectCommandsProvider removed
         multiProjectCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
@@ -197,7 +197,7 @@ function registerProviders(context: vscode.ExtensionContext, providers: Extensio
     
     context.subscriptions.push(projectTreeView);
     
-    vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
+    // claudeProjectCommands panel removed - commands now accessible via command palette only
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
@@ -219,8 +219,8 @@ function createCommandHandlers(
     context: vscode.ExtensionContext
 ): ExtensionCommands {
     const projectCommands = new ProjectCommands(
-        services.projectService,
-        providers.projectCommandsProvider
+        services.projectService
+        // projectCommandsProvider removed - commands now accessible via command palette only
     );
     
     // Inject project provider for selection management
@@ -237,7 +237,7 @@ function createCommandHandlers(
     );
     
     // Inject project commands provider for unified behavior
-    selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
+    // projectCommandsProvider removed - commands now accessible via command palette only
 
     const workspaceCommands = new WorkspaceCommands(
         services.configService,
@@ -321,16 +321,14 @@ function setupProviderCommunication(providers: ExtensionProviders): void {
     const originalSetCurrentSelectedProject = providers.projectProvider.setCurrentSelectedProject.bind(providers.projectProvider);
     providers.projectProvider.setCurrentSelectedProject = (project: any) => {
         originalSetCurrentSelectedProject(project);
-        // Update project commands panel when a single project is selected
-        providers.projectCommandsProvider.setSelectedProject(project);
+        // Project commands panel removed - commands now accessible via command palette only
     };
 
     // Hook into clearing project selection for commands panel
     const originalClearCurrentSelection = providers.projectProvider.clearCurrentSelection.bind(providers.projectProvider);
     providers.projectProvider.clearCurrentSelection = () => {
         originalClearCurrentSelection();
-        // Clear project commands panel when no project is selected
-        providers.projectCommandsProvider.clearSelection();
+        // Project commands panel removed - commands now accessible via command palette only
     };
 }
 

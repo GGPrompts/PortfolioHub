@@ -190,15 +190,9 @@
           "canSelectMany": true
         },
         {
-          "id": "claudeProjectCommands",
-          "name": "Project Commands",
-          "contextualTitle": "Project Commands",
-          "when": "true"
-        },
-        {
           "id": "claudeMultiProjectCommands",
-          "name": "Batch Commands",
-          "contextualTitle": "Multi-Project Batch Commands",
+          "name": "Batch Operations",
+          "contextualTitle": "Batch Operations for Selected Projects",
           "when": "true"
         },
         {

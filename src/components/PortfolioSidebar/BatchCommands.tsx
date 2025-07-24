@@ -4,6 +4,7 @@ import styles from '../PortfolioSidebar.module.css'
 import { 
   isVSCodeEnvironment, 
   launchAllProjects, 
+  killAllProjects,
   launchSelectedProjects, 
   launchProjectsEnhanced, 
   executeScript 
@@ -205,20 +206,39 @@ export default function BatchCommands({
         <button 
           className={styles.actionBtn}
           onClick={async () => {
-            const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-            await executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
+            if (isVSCodeEnvironment()) {
+              await killAllProjects()
+            } else {
+              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
+              await executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
+            }
           }}
-          title="Copy command to kill all projects"
+          title={isVSCodeEnvironment() ? "Systematically stop all running projects" : "Copy command to kill all projects"}
         >
           <SvgIcon name="stop" size={16} /> All
         </button>
         <button 
           className={styles.actionBtn}
-          onClick={() => {
-            copyScriptToClipboard(generateKillScript(Array.from(selectedProjects)), 'kill')
+          onClick={async () => {
+            if (isVSCodeEnvironment()) {
+              // Use environment bridge to kill selected projects individually
+              const selectedProjectsList = projects.filter(p => selectedProjects.has(p.id))
+              console.log(`🔴 Killing ${selectedProjectsList.length} selected projects...`)
+              
+              for (const project of selectedProjectsList) {
+                if (project.localPort) {
+                  console.log(`🔴 Stopping ${project.title} on port ${project.localPort}...`)
+                  const command = `powershell "Get-Process | Where-Object {\\$_.Name -eq 'node'} | Where-Object {(Get-NetTCPConnection -OwningProcess \\$_.Id -ErrorAction SilentlyContinue | Where-Object LocalPort -eq ${project.localPort})} | Stop-Process -Force"`
+                  await executeOrCopyCommand(command, `Stopped ${project.title}`, `Kill ${project.title}`)
+                }
+              }
+            } else {
+              // Web mode - copy PowerShell script to clipboard
+              copyScriptToClipboard(generateKillScript(Array.from(selectedProjects)), 'kill')
+            }
           }}
           disabled={selectedProjects.size === 0}
-          title="Copy command to kill selected projects"
+          title={isVSCodeEnvironment() ? "Stop selected projects individually" : "Copy command to kill selected projects"}
         >
           <SvgIcon name="stop" size={16} /> Selected ({selectedProjects.size})
         </button>

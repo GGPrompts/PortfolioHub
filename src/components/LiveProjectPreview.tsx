@@ -50,6 +50,7 @@ export default function LiveProjectPreview({
   const [localViewMode, setLocalViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showAIDropdown, setShowAIDropdown] = useState(false)
+  const [iframeBlocked, setIframeBlocked] = useState(false) // Track if iframe is blocked by server
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -241,24 +242,42 @@ export default function LiveProjectPreview({
   
   const previewUrl = getPreviewUrl()
 
-  // Simple mini device previews that fit their containers
+  // Larger, properly scaled device previews with realistic scaling
   const getPreviewDimensions = () => {
     if (viewMode === 'desktop') {
-      // Mini monitor - wide aspect ratio for desktop content
+      // Desktop monitor - scale typical 1920x1080 content to much larger size
+      const targetWidth = 1920
+      const targetHeight = 1080
+      const scaleToWidth = 640  // Significantly larger for better visibility (was 480)
+      const scaleToHeight = 360  // Maintain 16:9 aspect ratio
+      const scale = scaleToWidth / targetWidth
+      
       return {
-        containerWidth: 400,
-        containerHeight: 250, // Slightly taller to show more content
+        containerWidth: scaleToWidth,
+        containerHeight: scaleToHeight,
+        iframeWidth: targetWidth,
+        iframeHeight: targetHeight,
+        scale: scale,
         containerClass: 'desktopDisplay',
-        displayMode: 'Mini Monitor',
+        displayMode: `Desktop (${Math.round(scale * 100)}%)`,
         deviceType: 'desktop'
       }
     } else {
-      // Mini phone - phone aspect ratio for mobile content
+      // Mobile phone - scale typical 375x667 (iPhone) content to larger size
+      const targetWidth = 375
+      const targetHeight = 667
+      const scaleToWidth = 300  // Much larger phone preview (was 225)
+      const scaleToHeight = 533  // Maintain iPhone proportions
+      const scale = scaleToWidth / targetWidth
+      
       return {
-        containerWidth: 200,
-        containerHeight: 350, // Phone-like proportions
+        containerWidth: scaleToWidth,
+        containerHeight: scaleToHeight,
+        iframeWidth: targetWidth,
+        iframeHeight: targetHeight,
+        scale: scale,
         containerClass: 'mobileDisplay', 
-        displayMode: 'Mini Phone',
+        displayMode: `Mobile (${Math.round(scale * 100)}%)`,
         deviceType: 'mobile'
       }
     }
@@ -276,7 +295,7 @@ export default function LiveProjectPreview({
       willEnable: actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled
     })
     
-    if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled) {
+    if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled && !iframeBlocked && !isCommonlyBlocked) {
       setIsRefreshing(false) // Start without refresh indicator
       console.log(`✅ Enabling live preview for ${project.id} on port ${actualPort}`)
       // Small delay to let the server fully start
@@ -357,6 +376,8 @@ export default function LiveProjectPreview({
   }
 
   const handleIframeError = () => {
+    console.warn(`❌ LivePreview ${project.id} iframe failed to load - likely X-Frame-Options restrictions`)
+    setIframeBlocked(true) // Remember this project can't be embedded
     setPreviewLoaded(false)
     setShowLivePreview(false)
     setIsRefreshing(false)
@@ -373,6 +394,11 @@ export default function LiveProjectPreview({
   const togglePreview = () => {
     // Only allow toggling if global previews are enabled
     if (livePreviewsEnabled) {
+      if (!showLivePreview && iframeBlocked) {
+        // If trying to show preview for a blocked project, reset the blocked flag and try again
+        console.log(`🔄 Resetting iframe blocked flag for ${project.id} - user requested retry`)
+        setIframeBlocked(false)
+      }
       setIsRefreshing(true)
       setShowLivePreview(!showLivePreview)
       if (!showLivePreview) {
@@ -399,6 +425,11 @@ export default function LiveProjectPreview({
 
   // Prevent recursive preview loops for the portfolio app itself
   const isPortfolioApp = project.id === 'claude-portfolio-unified'
+  
+  // Known projects that commonly have iframe restrictions (can be overridden by user)
+  const commonlyBlockedProjects = ['ggprompts', 'ggprompts-style-guide']
+  const isCommonlyBlocked = commonlyBlockedProjects.includes(project.id)
+  
   const shouldShowPreview = showLivePreview && previewUrl && livePreviewsEnabled && !isPortfolioApp
 
   return (
@@ -415,43 +446,24 @@ export default function LiveProjectPreview({
               overflow: 'hidden',
               position: 'relative'
             }}>
-              {isVSCodeEnvironment() ? (
-                // VS Code uses regular iframe (CSP allows localhost)
-                <iframe
-                  ref={iframeRef}
-                  src={previewUrl}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    borderRadius: '8px'
-                  }}
-                  title={`${project.title} Preview`}
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"
-                  allow={project.permissions?.join('; ')}
-                  onLoad={handleIframeLoad}
-                  onError={handleIframeError}
-                />
-              ) : (
-                // Regular iframe for web mode
-                <iframe
-                  ref={iframeRef}
-                  src={previewUrl}
-                  className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
-                  onLoad={handleIframeLoad}
-                  onError={handleIframeError}
-                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation"
-                  title={`${project.title} Preview`}
-                  width="100%"
-                  height="100%"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    borderRadius: '6px'
-                  }}
-                />
-              )}
+              <iframe
+                ref={iframeRef}
+                src={previewUrl}
+                className={`${styles.livePreview} ${previewLoaded ? styles.loaded : ''}`}
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation allow-top-navigation-by-user-activation allow-modals allow-orientation-lock allow-presentation allow-pointer-lock"
+                title={`${project.title} Preview`}
+                style={{
+                  width: `${previewConfig.iframeWidth}px`,
+                  height: `${previewConfig.iframeHeight}px`,
+                  border: 'none',
+                  borderRadius: '6px',
+                  transform: `scale(${previewConfig.scale})`,
+                  transformOrigin: 'top left',
+                  overflow: 'hidden'
+                }}
+              />
             </div>
             {!previewLoaded && (
               <div className={styles.previewLoading}>
@@ -459,9 +471,6 @@ export default function LiveProjectPreview({
                 <p>Loading {project.title}...</p>
               </div>
             )}
-            <div className={styles.scaleIndicator}>
-              {previewConfig.displayMode}
-            </div>
           </div>
         ) : (
           <div className={styles.staticPreview}>
@@ -471,6 +480,16 @@ export default function LiveProjectPreview({
                 <p>Portfolio App</p>
                 <small style={{color: '#888', fontSize: '10px', marginTop: '4px'}}>
                   Preview disabled to prevent recursion
+                </small>
+              </div>
+            ) : actualIsRunning && actualPort && (iframeBlocked || isCommonlyBlocked) ? (
+              // Show "iframe blocked" message for running projects that are confirmed blocked or commonly blocked
+              <div className={styles.placeholderThumbnail}>
+                <div className={styles.placeholderIcon}>🚫</div>
+                <p style={{fontSize: '14px', marginBottom: '8px'}}>{project.title}</p>
+                <small style={{color: '#ff8c00', fontSize: '11px', textAlign: 'center', lineHeight: '1.3'}}>
+                  Preview blocked by server<br/>
+                  <span style={{color: '#888'}}>Click 🎬 to retry or use "View Live Preview"</span>
                 </small>
               </div>
             ) : project.thumbnail && imageLoadStatus !== false ? (
@@ -499,6 +518,12 @@ export default function LiveProjectPreview({
           <span className={styles.statusText}>
             {actualIsRunning ? `SERVER :${actualPort}` : 'OFFLINE'}
           </span>
+          {/* Scale indicator moved from preview overlay */}
+          {shouldShowPreview && (
+            <span className={styles.scaleText}>
+              • {previewConfig.displayMode}
+            </span>
+          )}
           {/* Refresh indicator */}
           {isRefreshing && (
             <div className={styles.refreshIndicator} title="Refreshing preview">

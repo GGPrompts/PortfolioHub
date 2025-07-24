@@ -103,6 +103,90 @@ export const launchAllProjects = async (): Promise<void> => {
   await executeCommand('cd D:\\ClaudeWindows\\claude-dev-portfolio && .\\scripts\\start-all-enhanced.ps1');
 };
 
+export const killAllProjects = async (): Promise<void> => {
+  // Kill all projects - ENHANCED approach using existing port detection infrastructure
+  console.log('🔴 Kill all projects - leveraging existing continuous port monitoring system');
+  
+  try {
+    // First, get the real-time project status from the existing port monitoring system
+    console.log('📊 Getting real-time project status from optimized port manager...');
+    
+    // Get project list from manifest (still needed for project metadata)
+    const manifest = await fetch('/projects/manifest.json').then(r => r.json());
+    const projects = manifest.projects || [];
+    
+    // Use the existing optimized port manager to get current running status
+    // This leverages the continuous monitoring that's already running
+    const { optimizedPortManager } = await import('./optimizedPortManager');
+    const projectStatus = await optimizedPortManager.checkProjectPorts(projects);
+    
+    // Filter to only running projects (no need to attempt stopping inactive ones)
+    const runningProjects = projects.filter(project => projectStatus.get(project.id) === true);
+    
+    console.log(`🎯 Port monitor detected ${runningProjects.length}/${projects.length} projects currently running`);
+    runningProjects.forEach(project => {
+      console.log(`  ✅ ${project.title} (${project.id}) - Port ${project.localPort} ACTIVE`);
+    });
+    
+    if (runningProjects.length === 0) {
+      console.log('✅ No running projects detected - all projects already stopped');
+      return;
+    }
+    
+    let stoppedCount = 0;
+    let totalAttempted = 0;
+    
+    // Use the existing unified architecture to stop only the running projects
+    for (const project of runningProjects) {
+      try {
+        console.log(`🔍 Stopping ${project.title} (port ${project.localPort}) via environment bridge...`);
+        
+        // Use the existing stopProject method - it handles both VS Code terminals and Windows Terminal processes
+        const success = await environmentBridge.stopProject(project.id);
+        
+        totalAttempted++;
+        if (success) {
+          stoppedCount++;
+          console.log(`✅ Successfully stopped ${project.title}`);
+        } else {
+          console.log(`⚠️ ${project.title} failed to stop via environment bridge`);
+        }
+        
+        // Small delay between stops for stability
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+      } catch (error) {
+        console.warn(`❌ Error stopping ${project.title}:`, error);
+        totalAttempted++;
+      }
+    }
+    
+    console.log(`✅ Enhanced kill all complete - stopped ${stoppedCount}/${totalAttempted} running projects`);
+    console.log('🎯 Used existing port monitoring + unified environment bridge architecture');
+    
+    // Clear port cache to force fresh detection on next status check
+    optimizedPortManager.clearCache();
+    console.log('🧹 Cleared port cache for fresh status detection');
+    
+  } catch (error) {
+    console.error('❌ Error in enhanced kill all, falling back to direct port approach:', error);
+    
+    // Fallback: Use direct port killing for all known development ports
+    const portfolioPorts = [3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010, 5173, 5174, 5175, 5176, 5177, 9323, 9324];
+    console.log(`🔄 Fallback: Attempting direct port kill for ${portfolioPorts.length} ports`);
+    
+    for (const port of portfolioPorts) {
+      try {
+        const killPortCommand = `$proc = Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`;
+        await executeCommand(killPortCommand);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } catch (error) {
+        console.warn(`⚠️ Fallback kill failed for port ${port}:`, error);
+      }
+    }
+  }
+};
+
 export const launchSelectedProjects = async (projectIds: string[]): Promise<void> => {
   console.log('Launch selected projects:', projectIds);
   // Start each project individually

@@ -110,6 +110,10 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
         return this.projects.filter(p => this.selectedProjects.has(p.id));
     }
 
+    getAllProjectsData(): any[] {
+        return this.projects;
+    }
+
     // Single project selection for commands panel (different from checkbox selection)
     private currentSelectedProject: any = null;
 

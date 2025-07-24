@@ -6,7 +6,6 @@ import EnhancedProjectViewer from './components/EnhancedProjectViewer'
 import GitUpdateButton from './components/GitUpdateButton'
 import PortfolioSidebar from './components/PortfolioSidebar'
 import ProjectGrid from './components/ProjectGrid'
-import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import ProjectViewer from './components/ProjectViewer'
 import { RightSidebar } from './components/RightSidebar'
 import SvgIcon from './components/SvgIcon'
@@ -53,7 +52,6 @@ function PortfolioApp() {
   } = useProjectData()
   
   const [isViewerOpen, setIsViewerOpen] = useState(false)
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [showGrid, setShowGrid] = useState(true)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [isNarrowScreen, setIsNarrowScreen] = useState(window.innerWidth <= 1400)
@@ -296,7 +294,6 @@ function PortfolioApp() {
   return (
     <div className="app">
       <PortfolioSidebar 
-        onOpenDashboard={() => setIsDashboardOpen(true)}
         onWidthChange={setSidebarWidth}
         layoutStrategy={layout.contentStrategy}
       />
@@ -432,11 +429,6 @@ function PortfolioApp() {
         />
       )}
 
-      {isDashboardOpen && (
-        <ProjectStatusDashboard 
-          onClose={() => setIsDashboardOpen(false)}
-        />
-      )}
     </div>
   )
 }

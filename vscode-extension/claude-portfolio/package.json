@@ -196,6 +196,12 @@
           "when": "true"
         },
         {
+          "id": "claudeTerminalCommands",
+          "name": "Terminal Management",
+          "contextualTitle": "Terminal & Process Management Commands",
+          "when": "true"
+        },
+        {
           "id": "claudeVSCodePages",
           "name": "VS Code Pages",
           "contextualTitle": "VS Code Integrated Pages",

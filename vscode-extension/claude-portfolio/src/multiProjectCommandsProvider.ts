@@ -38,18 +38,9 @@ export class MultiProjectCommandsProvider implements vscode.TreeDataProvider<Bat
     private async updateCommands() {
         const selectedProjects = this.projectProvider.getSelectedProjectsData();
         
-        // Always get project statuses, even if none selected
-        if (selectedProjects.length > 0) {
-            // Get enhanced status information with duplicate detection
-            this.projectStatuses = await this.portDetectionService.checkProjectStatuses(selectedProjects);
-            
-            // Filter to only selected projects
-            const selectedStatuses = this.projectStatuses.filter(status => 
-                selectedProjects.some(p => p.id === status.projectId)
-            );
-        } else {
-            this.projectStatuses = [];
-        }
+        // Always check all projects for warnings/multi-instance detection
+        const allProjects = this.projectProvider.getAllProjectsData();
+        this.projectStatuses = await this.portDetectionService.checkProjectStatuses(allProjects);
 
         const selectedStatuses = this.projectStatuses.filter(status => 
             selectedProjects.some(p => p.id === status.projectId)
@@ -198,6 +189,22 @@ export class MultiProjectCommandsProvider implements vscode.TreeDataProvider<Bat
                 category: 'Other Commands'
             },
 
+            // Terminal Management Commands (NEW)
+            {
+                label: 'Clean Up Terminals',
+                command: 'claude-portfolio.cleanupTerminals',
+                icon: 'trash',
+                description: 'Close external terminal windows (preserves VS Code terminals)',
+                category: 'Other Commands'
+            },
+            {
+                label: 'Schedule Terminal Cleanup',
+                command: 'claude-portfolio.scheduleCleanup',
+                icon: 'clock',
+                description: 'Schedule automatic terminal cleanup after delay',
+                category: 'Other Commands'
+            },
+
             // VS Code Commands (NOT checkbox-affected) - Keep only essential ones
             {
                 label: 'Reload Window',
@@ -207,21 +214,7 @@ export class MultiProjectCommandsProvider implements vscode.TreeDataProvider<Bat
                 category: 'Other Commands'
             },
 
-            // Selection Management (keep these - they manage checkboxes)
-            {
-                label: `Clear Selection`,
-                command: 'claude-portfolio.clearProjectSelection',
-                icon: 'clear-all',
-                description: `Uncheck all selected projects`,
-                category: 'Batch Operations'
-            },
-            {
-                label: `Select All Projects`,
-                command: 'claude-portfolio.selectAllProjects',
-                icon: 'select-all',
-                description: `Check all projects`,
-                category: 'Batch Operations'
-            }
+            // Selection Management buttons moved to top-level (removed from Batch Operations to avoid duplication)
         ];
 
         // Combine the commands - include both batch operations and other commands
@@ -254,15 +247,36 @@ export class MultiProjectCommandsProvider implements vscode.TreeDataProvider<Bat
                 true
             ));
 
+            // Add selection management buttons right after the header
+            items.push(new BatchCommandItem(
+                `Select All Projects`,
+                'claude-portfolio.selectAllProjects',
+                'SelectionAction',
+                'check',
+                'Check all projects for batch operations',
+                vscode.TreeItemCollapsibleState.None,
+                false
+            ));
+            
+            items.push(new BatchCommandItem(
+                `Clear Selection`,
+                'claude-portfolio.clearProjectSelection',
+                'SelectionAction',
+                'clear-all',
+                'Uncheck all selected projects',
+                vscode.TreeItemCollapsibleState.None,
+                false
+            ));
+
             // Add warnings if any exist
             const projectsWithWarnings = this.projectStatuses.filter(s => s.warnings.length > 0);
             if (projectsWithWarnings.length > 0) {
                 items.push(new BatchCommandItem(
-                    `⚠️ ${projectsWithWarnings.length} Issues Detected`,
+                    `⚠️ ${projectsWithWarnings.length} Multi Instances`,
                     '',
                     'Warnings',
                     'warning',
-                    'Click to see details',
+                    'Multiple instances running on same ports - click to see details',
                     vscode.TreeItemCollapsibleState.Collapsed,
                     true
                 ));
@@ -310,12 +324,18 @@ export class MultiProjectCommandsProvider implements vscode.TreeDataProvider<Bat
             const warningItems: BatchCommandItem[] = [];
             this.projectStatuses.forEach(status => {
                 if (status.warnings.length > 0) {
+                    // Format warnings for better readability
+                    const formattedWarnings = status.warnings.map((warning, index) => {
+                        // Add bullet points and clean up spacing
+                        return `• ${warning.trim()}`;
+                    }).join('\n');
+                    
                     warningItems.push(new BatchCommandItem(
                         `${status.projectId}`,
                         '',
                         'Warning',
                         status.status === 'multiple' ? 'error' : 'warning',
-                        `${status.warnings.join('; ')}`,
+                        formattedWarnings,
                         vscode.TreeItemCollapsibleState.None,
                         true
                     ));

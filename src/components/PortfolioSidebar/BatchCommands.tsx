@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import SvgIcon from '../SvgIcon'
 import styles from '../PortfolioSidebar.module.css'
 import { 
@@ -22,7 +22,6 @@ interface Project {
 interface BatchCommandsProps {
   projects: Project[]
   selectedProjects: Set<string>
-  onOpenDashboard?: () => void
   onClearFilters: () => void
   executeOrCopyCommand: (command: string, successMessage: string, commandName?: string) => Promise<void>
 }
@@ -30,7 +29,6 @@ interface BatchCommandsProps {
 export default function BatchCommands({
   projects,
   selectedProjects,
-  onOpenDashboard,
   onClearFilters,
   executeOrCopyCommand
 }: BatchCommandsProps) {
@@ -117,149 +115,204 @@ export default function BatchCommands({
     await executeOrCopyCommand(script, `${type} script ready!`, commandName)
   }
 
+  // Define command options
+  const commandOptions = [
+    // Launch commands
+    {
+      id: 'launch-all',
+      label: 'Launch All Projects',
+      icon: 'play',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          await launchAllProjects()
+        } else {
+          const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
+          await executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
+        }
+      },
+      condition: () => true,
+      description: isVSCodeEnvironment() ? "Launch all projects in VS Code terminals" : "Copy command to start all projects"
+    },
+    {
+      id: 'launch-script',
+      label: 'Enhanced Script',
+      icon: 'terminal',
+      action: async () => {
+        await executeScript('scripts\\start-all-enhanced.ps1')
+        showBrowserNotification('📜 Enhanced startup script executed', 'info')
+      },
+      condition: () => isVSCodeEnvironment(),
+      description: "Run the full enhanced PowerShell script with comprehensive port checking"
+    },
+    {
+      id: 'launch-selected',
+      label: `Launch Selected (${selectedProjects.size})`,
+      icon: 'play',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          await launchSelectedProjects(Array.from(selectedProjects))
+        } else {
+          copyScriptToClipboard(generateLaunchScript(Array.from(selectedProjects)), 'launch')
+        }
+      },
+      condition: () => selectedProjects.size > 0,
+      description: isVSCodeEnvironment() ? "Launch selected projects in VS Code terminals" : "Copy command to start selected projects"
+    },
+    {
+      id: 'launch-enhanced',
+      label: `Enhanced Launch (${selectedProjects.size})`,
+      icon: 'zap',
+      action: async () => {
+        await launchProjectsEnhanced(Array.from(selectedProjects), false)
+        showBrowserNotification(`⚡ Enhanced launch started for ${selectedProjects.size} projects`, 'info')
+      },
+      condition: () => isVSCodeEnvironment() && selectedProjects.size > 0,
+      description: "Launch selected projects with enhanced port checking and smart restart detection"
+    },
+    {
+      id: 'launch-force',
+      label: `Force Restart (${selectedProjects.size})`,
+      icon: 'rotateCcw',
+      action: async () => {
+        await launchProjectsEnhanced(Array.from(selectedProjects), true)
+        showBrowserNotification(`🔄 Force restart initiated for ${selectedProjects.size} projects`, 'warning')
+      },
+      condition: () => isVSCodeEnvironment() && selectedProjects.size > 0,
+      description: "Force restart all selected projects (stops existing servers first)"
+    },
+    // Kill commands
+    {
+      id: 'kill-all',
+      label: 'Kill All Projects',
+      icon: 'stop',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          await killAllProjects()
+        } else {
+          const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
+          await executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
+        }
+      },
+      condition: () => true,
+      description: isVSCodeEnvironment() ? "Systematically stop all running projects" : "Copy command to kill all projects"
+    },
+    {
+      id: 'kill-selected',
+      label: `Kill Selected (${selectedProjects.size})`,
+      icon: 'stop',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          const selectedProjectsList = projects.filter(p => selectedProjects.has(p.id))
+          console.log(`🔴 Killing ${selectedProjectsList.length} selected projects...`)
+          
+          for (const project of selectedProjectsList) {
+            if (project.localPort) {
+              console.log(`🔴 Stopping ${project.title} on port ${project.localPort}...`)
+              const command = `powershell "Get-Process | Where-Object {\\$_.Name -eq 'node'} | Where-Object {(Get-NetTCPConnection -OwningProcess \\$_.Id -ErrorAction SilentlyContinue | Where-Object LocalPort -eq ${project.localPort})} | Stop-Process -Force"`
+              await executeOrCopyCommand(command, `Stopped ${project.title}`, `Kill ${project.title}`)
+            }
+          }
+        } else {
+          copyScriptToClipboard(generateKillScript(Array.from(selectedProjects)), 'kill')
+        }
+      },
+      condition: () => selectedProjects.size > 0,
+      description: isVSCodeEnvironment() ? "Stop selected projects individually" : "Copy command to kill selected projects"
+    },
+    // Utility commands
+    {
+      id: 'clear-filters',
+      label: 'Clear Filters',
+      icon: 'filterX',
+      action: () => {
+        onClearFilters()
+        showBrowserNotification('🧼 Filters cleared and projects collapsed', 'info')
+      },
+      condition: () => true,
+      description: "Clear filters and collapse all projects"
+    },
+    // Terminal Management commands
+    {
+      id: 'cleanup-terminals',
+      label: 'Clean Up Terminals',
+      icon: 'trash',
+      action: async () => {
+        const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\enhanced-cleanup.ps1 -OnlyExternal -DelaySeconds 0'
+        await executeOrCopyCommand(command, 'Terminal cleanup initiated!', 'Clean Up Terminals')
+        showBrowserNotification('🧹 External terminals cleanup initiated', 'info')
+      },
+      condition: () => true,
+      description: "Close external terminal windows (preserves VS Code integrated terminals)"
+    },
+    {
+      id: 'schedule-cleanup',
+      label: 'Schedule Cleanup',
+      icon: 'clock',
+      action: async () => {
+        const delay = prompt('Enter delay in seconds (default: 10):', '10')
+        const delaySeconds = parseInt(delay || '10')
+        if (isNaN(delaySeconds) || delaySeconds < 0) {
+          showBrowserNotification('❌ Invalid delay time entered', 'error')
+          return
+        }
+        
+        const command = `cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\enhanced-cleanup.ps1 -OnlyExternal -DelaySeconds ${delaySeconds}`
+        await executeOrCopyCommand(command, `Terminal cleanup scheduled for ${delaySeconds}s`, 'Schedule Cleanup')
+        showBrowserNotification(`⏰ Terminal cleanup scheduled in ${delaySeconds} seconds`, 'info')
+      },
+      condition: () => true,
+      description: "Schedule automatic terminal cleanup after specified delay"
+    }
+  ]
+
+  // Filter available commands based on conditions
+  const availableCommands = commandOptions.filter(cmd => cmd.condition())
+
+  const [selectedCommand, setSelectedCommand] = useState(availableCommands[0]?.id || '')
+
+  // Update selected command when available commands change
+  useEffect(() => {
+    if (!availableCommands.find(cmd => cmd.id === selectedCommand)) {
+      setSelectedCommand(availableCommands[0]?.id || '')
+    }
+  }, [availableCommands, selectedCommand])
+
+  const executeSelectedCommand = async () => {
+    const command = availableCommands.find(cmd => cmd.id === selectedCommand)
+    if (command) {
+      await command.action()
+    }
+  }
+
   return (
     <div className={styles.quickActions}>
-      <button 
-        className={styles.actionBtn}
-        onClick={() => {
-          onOpenDashboard?.()
-          showBrowserNotification('📋 Project status dashboard opened', 'info')
-        }}
-        title="Open project status dashboard"
-      >
-        <SvgIcon name="settings" size={16} /> Dashboard
-      </button>
-      
-      {/* Run Commands Group */}
-      <div className={styles.buttonGroup}>
-        <span className={styles.groupLabel}>Run</span>
-        <button 
-          className={styles.actionBtn}
-          onClick={async () => {
-            if (isVSCodeEnvironment()) {
-              await launchAllProjects()
-            } else {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\start-all-enhanced.ps1'
-              await executeOrCopyCommand(command, 'Start all projects command ready!', 'Start All Projects')
-            }
-          }}
-          title={isVSCodeEnvironment() ? "Launch all projects in VS Code terminals" : "Copy command to start all projects"}
-        >
-          <SvgIcon name="play" size={16} /> All
-        </button>
-        
-        {/* Enhanced Script Button - Only show in VS Code */}
-        {isVSCodeEnvironment() && (
-          <button
-            className={`${styles.actionBtn} ${styles.scriptBtn}`}
-            onClick={async () => {
-              await executeScript('scripts\\start-all-enhanced.ps1')
-              showBrowserNotification('📜 Enhanced startup script executed', 'info')
-            }}
-            title="Run the full enhanced PowerShell script with comprehensive port checking"
+      <div className={styles.commandSelector}>
+        <div className={styles.projectFilter}>
+          <select 
+            className={styles.projectSelect}
+            value={selectedCommand}
+            onChange={(e) => setSelectedCommand(e.target.value)}
           >
-            <SvgIcon name="terminal" size={16} /> Script
-          </button>
-        )}
+            {availableCommands.map((command) => (
+              <option key={command.id} value={command.id}>
+                {command.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <button 
-          className={styles.actionBtn}
-          onClick={async () => {
-            if (isVSCodeEnvironment()) {
-              await launchSelectedProjects(Array.from(selectedProjects))
-            } else {
-              copyScriptToClipboard(generateLaunchScript(Array.from(selectedProjects)), 'launch')
-            }
-          }}
-          disabled={selectedProjects.size === 0}
-          title={isVSCodeEnvironment() ? "Launch selected projects in VS Code terminals" : "Copy command to start selected projects"}
+          className={`${styles.actionBtn} ${styles.executeBtn}`}
+          onClick={executeSelectedCommand}
+          disabled={!selectedCommand || availableCommands.length === 0}
+          title={availableCommands.find(cmd => cmd.id === selectedCommand)?.description || 'Execute command'}
         >
-          <SvgIcon name="play" size={16} /> Selected ({selectedProjects.size})
-        </button>
-        
-        {/* Enhanced Launch Button - Only show in VS Code */}
-        {isVSCodeEnvironment() && (
-          <button 
-            className={`${styles.actionBtn} ${styles.enhancedBtn}`}
-            onClick={async () => {
-              await launchProjectsEnhanced(Array.from(selectedProjects), false)
-              showBrowserNotification(`⚡ Enhanced launch started for ${selectedProjects.size} projects`, 'info')
-            }}
-            disabled={selectedProjects.size === 0}
-            title="Launch selected projects with enhanced port checking and smart restart detection"
-          >
-            <SvgIcon name="zap" size={16} /> Enhanced ({selectedProjects.size})
-          </button>
-        )}
-        
-        {/* Force Enhanced Launch Button - Only show in VS Code */}
-        {isVSCodeEnvironment() && (
-          <button 
-            className={`${styles.actionBtn} ${styles.forceBtn}`}
-            onClick={async () => {
-              await launchProjectsEnhanced(Array.from(selectedProjects), true)
-              showBrowserNotification(`🔄 Force restart initiated for ${selectedProjects.size} projects`, 'warning')
-            }}
-            disabled={selectedProjects.size === 0}
-            title="Force restart all selected projects (stops existing servers first)"
-          >
-            <SvgIcon name="rotateCcw" size={16} /> Force ({selectedProjects.size})
-          </button>
-        )}
-      </div>
-      
-      {/* Kill Commands Group */}
-      <div className={`${styles.buttonGroup} ${styles.killGroup}`}>
-        <span className={styles.groupLabel}>Kill</span>
-        <button 
-          className={styles.actionBtn}
-          onClick={async () => {
-            if (isVSCodeEnvironment()) {
-              await killAllProjects()
-            } else {
-              const command = 'cd D:\\ClaudeWindows\\claude-dev-portfolio; .\\scripts\\kill-all-servers.ps1'
-              await executeOrCopyCommand(command, 'Kill all servers command ready!', 'Kill All Servers')
-            }
-          }}
-          title={isVSCodeEnvironment() ? "Systematically stop all running projects" : "Copy command to kill all projects"}
-        >
-          <SvgIcon name="stop" size={16} /> All
-        </button>
-        <button 
-          className={styles.actionBtn}
-          onClick={async () => {
-            if (isVSCodeEnvironment()) {
-              // Use environment bridge to kill selected projects individually
-              const selectedProjectsList = projects.filter(p => selectedProjects.has(p.id))
-              console.log(`🔴 Killing ${selectedProjectsList.length} selected projects...`)
-              
-              for (const project of selectedProjectsList) {
-                if (project.localPort) {
-                  console.log(`🔴 Stopping ${project.title} on port ${project.localPort}...`)
-                  const command = `powershell "Get-Process | Where-Object {\\$_.Name -eq 'node'} | Where-Object {(Get-NetTCPConnection -OwningProcess \\$_.Id -ErrorAction SilentlyContinue | Where-Object LocalPort -eq ${project.localPort})} | Stop-Process -Force"`
-                  await executeOrCopyCommand(command, `Stopped ${project.title}`, `Kill ${project.title}`)
-                }
-              }
-            } else {
-              // Web mode - copy PowerShell script to clipboard
-              copyScriptToClipboard(generateKillScript(Array.from(selectedProjects)), 'kill')
-            }
-          }}
-          disabled={selectedProjects.size === 0}
-          title={isVSCodeEnvironment() ? "Stop selected projects individually" : "Copy command to kill selected projects"}
-        >
-          <SvgIcon name="stop" size={16} /> Selected ({selectedProjects.size})
+          <SvgIcon 
+            name={availableCommands.find(cmd => cmd.id === selectedCommand)?.icon || 'play'} 
+            size={16} 
+          /> 
+          Execute
         </button>
       </div>
-      <button
-        className={styles.actionBtn}
-        onClick={() => {
-          onClearFilters()
-          showBrowserNotification('🧼 Filters cleared and projects collapsed', 'info')
-        }}
-        title="Clear filters and collapse all projects"
-      >
-        <SvgIcon name="refresh" size={16} /> Clear
-      </button>
     </div>
   )
 }

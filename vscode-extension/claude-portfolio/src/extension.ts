@@ -3,6 +3,7 @@ import { ProjectProvider, ProjectItem } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
 // ProjectCommandsProvider removed - commands now accessible via command palette only
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
+import { TerminalCommandsProvider } from './terminalCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
 import { VSCodePageProvider } from './vscodePageProvider';
@@ -38,6 +39,7 @@ interface ExtensionProviders {
     projectProvider: ProjectProvider;
     // projectCommandsProvider removed - commands now accessible via command palette only
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
+    terminalCommandsProvider: TerminalCommandsProvider;
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     taskProvider: PortfolioTaskProvider;
     vscodePageProvider: VSCodePageProvider;
@@ -78,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
         console.log('✅ Command handlers created');
 
         // Register all commands
-        registerCommands(context, commands);
+        registerCommands(context, commands, providers);
         console.log('✅ Commands registered');
 
         // Set up cross-provider communication
@@ -152,6 +154,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const projectProvider = new ProjectProvider(portfolioPath);
     // projectCommandsProvider removed - commands now accessible via command palette only
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
+    const terminalCommandsProvider = new TerminalCommandsProvider();
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
     const vscodePageProvider = new VSCodePageProvider();
@@ -161,6 +164,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
         projectProvider,
         // projectCommandsProvider removed
         multiProjectCommandsProvider,
+        terminalCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
         vscodePageProvider,
@@ -199,6 +203,7 @@ function registerProviders(context: vscode.ExtensionContext, providers: Extensio
     
     // claudeProjectCommands panel removed - commands now accessible via command palette only
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
+    vscode.window.registerTreeDataProvider('claudeTerminalCommands', providers.terminalCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
 
@@ -258,11 +263,12 @@ function createCommandHandlers(
 /**
  * Register all commands
  */
-function registerCommands(context: vscode.ExtensionContext, commands: ExtensionCommands): void {
+function registerCommands(context: vscode.ExtensionContext, commands: ExtensionCommands, providers: ExtensionProviders): void {
     commands.projectCommands.registerCommands(context);
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
+    providers.terminalCommandsProvider.registerCommands(context);
     
     // Register Chat Panel command
     const chatCommand = vscode.commands.registerCommand('claudePortfolio.openChat', () => {

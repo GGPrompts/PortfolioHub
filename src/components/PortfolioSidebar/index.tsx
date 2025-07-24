@@ -17,13 +17,11 @@ import { executeOrCopyCommand } from './utils'
 import { showBrowserNotification } from '../../services/environmentBridge'
 
 interface PortfolioSidebarProps {
-  onOpenDashboard?: () => void
   onWidthChange?: (width: number) => void
   layoutStrategy?: 'push' | 'overlay'
 }
 
 export default function PortfolioSidebar({ 
-  onOpenDashboard, 
   onWidthChange, 
   layoutStrategy = 'push' 
 }: PortfolioSidebarProps) {
@@ -384,7 +382,6 @@ export default function PortfolioSidebar({
             <BatchCommands
               projects={projects}
               selectedProjects={selectedProjects}
-              onOpenDashboard={onOpenDashboard}
               onClearFilters={handleClearFilters}
               executeOrCopyCommand={executeOrCopyCommand}
             />

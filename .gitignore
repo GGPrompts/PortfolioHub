@@ -33,6 +33,16 @@ desktop.ini
 # Generated thumbnails (uncomment if you want to generate fresh each time)
 # thumbnails/
 
+# VS Code Extension Build Artifacts
+vscode-extension/claude-portfolio/out/
+vscode-extension/claude-portfolio/*.vsix
+vscode-extension/claude-portfolio/node_modules/
+
+# TypeScript/JavaScript build outputs
+*.js.map
+out/
+lib/
+
 # Local project copies (if using symlinks instead of submodules)
 # projects/*
 !projects/manifest.json

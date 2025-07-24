@@ -1419,6 +1419,9 @@
   box-shadow: 
     0 0 20px rgba(0, 255, 136, 0.2),
     0 8px 32px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   overflow: hidden; /* Keep content contained */
   margin: 20px 20px 40px 20px; /* Add extra bottom margin to prevent clipping */

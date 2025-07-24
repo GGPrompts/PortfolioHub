@@ -398,19 +398,29 @@ export default function LiveProjectPreview({
         // If trying to show preview for a blocked project, reset the blocked flag and try again
         console.log(`🔄 Resetting iframe blocked flag for ${project.id} - user requested retry`)
         setIframeBlocked(false)
+        showNotification(`Retrying live preview for ${project.title}`, 'info')
       }
+      const newState = !showLivePreview
       setIsRefreshing(true)
-      setShowLivePreview(!showLivePreview)
+      setShowLivePreview(newState)
       if (!showLivePreview) {
         setPreviewLoaded(false)
       }
+      showNotification(
+        newState ? `Enabled live preview for ${project.title}` : `Disabled live preview for ${project.title}`,
+        'info'
+      )
+    } else {
+      showNotification('Live previews are disabled globally', 'warning')
     }
   }
 
   const toggleViewMode = () => {
     // Only allow local toggle if no global view mode is set
     if (!globalViewMode) {
-      setLocalViewMode(localViewMode === 'mobile' ? 'desktop' : 'mobile')
+      const newMode = localViewMode === 'mobile' ? 'desktop' : 'mobile'
+      setLocalViewMode(newMode)
+      showNotification(`Switched to ${newMode} view`, 'info')
     }
   }
 
@@ -418,6 +428,9 @@ export default function LiveProjectPreview({
     if (previewUrl) {
       // Open preview in new window/tab at full size
       window.open(previewUrl, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes')
+      showNotification(`Opened ${project.title} in full screen`, 'info')
+    } else {
+      showNotification('Project is not running - cannot open full screen', 'warning')
     }
   }
 
@@ -569,7 +582,14 @@ export default function LiveProjectPreview({
                 {showLivePreview ? '🖼️' : '🎬'}
               </button>
               <button
-                onClick={() => window.open(previewUrl, '_blank')}
+                onClick={() => { 
+                  if (previewUrl) {
+                    window.open(previewUrl, '_blank')
+                    showNotification(`Opened ${project.title} in new tab`, 'info')
+                  } else {
+                    showNotification('Project is not running - cannot open in new tab', 'warning')
+                  }
+                }}
                 className={styles.openExternal}
                 title="Open in new tab"
               >
@@ -638,7 +658,13 @@ export default function LiveProjectPreview({
             {/* AI Assistant Dropdown */}
             <div className={styles.aiDropdownContainer} ref={dropdownRef}>
               <button
-                onClick={() => setShowAIDropdown(!showAIDropdown)}
+                onClick={() => {
+                  const newState = !showAIDropdown
+                  setShowAIDropdown(newState)
+                  if (newState) {
+                    showNotification('AI Assistant menu opened', 'info')
+                  }
+                }}
                 className={`${styles.actionButton} ${styles.aiButton}`}
                 title="Open with AI Assistant"
               >

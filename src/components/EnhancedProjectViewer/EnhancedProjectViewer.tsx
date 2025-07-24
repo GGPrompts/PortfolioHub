@@ -713,7 +713,10 @@ Thank you!`
       {/* Header */}
       <div className={styles.viewerHeader}>
         <div className={styles.headerInfo}>
-          <button onClick={onClose} className={styles.backButton}>
+          <button onClick={() => {
+            onClose()
+            showNotification('Returned to projects overview', 'info')
+          }} className={styles.backButton}>
             <SvgIcon name="arrowLeft" size={20} />
             Back to Projects
           </button>
@@ -733,7 +736,14 @@ Thank you!`
             </button>
           ) : (
             <>
-              <button onClick={handleOpenInBrowser} className={styles.btnSecondary}>
+              <button onClick={() => {
+                handleOpenInBrowser()
+                if (actualPort) {
+                  showNotification(`Opening ${project.title} in browser (port ${actualPort})`, 'info')
+                } else {
+                  showNotification('Project is not running - cannot open in browser', 'warning')
+                }
+              }} className={styles.btnSecondary}>
                 <SvgIcon name="externalLink" size={16} />
                 Open in Browser
               </button>

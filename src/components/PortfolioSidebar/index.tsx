@@ -14,6 +14,7 @@ import DevNotes from './DevNotes'
 import SvgIcon from '../SvgIcon'
 import styles from '../PortfolioSidebar.module.css'
 import { executeOrCopyCommand } from './utils'
+import { showBrowserNotification } from '../../services/environmentBridge'
 
 interface PortfolioSidebarProps {
   onOpenDashboard?: () => void
@@ -190,10 +191,12 @@ export default function PortfolioSidebar({
   // Project selection helpers
   const selectAllProjects = () => {
     setSelectedProjects(new Set(projects.map(p => p.id)))
+    showBrowserNotification(`✅ Selected all ${projects.length} projects`, 'info')
   }
 
   const deselectAllProjects = () => {
     setSelectedProjects(new Set())
+    showBrowserNotification('❌ Deselected all projects', 'info')
   }
 
   // New project handler
@@ -206,6 +209,7 @@ export default function PortfolioSidebar({
     if (!activeTabs.includes('journals')) {
       toggleTab('journals')
     }
+    showBrowserNotification('🚀 Project wizard opened - fill out the form to create a new project', 'info')
   }
 
   // Clear filters handler
@@ -275,6 +279,7 @@ export default function PortfolioSidebar({
                 onClick={(e) => {
                   e.stopPropagation()
                   refreshProjectStatus()
+                  showBrowserNotification('🔄 Project status refreshed', 'info')
                 }}
                 title="Refresh project status"
               >
@@ -310,7 +315,11 @@ export default function PortfolioSidebar({
               {/* Online Projects Section */}
               {filteredProjects.some(p => getProjectStatus(p.id)) && (
                 <>
-                  <div className={styles.statusSectionHeader} onClick={() => setOnlineSectionCollapsed(!onlineSectionCollapsed)}>
+                  <div className={styles.statusSectionHeader} onClick={() => {
+                    setOnlineSectionCollapsed(!onlineSectionCollapsed)
+                    const action = onlineSectionCollapsed ? 'expanded' : 'collapsed'
+                    showBrowserNotification(`📋 Online projects section ${action}`, 'info')
+                  }}>
                     <button className={`${styles.sectionCollapseToggle} ${onlineSectionCollapsed ? styles.collapsed : ''}`}>
                       ▼
                     </button>
@@ -340,7 +349,11 @@ export default function PortfolioSidebar({
               {/* Offline Projects Section */}
               {filteredProjects.some(p => !getProjectStatus(p.id)) && (
                 <>
-                  <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`} onClick={() => setOfflineSectionCollapsed(!offlineSectionCollapsed)}>
+                  <div className={`${styles.statusSectionHeader} ${styles.offlineSection}`} onClick={() => {
+                    setOfflineSectionCollapsed(!offlineSectionCollapsed)
+                    const action = offlineSectionCollapsed ? 'expanded' : 'collapsed'
+                    showBrowserNotification(`📋 Offline projects section ${action}`, 'info')
+                  }}>
                     <button className={`${styles.sectionCollapseToggle} ${offlineSectionCollapsed ? styles.collapsed : ''}`}>
                       ▼
                     </button>

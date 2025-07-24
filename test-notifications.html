@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-info { background: #007acc; color: white; }
+        .btn-warning { background: #f9c74f; color: black; }
+        .btn-error { background: #d73a49; color: white; }
+        .btn-success { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Toast Notification Test</h1>
+    <p>This page tests the toast notification system that was added to the Portfolio Dashboard and Server Toolbar components.</p>
+    
+    <div class="test-section">
+        <h2>Test Toast Notifications</h2>
+        <p>Click these buttons to test different notification types:</p>
+        
+        <button class="btn-info" onclick="testInfoNotification()">📊 Test Info Notification</button>
+        <button class="btn-success" onclick="testSuccessNotification()">✅ Test Success Notification</button>
+        <button class="btn-warning" onclick="testWarningNotification()">⚠️ Test Warning Notification</button>
+        <button class="btn-error" onclick="testErrorNotification()">❌ Test Error Notification</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Simulated Project Dashboard Notifications</h2>
+        <p>These simulate the notifications added to ProjectStatusDashboard.tsx:</p>
+        
+        <button class="btn-info" onclick="testProjectRefresh()">🔄 Test Project Refresh</button>
+        <button class="btn-info" onclick="testProjectStart()">🚀 Test Project Start</button>
+        <button class="btn-info" onclick="testProjectStop()">🛑 Test Project Stop</button>
+        <button class="btn-success" onclick="testBatchStart()">📦 Test Batch Start All</button>
+        <button class="btn-warning" onclick="testBatchStop()">🔥 Test Batch Stop All</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Simulated Server Toolbar Notifications</h2>
+        <p>These simulate the notifications added to ServerToolbar.tsx:</p>
+        
+        <button class="btn-info" onclick="testStartAllServers()">🚀 Test Start All Servers</button>
+        <button class="btn-info" onclick="testStartPortfolio()">💼 Test Start Portfolio</button>
+        <button class="btn-info" onclick="testStartVSCode()">⚡ Test Start VS Code Server</button>
+    </div>
+
+    <script>
+        // Import the notification function from the environment bridge
+        // In a real app, this would be imported from the React component
+        function showTestNotification(text, level = 'info') {
+            console.log(`Notification (${level}): ${text}`);
+            
+            // Create a simple toast for testing
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${level === 'error' ? '#d73a49' : level === 'warning' ? '#f9c74f' : level === 'success' ? '#28a745' : '#007acc'};
+                color: ${level === 'warning' ? 'black' : 'white'};
+                padding: 12px 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                max-width: 400px;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+            `;
+            toast.textContent = text;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remove after delay
+            const delay = level === 'error' ? 8000 : level === 'warning' ? 6000 : 4000;
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, delay);
+        }
+
+        // Basic notification tests
+        function testInfoNotification() {
+            showTestNotification('ℹ️ This is an info notification - shows general information', 'info');
+        }
+
+        function testSuccessNotification() {
+            showTestNotification('✅ This is a success notification - operation completed successfully', 'success');
+        }
+
+        function testWarningNotification() {
+            showTestNotification('⚠️ This is a warning notification - something needs attention', 'warning');
+        }
+
+        function testErrorNotification() {
+            showTestNotification('❌ This is an error notification - something went wrong', 'error');
+        }
+
+        // Project dashboard simulations
+        function testProjectRefresh() {
+            showTestNotification('Project status refreshed: 3/8 projects running', 'info');
+        }
+
+        function testProjectStart() {
+            showTestNotification('✅ Successfully started ggprompts on port 3001', 'info');
+        }
+
+        function testProjectStop() {
+            showTestNotification('✅ Successfully stopped matrix-cards-react', 'info');
+        }
+
+        function testBatchStart() {
+            showTestNotification('✅ Successfully started all 5 stopped projects', 'success');
+        }
+
+        function testBatchStop() {
+            showTestNotification('⚠️ Stopped 4 projects, 1 failed - check individual project status', 'warning');
+        }
+
+        // Server toolbar simulations
+        function testStartAllServers() {
+            showTestNotification('🚀 All servers starting - check VS Code terminals for progress', 'info');
+        }
+
+        function testStartPortfolio() {
+            showTestNotification('💼 Portfolio server starting - check VS Code terminal for URL', 'info');
+        }
+
+        function testStartVSCode() {
+            showTestNotification('⚡ VS Code Live Preview opening - Simple Browser window will appear', 'info');
+        }
+    </script>
+</body>
+</html>

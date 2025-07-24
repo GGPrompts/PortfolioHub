@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { executeCommand, isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import { showBrowserNotification } from '../services/environmentBridge'
 import EnvironmentBadge from './EnvironmentBadge'
 import styles from './ServerToolbar.module.css'
 
@@ -16,6 +17,7 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
   const handleStartAllServers = async () => {
     setIsStartingServers(true)
     setStatusMessage('Starting all servers...')
+    showBrowserNotification('Starting all servers...', 'info')
     
     try {
       if (isVSCodeEnvironment()) {
@@ -26,16 +28,28 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
           args: [] // Will start all projects
         });
         setStatusMessage('All servers starting - check terminals for progress')
+        showBrowserNotification(
+          '🚀 All servers starting - check VS Code terminals for progress',
+          'info'
+        )
         setTimeout(() => setStatusMessage(''), 3000)
       } else {
         // Use executeCommand for non-VS Code environment (legitimate shell command)
         await executeCommand('npm run dev')
         setStatusMessage('Portfolio dev server started!')
+        showBrowserNotification(
+          '✅ Portfolio dev server started successfully!',
+          'info'
+        )
         setTimeout(() => setStatusMessage(''), 3000)
       }
     } catch (error) {
       console.error('Failed to start servers:', error)
       setStatusMessage('Failed to start servers - check console for details')
+      showBrowserNotification(
+        `❌ Failed to start servers: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
       setTimeout(() => setStatusMessage(''), 5000)
     } finally {
       setIsStartingServers(false)
@@ -45,6 +59,7 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
   const handleStartPortfolio = async () => {
     setIsStartingPortfolio(true)
     setStatusMessage('Starting portfolio dev server...')
+    showBrowserNotification('Starting portfolio dev server...', 'info')
     
     try {
       if (isVSCodeEnvironment()) {
@@ -54,15 +69,33 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
           projectId: 'claude-portfolio-self' // Portfolio project ID
         });
         setStatusMessage('Portfolio server starting - check terminal for URL')
+        showBrowserNotification(
+          '💼 Portfolio server starting - check VS Code terminal for URL',
+          'info'
+        )
+        setTimeout(() => {
+          showBrowserNotification(
+            '✅ Portfolio server started - should be available at http://localhost:5173',
+            'info'
+          )
+        }, 3000)
         setTimeout(() => setStatusMessage(''), 3000)
       } else {
         await executeCommand('npm run dev')
         setStatusMessage('Portfolio dev server started!')
+        showBrowserNotification(
+          '✅ Portfolio dev server started successfully!',
+          'info'
+        )
         setTimeout(() => setStatusMessage(''), 3000)
       }
     } catch (error) {
       console.error('Failed to start portfolio server:', error)
       setStatusMessage('Failed to start portfolio server')
+      showBrowserNotification(
+        `❌ Failed to start portfolio server: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
       setTimeout(() => setStatusMessage(''), 5000)
     } finally {
       setIsStartingPortfolio(false)
@@ -72,6 +105,7 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
   const handleStartVSCodeServer = async () => {
     setIsStartingVSCode(true)
     setStatusMessage('Starting VS Code server...')
+    showBrowserNotification('Opening VS Code Live Preview...', 'info')
     
     try {
       if (isVSCodeEnvironment()) {
@@ -82,14 +116,32 @@ const ServerToolbar: React.FC<ServerToolbarProps> = ({ globalViewMode = 'mobile'
           title: 'Portfolio Live Preview'
         });
         setStatusMessage('VS Code server started - Simple Browser will open')
+        showBrowserNotification(
+          '⚡ VS Code Live Preview opening - Simple Browser window will appear',
+          'info'
+        )
+        setTimeout(() => {
+          showBrowserNotification(
+            '✅ VS Code Live Preview opened successfully',
+            'info'
+          )
+        }, 2000)
         setTimeout(() => setStatusMessage(''), 3000)
       } else {
         setStatusMessage('VS Code server requires VS Code environment')
+        showBrowserNotification(
+          '⚠️ VS Code Live Preview requires VS Code environment - switch to VS Code mode',
+          'warning'
+        )
         setTimeout(() => setStatusMessage(''), 3000)
       }
     } catch (error) {
       console.error('Failed to start VS Code server:', error)
       setStatusMessage('Failed to start VS Code server')
+      showBrowserNotification(
+        `❌ Failed to open VS Code Live Preview: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
       setTimeout(() => setStatusMessage(''), 5000)
     } finally {
       setIsStartingVSCode(false)

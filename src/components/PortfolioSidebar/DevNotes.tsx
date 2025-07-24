@@ -4,6 +4,7 @@ import NoteCard from '../NoteCard'
 import ProjectWizard from '../ProjectWizard'
 import styles from '../PortfolioSidebar.module.css'
 import { isVSCodeEnvironment, copyToClipboard, showNotification, saveFile, deleteFile } from '../../utils/vsCodeIntegration'
+import { showBrowserNotification } from '../../services/environmentBridge'
 
 interface Project {
   id: string
@@ -132,6 +133,7 @@ export default function DevNotes({
         setClaudeInstructions('')
         setSelectedNoteProject('')
         
+        showBrowserNotification('💾 Note saved to TO-SORT folder (VS Code mode)', 'info')
         return
       }
       
@@ -164,7 +166,7 @@ export default function DevNotes({
           
           setToSortNotes(prev => [newNote, ...prev])
           
-          alert(`Note saved successfully as ${fileHandle.name}!`)
+          showBrowserNotification(`💾 Note saved successfully as ${fileHandle.name}!`, 'info')
           setCurrentNote('')
           setClaudeInstructions('')
           setSelectedNoteProject('')
@@ -204,7 +206,7 @@ export default function DevNotes({
         
         setToSortNotes(prev => [newNote, ...prev])
         
-        alert(`Note downloaded as ${fileName}! Move it to your to-sort folder: D:\\ClaudeWindows\\claude-dev-portfolio\\notes\\to-sort\\`)
+        showBrowserNotification(`💾 Note downloaded as ${fileName}! Move it to your to-sort folder`, 'info')
         setCurrentNote('')
         setClaudeInstructions('')
         setSelectedNoteProject('')
@@ -214,7 +216,7 @@ export default function DevNotes({
       
     } catch (error) {
       console.error('Error saving note:', error)
-      alert('Failed to save file. Please try again.')
+      showBrowserNotification('❌ Failed to save file. Please try again.', 'error')
     }
   }
 
@@ -283,6 +285,7 @@ export default function DevNotes({
     setSelectedNoteProject(selectedProject?.id || '')
     setIsEditingNote(true)
     setIsSelectingNote(false)
+    showBrowserNotification('📝 New note editor opened', 'info')
   }
 
   const handleEditExistingNote = () => {
@@ -477,7 +480,10 @@ export default function DevNotes({
               <>
                 <button 
                   className={styles.editToggleBtn}
-                  onClick={handleCreateNewNote}
+                  onClick={() => {
+                    handleCreateNewNote()
+                    showBrowserNotification('📝 Creating new note', 'info')
+                  }}
                   title="Create new note"
                 >
                   ➕ New Note
@@ -487,14 +493,20 @@ export default function DevNotes({
                 <div className={styles.viewSwitcher}>
                   <button 
                     className={`${styles.viewBtn} ${currentNotesView === 'to-sort' ? styles.active : ''}`}
-                    onClick={() => setCurrentNotesView('to-sort')}
+                    onClick={() => {
+                      setCurrentNotesView('to-sort')
+                      showBrowserNotification(`📥 Viewing ${toSortNotes.length} notes in TO-SORT folder`, 'info')
+                    }}
                     title="View notes waiting to be organized"
                   >
                     📥 To-Sort ({toSortNotes.length})
                   </button>
                   <button 
                     className={`${styles.viewBtn} ${currentNotesView === 'organized' ? styles.active : ''}`}
-                    onClick={() => setCurrentNotesView('organized')}
+                    onClick={() => {
+                      setCurrentNotesView('organized')
+                      showBrowserNotification(`📂 Viewing ${organizedNotes.length} organized notes`, 'info')
+                    }}
                     title="View organized notes"
                   >
                     📂 Organized ({organizedNotes.length})
@@ -506,7 +518,13 @@ export default function DevNotes({
                   <div className={styles.projectFilter}>
                     <select 
                       value={selectedOrganizedProject}
-                      onChange={(e) => setSelectedOrganizedProject(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedOrganizedProject(e.target.value)
+                        const projectName = e.target.value === 'all' ? 'All Projects' : 
+                                          e.target.value === 'general' ? 'General' : 
+                                          projects.find(p => p.id === e.target.value)?.title || e.target.value
+                        showBrowserNotification(`🗂️ Filtering organized notes by: ${projectName}`, 'info')
+                      }}
                       className={styles.projectSelect}
                       title="Filter organized notes by project"
                     >
@@ -609,7 +627,10 @@ export default function DevNotes({
                   <div className={styles.organizeButtonContainer}>
                     <button 
                       className={styles.organizeBtn}
-                      onClick={handleOrganizeNotes}
+                      onClick={() => {
+                        handleOrganizeNotes()
+                        showBrowserNotification(`🗂️ Organization prompt copied for ${toSortNotes.length} notes`, 'info')
+                      }}
                       title="Generate Claude prompt to organize all unsorted notes"
                     >
                       🗂️ Copy Organize Prompt
@@ -646,9 +667,10 @@ export default function DevNotes({
                               </span>
                               <button
                                 className={styles.deleteNoteBtn}
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                   e.stopPropagation()
-                                  handleDeleteNote(note.id, note.title)
+                                  await handleDeleteNote(note.id, note.title)
+                                  showBrowserNotification(`🗑️ Note "${note.title}" deleted`, 'warning')
                                 }}
                                 title="Delete this note"
                               >

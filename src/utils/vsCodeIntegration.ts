@@ -207,7 +207,36 @@ export const openMultipleLivePreviews = async (projects: Array<{id: string, titl
 };
 
 export const launchProjectsEnhanced = async (projectIds: string[], force: boolean = false): Promise<void> => {
-  // Enhanced launch with force option
+  if (force) {
+    // Force restart: Stop all projects first, then start them
+    console.log('🔄 Force restart - stopping existing servers first...');
+    
+    // Get current project status to only stop running projects
+    const manifest = await fetch('/projects/manifest.json').then(r => r.json());
+    const allProjects = manifest.projects || [];
+    const targetProjects = allProjects.filter((p: any) => projectIds.includes(p.id));
+    
+    // Use optimized port manager to check which are actually running
+    const { optimizedPortManager } = await import('./optimizedPortManager');
+    const projectStatus = await optimizedPortManager.checkProjectPorts(targetProjects);
+    const runningTargets = targetProjects.filter((p: any) => projectStatus.get(p.id) === true);
+    
+    if (runningTargets.length > 0) {
+      console.log(`🛑 Force restart - stopping ${runningTargets.length} running projects...`);
+      
+      for (const project of runningTargets) {
+        await environmentBridge.stopProject(project.id);
+        // Small delay between stops
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Wait for servers to fully stop
+      console.log('⏳ Waiting for servers to fully stop...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+  
+  // Start all requested projects - keep original simple behavior for non-force
   for (const projectId of projectIds) {
     await environmentBridge.startProject(projectId);
   }

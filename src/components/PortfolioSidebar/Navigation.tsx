@@ -48,7 +48,9 @@ export default function Navigation({
           key={tabId}
           className={`${styles.notebookTab} ${activeTabs.includes(tabId) ? styles.active : ''}`}
           title={config.title}
-          onClick={() => toggleTab(tabId)}
+          onClick={() => {
+            toggleTab(tabId)
+          }}
           style={{
             position: 'fixed',
             left: `${getTabPosition(tabId)}px`,

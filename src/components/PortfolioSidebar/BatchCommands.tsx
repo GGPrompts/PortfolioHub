@@ -9,6 +9,7 @@ import {
   launchProjectsEnhanced, 
   executeScript 
 } from '../../utils/vsCodeIntegration'
+import { showBrowserNotification } from '../../services/environmentBridge'
 
 interface Project {
   id: string
@@ -120,7 +121,10 @@ export default function BatchCommands({
     <div className={styles.quickActions}>
       <button 
         className={styles.actionBtn}
-        onClick={() => onOpenDashboard?.()}
+        onClick={() => {
+          onOpenDashboard?.()
+          showBrowserNotification('📋 Project status dashboard opened', 'info')
+        }}
         title="Open project status dashboard"
       >
         <SvgIcon name="settings" size={16} /> Dashboard
@@ -150,6 +154,7 @@ export default function BatchCommands({
             className={`${styles.actionBtn} ${styles.scriptBtn}`}
             onClick={async () => {
               await executeScript('scripts\\start-all-enhanced.ps1')
+              showBrowserNotification('📜 Enhanced startup script executed', 'info')
             }}
             title="Run the full enhanced PowerShell script with comprehensive port checking"
           >
@@ -177,6 +182,7 @@ export default function BatchCommands({
             className={`${styles.actionBtn} ${styles.enhancedBtn}`}
             onClick={async () => {
               await launchProjectsEnhanced(Array.from(selectedProjects), false)
+              showBrowserNotification(`⚡ Enhanced launch started for ${selectedProjects.size} projects`, 'info')
             }}
             disabled={selectedProjects.size === 0}
             title="Launch selected projects with enhanced port checking and smart restart detection"
@@ -191,6 +197,7 @@ export default function BatchCommands({
             className={`${styles.actionBtn} ${styles.forceBtn}`}
             onClick={async () => {
               await launchProjectsEnhanced(Array.from(selectedProjects), true)
+              showBrowserNotification(`🔄 Force restart initiated for ${selectedProjects.size} projects`, 'warning')
             }}
             disabled={selectedProjects.size === 0}
             title="Force restart all selected projects (stops existing servers first)"
@@ -245,7 +252,10 @@ export default function BatchCommands({
       </div>
       <button
         className={styles.actionBtn}
-        onClick={onClearFilters}
+        onClick={() => {
+          onClearFilters()
+          showBrowserNotification('🧼 Filters cleared and projects collapsed', 'info')
+        }}
         title="Clear filters and collapse all projects"
       >
         <SvgIcon name="refresh" size={16} /> Clear

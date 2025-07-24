@@ -139,7 +139,14 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
           </div>
           <div className={styles.controls}>
             {project.displayType === 'external' && (
-              <button className={styles.openExternalBtn} onClick={openExternal}>
+              <button className={styles.openExternalBtn} onClick={() => {
+                openExternal()
+                if (isRunning && actualPort) {
+                  showNotification(`Opening ${project.title} in new tab (port ${actualPort})`, 'info')
+                } else {
+                  showNotification(`Opening ${project.title} demo URL in new tab`, 'info')
+                }
+              }}>
                 Open in New Tab ↗
               </button>
             )}
@@ -251,7 +258,10 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                 </button>
                 <button 
                   className={styles.metaBtn}
-                  onClick={() => window.open('http://localhost:5173', '_blank')}
+                  onClick={() => {
+                    window.open('http://localhost:5173', '_blank')
+                    showNotification('Opened portfolio in new tab', 'info')
+                  }}
                 >
                   🔗 Open in New Tab
                 </button>

@@ -3,6 +3,7 @@ import GitUpdateButton from '../GitUpdateButton'
 import SvgIcon from '../SvgIcon'
 import styles from '../PortfolioSidebar.module.css'
 import { isVSCodeEnvironment } from '../../utils/vsCodeIntegration'
+import { showBrowserNotification } from '../../services/environmentBridge'
 
 interface Project {
   id: string
@@ -91,6 +92,8 @@ export default function ProjectActions({
           onClick={(e) => {
             e.stopPropagation()
             onToggleExpanded(project.id)
+            const action = isExpanded ? 'collapsed' : 'expanded'
+            showBrowserNotification(`📂 ${project.title} details ${action}`, 'info')
           }}
         >
           ▶
@@ -102,6 +105,8 @@ export default function ProjectActions({
           onChange={(e) => {
             e.stopPropagation()
             onToggleSelection(project.id)
+            const action = selectedProjects.has(project.id) ? 'deselected' : 'selected'
+            showBrowserNotification(`${action === 'selected' ? '✅' : '❌'} ${project.title} ${action} for batch operations`, 'info')
           }}
           title="Select for launch/kill operations"
         />
@@ -157,7 +162,10 @@ export default function ProjectActions({
           {project.repository && (
             <button
               className={styles.dropdownItem}
-              onClick={() => window.open(project.repository, '_blank')}
+              onClick={() => {
+                window.open(project.repository, '_blank')
+                showBrowserNotification(`🐙 Opening ${project.title} GitHub repository`, 'info')
+              }}
             >
               <SvgIcon name="github" size={16} /> View on GitHub
             </button>

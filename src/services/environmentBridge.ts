@@ -600,12 +600,7 @@ ${command}`;
     
     private showToastNotification(text: string, level: 'info' | 'warning' | 'error', isVSCodeMode: boolean): void {
         // Create a toast notification element that appears in the React app
-        const toastId = `toast-${Date.now()}`;
-        const existingToast = document.getElementById(toastId);
-        
-        if (existingToast) {
-            existingToast.remove();
-        }
+        const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
         const toast = document.createElement('div');
         toast.id = toastId;
@@ -621,25 +616,61 @@ ${command}`;
                     <div class="toast-title">Claude Portfolio${modeLabel}</div>
                     <div class="toast-message">${text}</div>
                 </div>
-                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                <button class="toast-close">×</button>
             </div>
         `;
+        
+        // Add close button event listener
+        const closeButton = toast.querySelector('.toast-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                this.removeToast(toastId);
+            });
+        }
         
         // Add styles if not already added
         this.ensureToastStyles();
         
+        // Calculate position based on existing toasts (cascade effect)
+        const existingToasts = document.querySelectorAll('.notification-toast');
+        const topOffset = 20 + (existingToasts.length * 90); // 90px spacing between toasts
+        toast.style.top = `${topOffset}px`;
+        
         // Add to page
         document.body.appendChild(toast);
+        
+        // Add slide-in animation
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.style.opacity = '1';
+        }, 10);
         
         // Auto-remove after delay (longer for errors)
         const delay = level === 'error' ? 8000 : level === 'warning' ? 6000 : 4000;
         setTimeout(() => {
-            if (document.getElementById(toastId)) {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.remove(), 300);
-            }
+            this.removeToast(toastId);
         }, delay);
+    }
+    
+    private removeToast(toastId: string): void {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                toast.remove();
+                this.updateToastPositions();
+            }, 300);
+        }
+    }
+    
+    private updateToastPositions(): void {
+        const toasts = document.querySelectorAll('.notification-toast');
+        toasts.forEach((toast, index) => {
+            const element = toast as HTMLElement;
+            const newTop = 20 + (index * 90);
+            element.style.top = `${newTop}px`;
+        });
     }
     
     private ensureToastStyles(): void {
@@ -652,7 +683,6 @@ ${command}`;
         styles.textContent = `
             .notification-toast {
                 position: fixed;
-                top: 20px;
                 right: 20px;
                 z-index: 10000;
                 min-width: 320px;
@@ -660,10 +690,11 @@ ${command}`;
                 background: white;
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
-                transform: translateX(0);
+                transform: translateX(100%);
+                opacity: 0;
                 transition: all 0.3s ease;
-                animation: slideIn 0.3s ease;
                 border-left: 4px solid #007acc;
+                margin-bottom: 10px;
             }
             
             .notification-toast.notification-error {

@@ -3,6 +3,7 @@ import { usePortfolioStore } from '../store/portfolioStore'
 import { useProjectData } from '../hooks/useProjectData'
 import { getAllPortStatuses, getRunningProjects, getProjectPort } from '../utils/portManager'
 import { isVSCodeEnvironment, executeCommand, showNotification } from '../utils/vsCodeIntegration'
+import { showBrowserNotification } from '../services/environmentBridge'
 import GitUpdateButton from './GitUpdateButton'
 import styles from './ProjectStatusDashboard.module.css'
 
@@ -31,75 +32,91 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
     setLoading(true)
     const statuses: ProjectStatus[] = []
     
-    // Check if we're in VS Code environment and use project data
-    if (isVSCodeEnvironment() && allProjects.length > 0) {
-      console.log('🖥️ Dashboard: Using VS Code project data')
-      const vsCodeProjects = allProjects || []
-      
-      for (const project of projects) {
-        if (project.displayType === 'external') {
-          const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
-          const isRunning = vsCodeProject?.status === 'active' || false
-          const actualPort = isRunning ? (vsCodeProject?.localPort || project.localPort) : null
-          
-          statuses.push({
-            id: project.id,
-            title: project.title,
-            isRunning,
-            port: actualPort,
-            defaultPort: project.localPort || null,
-            buildCommand: project.buildCommand || 'npm run dev',
-            displayType: project.displayType
-          })
-        } else {
-          statuses.push({
-            id: project.id,
-            title: project.title,
-            isRunning: true, // iframe projects are always "running"
-            port: null,
-            defaultPort: null,
-            buildCommand: 'N/A',
-            displayType: project.displayType
-          })
+    try {
+      // Check if we're in VS Code environment and use project data
+      if (isVSCodeEnvironment() && allProjects.length > 0) {
+        console.log('🖥️ Dashboard: Using VS Code project data')
+        const vsCodeProjects = allProjects || []
+        
+        for (const project of projects) {
+          if (project.displayType === 'external') {
+            const vsCodeProject = vsCodeProjects.find((p: any) => p.id === project.id)
+            const isRunning = vsCodeProject?.status === 'active' || false
+            const actualPort = isRunning ? (vsCodeProject?.localPort || project.localPort) : null
+            
+            statuses.push({
+              id: project.id,
+              title: project.title,
+              isRunning,
+              port: actualPort,
+              defaultPort: project.localPort || null,
+              buildCommand: project.buildCommand || 'npm run dev',
+              displayType: project.displayType
+            })
+          } else {
+            statuses.push({
+              id: project.id,
+              title: project.title,
+              isRunning: true, // iframe projects are always "running"
+              port: null,
+              defaultPort: null,
+              buildCommand: 'N/A',
+              displayType: project.displayType
+            })
+          }
+        }
+      } else {
+        // Fallback to web-based port checking
+        console.log('🌐 Dashboard: Using web-based port checking')
+        const runningProjects = await getRunningProjects()
+        const portStatuses = await getAllPortStatuses()
+        
+        for (const project of projects) {
+          if (project.displayType === 'external') {
+            const actualPort = await getProjectPort(project)
+            const isRunning = runningProjects.has(project.id)
+            
+            statuses.push({
+              id: project.id,
+              title: project.title,
+              isRunning,
+              port: actualPort,
+              defaultPort: project.localPort || null,
+              buildCommand: project.buildCommand || 'npm run dev',
+              displayType: project.displayType
+            })
+          } else {
+            statuses.push({
+              id: project.id,
+              title: project.title,
+              isRunning: true, // iframe projects are always "running"
+              port: null,
+              defaultPort: null,
+              buildCommand: 'N/A',
+              displayType: project.displayType
+            })
+          }
         }
       }
-    } else {
-      // Fallback to web-based port checking
-      console.log('🌐 Dashboard: Using web-based port checking')
-      const runningProjects = await getRunningProjects()
-      const portStatuses = await getAllPortStatuses()
       
-      for (const project of projects) {
-        if (project.displayType === 'external') {
-          const actualPort = await getProjectPort(project)
-          const isRunning = runningProjects.has(project.id)
-          
-          statuses.push({
-            id: project.id,
-            title: project.title,
-            isRunning,
-            port: actualPort,
-            defaultPort: project.localPort || null,
-            buildCommand: project.buildCommand || 'npm run dev',
-            displayType: project.displayType
-          })
-        } else {
-          statuses.push({
-            id: project.id,
-            title: project.title,
-            isRunning: true, // iframe projects are always "running"
-            port: null,
-            defaultPort: null,
-            buildCommand: 'N/A',
-            displayType: project.displayType
-          })
-        }
-      }
+      setProjectStatuses(statuses)
+      setLastUpdated(new Date())
+      
+      const runningCount = statuses.filter(p => p.isRunning).length
+      const totalCount = statuses.length
+      showBrowserNotification(
+        `Project status refreshed: ${runningCount}/${totalCount} projects running`,
+        'info'
+      )
+    } catch (error) {
+      console.error('Failed to update project statuses:', error)
+      showBrowserNotification(
+        'Failed to refresh project status - check console for details',
+        'error'
+      )
+    } finally {
+      setLoading(false)
     }
-    
-    setProjectStatuses(statuses)
-    setLastUpdated(new Date())
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -136,59 +153,222 @@ export default function ProjectStatusDashboard({ onClose }: ProjectStatusDashboa
 
   const killProject = async (projectId: string) => {
     const project = projects.find(p => p.id === projectId)
-    if (!project || !project.localPort) return
-    
-    // Use VS Code API if available
-    if (isVSCodeEnvironment()) {
-      const command = `$proc = Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`
-      await executeCommand(command, `Kill ${project.title}`)
-      showNotification(`Stopping ${project.title}...`, 'info')
-    } else {
-      // Fallback to clipboard
-      const command = `taskkill /F /PID (Get-NetTCPConnection -LocalPort ${project.localPort} | Select-Object -ExpandProperty OwningProcess)`
-      await navigator.clipboard.writeText(command)
-      alert(`Kill command copied to clipboard for ${project.title}`)
+    if (!project || !project.localPort) {
+      showBrowserNotification(
+        `Cannot stop project: ${projectId} - missing project data or port`,
+        'error'
+      )
+      return
     }
     
-    // Refresh status after a delay
-    setTimeout(() => updateProjectStatuses(), 2000)
+    try {
+      // Use VS Code API if available
+      if (isVSCodeEnvironment()) {
+        const command = `$proc = Get-NetTCPConnection -LocalPort ${project.localPort} -ErrorAction SilentlyContinue | Select-Object -First 1; if ($proc) { Stop-Process -Id $proc.OwningProcess -Force }`
+        await executeCommand(command, `Kill ${project.title}`)
+        showNotification(`Stopping ${project.title}...`, 'info')
+        showBrowserNotification(
+          `Stopping ${project.title} (port ${project.localPort})...`,
+          'info'
+        )
+      } else {
+        // Fallback to clipboard
+        const command = `taskkill /F /PID (Get-NetTCPConnection -LocalPort ${project.localPort} | Select-Object -ExpandProperty OwningProcess)`
+        await navigator.clipboard.writeText(command)
+        showBrowserNotification(
+          `Kill command copied to clipboard for ${project.title} - paste in terminal to execute`,
+          'info'
+        )
+      }
+      
+      // Refresh status after a delay and show success confirmation
+      setTimeout(async () => {
+        await updateProjectStatuses()
+        const updatedProject = projectStatuses.find(p => p.id === projectId)
+        if (updatedProject && !updatedProject.isRunning) {
+          showBrowserNotification(
+            `✅ Successfully stopped ${project.title}`,
+            'info'
+          )
+        }
+      }, 2000)
+    } catch (error) {
+      console.error(`Failed to kill project ${project.title}:`, error)
+      showBrowserNotification(
+        `Failed to stop ${project.title}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
+    }
   }
 
   const startProject = async (projectId: string) => {
     const project = projects.find(p => p.id === projectId)
-    if (!project) return
-    
-    const portfolioPath = 'D:\\ClaudeWindows\\claude-dev-portfolio'
-    const projectPath = isVSCodeEnvironment()
-      ? `${portfolioPath}\\projects\\${project.id}`
-      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
-    
-    const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
-    
-    // Use VS Code API if available
-    if (isVSCodeEnvironment()) {
-      await executeCommand(command, `Start ${project.title}`)
-      showNotification(`Starting ${project.title}...`, 'info')
-    } else {
-      // Fallback to clipboard
-      await navigator.clipboard.writeText(command)
-      alert(`Start command copied to clipboard for ${project.title}`)
+    if (!project) {
+      showBrowserNotification(
+        `Cannot start project: ${projectId} - project not found`,
+        'error'
+      )
+      return
     }
     
-    // Refresh status after a delay
-    setTimeout(() => updateProjectStatuses(), 3000)
+    try {
+      const portfolioPath = 'D:\\ClaudeWindows\\claude-dev-portfolio'
+      const projectPath = isVSCodeEnvironment()
+        ? `${portfolioPath}\\projects\\${project.id}`
+        : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+      
+      const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
+      
+      // Use VS Code API if available
+      if (isVSCodeEnvironment()) {
+        await executeCommand(command, `Start ${project.title}`)
+        showNotification(`Starting ${project.title}...`, 'info')
+        showBrowserNotification(
+          `Starting ${project.title} with command: ${project.buildCommand || 'npm run dev'}`,
+          'info'
+        )
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(command)
+        showBrowserNotification(
+          `Start command copied to clipboard for ${project.title} - paste in terminal to execute`,
+          'info'
+        )
+      }
+      
+      // Refresh status after a delay and show success confirmation
+      setTimeout(async () => {
+        await updateProjectStatuses()
+        const updatedProject = projectStatuses.find(p => p.id === projectId)
+        if (updatedProject && updatedProject.isRunning) {
+          showBrowserNotification(
+            `✅ Successfully started ${project.title} on port ${updatedProject.port}`,
+            'info'
+          )
+        }
+      }, 3000)
+    } catch (error) {
+      console.error(`Failed to start project ${project.title}:`, error)
+      showBrowserNotification(
+        `Failed to start ${project.title}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
+    }
   }
 
   const startAllProjects = async () => {
     console.log('Starting all projects')
-    // This would start all external projects
-    await updateProjectStatuses()
+    
+    const externalProjects = projects.filter(p => p.displayType === 'external')
+    const stoppedProjects = projectStatuses.filter(p => p.displayType === 'external' && !p.isRunning)
+    
+    if (stoppedProjects.length === 0) {
+      showBrowserNotification(
+        `All external projects are already running (${externalProjects.length}/${externalProjects.length})`,
+        'info'
+      )
+      return
+    }
+    
+    showBrowserNotification(
+      `Starting ${stoppedProjects.length} stopped projects out of ${externalProjects.length} total external projects...`,
+      'info'
+    )
+    
+    try {
+      let successCount = 0
+      let failureCount = 0
+      
+      for (const project of stoppedProjects) {
+        try {
+          await startProject(project.id)
+          successCount++
+        } catch (error) {
+          console.error(`Failed to start ${project.title}:`, error)
+          failureCount++
+        }
+        // Small delay between starts to avoid overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      
+      // Final status notification
+      setTimeout(() => {
+        if (failureCount === 0) {
+          showBrowserNotification(
+            `✅ Successfully started all ${successCount} stopped projects`,
+            'success'
+          )
+        } else {
+          showBrowserNotification(
+            `⚠️ Started ${successCount} projects, ${failureCount} failed - check individual project status`,
+            'warning'
+          )
+        }
+      }, 5000) // Wait for individual projects to start
+    } catch (error) {
+      console.error('Failed to start all projects:', error)
+      showBrowserNotification(
+        'Failed to start all projects - check console for details',
+        'error'
+      )
+    }
   }
 
   const killAllProjects = async () => {
     console.log('Killing all projects')
-    // This would kill all running projects
-    await updateProjectStatuses()
+    
+    const runningProjects = projectStatuses.filter(p => p.displayType === 'external' && p.isRunning)
+    
+    if (runningProjects.length === 0) {
+      showBrowserNotification(
+        'No external projects are currently running to stop',
+        'info'
+      )
+      return
+    }
+    
+    showBrowserNotification(
+      `Stopping ${runningProjects.length} running projects...`,
+      'info'
+    )
+    
+    try {
+      let successCount = 0
+      let failureCount = 0
+      
+      for (const project of runningProjects) {
+        try {
+          await killProject(project.id)
+          successCount++
+        } catch (error) {
+          console.error(`Failed to kill ${project.title}:`, error)
+          failureCount++
+        }
+        // Small delay between kills
+        await new Promise(resolve => setTimeout(resolve, 300))
+      }
+      
+      // Final status notification
+      setTimeout(() => {
+        if (failureCount === 0) {
+          showBrowserNotification(
+            `✅ Successfully stopped all ${successCount} running projects`,
+            'success'
+          )
+        } else {
+          showBrowserNotification(
+            `⚠️ Stopped ${successCount} projects, ${failureCount} failed - check individual project status`,
+            'warning'
+          )
+        }
+      }, 3000) // Wait for individual projects to stop
+    } catch (error) {
+      console.error('Failed to kill all projects:', error)
+      showBrowserNotification(
+        'Failed to stop all projects - check console for details',
+        'error'
+      )
+    }
   }
 
   return (

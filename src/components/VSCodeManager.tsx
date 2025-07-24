@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { copyToClipboard as copyText, executeCommand, isVSCodeEnvironment, openFolder, openInVSCode, showNotification } from '../utils/vsCodeIntegration';
+import { showBrowserNotification } from '../services/environmentBridge';
 import SvgIcon from './SvgIcon';
 import { VSCodeTerminal } from './VSCodeTerminal';
 import './VSCodeTerminal.css';
@@ -159,9 +160,11 @@ ${command}`;
     
     try {
       await copyText(remoteCommand);
-      alert(`Remote VS Code command copied!\n\n📋 Command: ${command}\n\n💡 Instructions:\n1. Open http://localhost:8080 in browser\n2. Press Ctrl+Shift+P in the remote VS Code\n3. Paste and execute the command`);
+      showBrowserNotification(`📋 Remote VS Code command copied: ${command}`, 'info');
+      showBrowserNotification('💡 Open http://localhost:8080, press Ctrl+Shift+P, and paste the command', 'info');
     } catch (error) {
-      alert(`Remote VS Code Command: ${command}\n\nExecute this in your remote VS Code Server at http://localhost:8080\nPress Ctrl+Shift+P and type the command.`);
+      showBrowserNotification(`⚠️ Remote VS Code Command: ${command}`, 'warning');
+      showBrowserNotification('Execute in VS Code Server at http://localhost:8080 (Ctrl+Shift+P)', 'info');
     }
   };
 
@@ -169,7 +172,7 @@ ${command}`;
     // Debug: console.log('Executing VS Code command:', command, 'Server status:', serverStatus, 'Automation status:', automationStatus);
     
     if (serverStatus !== 'running') {
-      alert('VS Code Server is not running');
+      showBrowserNotification('❌ VS Code Server is not running', 'error');
       return;
     }
 
@@ -179,7 +182,7 @@ ${command}`;
       if (portfolioProject) {
         const tabNumber = instances.length + 1;
         createVSCodeInstance(portfolioProject, `VS Code Tab ${tabNumber}`);
-        alert(`New VS Code tab created: "VS Code Tab ${tabNumber}"`);
+        showBrowserNotification(`✅ New VS Code tab created: "VS Code Tab ${tabNumber}"`, 'info');
       }
       return;
     }
@@ -194,17 +197,17 @@ ${command}`;
       ]);
       
       if (success) {
-        alert('✅ Portfolio workspace opened automatically!');
+        showBrowserNotification('✅ Portfolio workspace opened automatically!', 'info');
         return;
       } else {
         // Fallback to clipboard method
         const windowsPath = workspacePath.replace(/\//g, '\\');
         if (isVSCodeEnvironment()) {
-          await openInVSCode(windowsPath)
-          showNotification(`Opening workspace: ${windowsPath}`)
+          await openInVSCode(windowsPath);
+          showNotification(`Opening workspace: ${windowsPath}`);
+          showBrowserNotification(`🚀 Opening workspace: ${windowsPath}`, 'info');
         } else {
-          await copyTextToClipboard(windowsPath)
-          alert(`Workspace path copied: ${windowsPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path`)
+          await copyTextToClipboard(windowsPath, '💡 In VS Code: Ctrl+Shift+P → "File: Open Workspace from File" → Paste path');
         }
         return;
       }
@@ -223,17 +226,17 @@ ${command}`;
         ]);
         
         if (success) {
-          alert(`✅ ${project.title} opened automatically!`);
+          showBrowserNotification(`✅ ${project.title} opened automatically!`, 'info');
           return;
         } else {
           // Fallback to clipboard method
           const folderPath = projectPath.replace(/\//g, '\\');
           if (isVSCodeEnvironment()) {
-            await openFolder(folderPath)
-            showNotification(`Opening folder: ${folderPath}`)
+            await openFolder(folderPath);
+            showNotification(`Opening folder: ${folderPath}`);
+            showBrowserNotification(`📁 Opening folder: ${folderPath}`, 'info');
           } else {
-            await copyTextToClipboard(folderPath)
-            alert(`Folder path copied: ${folderPath}\n\nIn VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path`)
+            await copyTextToClipboard(folderPath, '💡 In VS Code: Ctrl+Shift+P → "File: Open Folder" → Paste path');
           }
           return;
         }
@@ -250,16 +253,16 @@ ${command}`;
       ]);
       
       if (success) {
-        alert(`✅ Command executed automatically: ${terminalCommand}`);
+        showBrowserNotification(`✅ Command executed automatically: ${terminalCommand}`, 'info');
         return;
       } else {
         // Fallback to clipboard method
         if (isVSCodeEnvironment()) {
-          await executeCommand(terminalCommand, 'VS Code Command')
-          showNotification(`Executing command: ${terminalCommand}`)
+          await executeCommand(terminalCommand, 'VS Code Command');
+          showNotification(`Executing command: ${terminalCommand}`);
+          showBrowserNotification(`⚡ Executing command: ${terminalCommand}`, 'info');
         } else {
-          await copyTextToClipboard(terminalCommand)
-          alert(`Command copied: ${terminalCommand}\n\nIn VS Code: Ctrl+\` (open terminal) → Paste & Enter`)
+          await copyTextToClipboard(terminalCommand, '💡 In VS Code: Ctrl+` (open terminal) → Paste & Enter');
         }
         return;
       }
@@ -271,26 +274,27 @@ ${command}`;
       
       if (success) {
         const commandName = getCommandDisplayName(command);
-        alert(`✅ Command executed automatically: ${commandName}`);
+        showBrowserNotification(`✅ Command executed automatically: ${commandName}`, 'info');
         return;
       } else {
         // Fallback to clipboard method
         const commandName = getCommandDisplayName(command);
         try {
           if (isVSCodeEnvironment()) {
-            showNotification(`Command: ${commandName}`)
+            showNotification(`Command: ${commandName}`);
+            showBrowserNotification(`📋 Command ready: ${commandName}`, 'info');
           } else {
-            await copyTextToClipboard(commandName)
+            await copyTextToClipboard(commandName, '💡 In VS Code: Ctrl+Shift+P → Paste & Enter');
           }
-          alert(`📋 Command copied: ${commandName}\n\nIn VS Code: Ctrl+Shift+P → Paste & Enter`);
         } catch (clipboardError) {
           console.error('Clipboard access failed:', clipboardError);
-          alert(`⚠️ Cannot access clipboard. Command: ${commandName}\n\nManually use: Ctrl+Shift+P in VS Code → Type: ${commandName}`);
+          showBrowserNotification(`⚠️ Cannot access clipboard. Command: ${commandName}`, 'warning');
+          showBrowserNotification('💡 Manually use: Ctrl+Shift+P in VS Code → Type the command', 'info');
         }
       }
     } catch (error) {
       console.error('Failed to execute VS Code command:', error);
-      alert(`❌ Command execution failed: ${error.message || 'Unknown error'}`);
+      showBrowserNotification(`❌ Command execution failed: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -306,17 +310,22 @@ ${command}`;
     return commandMap[command] || command;
   };
 
-  const copyTextToClipboard = async (text: string, description: string) => {
+  const copyTextToClipboard = async (text: string, description?: string) => {
     try {
       if (isVSCodeEnvironment()) {
-        showNotification(`Copied: ${text}`)
+        showNotification(`Copied: ${text}`);
+        showBrowserNotification(`📋 Copied to clipboard: ${text}`, 'info');
       } else {
-        await copyText(text)
+        await copyText(text);
+        showBrowserNotification(`📋 Copied to clipboard: ${text}`, 'info');
       }
-      alert(`Copied: ${text}\n\n${description}`);
+      
+      if (description) {
+        showBrowserNotification(description, 'info');
+      }
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      alert(`Failed to copy. Command: ${text}`);
+      showBrowserNotification(`❌ Failed to copy to clipboard: ${text}`, 'error');
     }
   };
 
@@ -490,9 +499,12 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
 
       try {
         await copyText(commands);
-        alert(`VS Code Server commands copied!\n\n💡 Setup Instructions:\n1. Paste and run in PowerShell\n2. Once running, VS Code will be available at http://localhost:8080\n3. Use the 🔗 button to open in new browser window\n4. In VS Code: File → Open Workspace → Select "portfolio-dev.code-workspace"\n\n🎯 Pro Tip: Opening in a separate browser window gives you full VS Code functionality!`);
+        showBrowserNotification('📋 VS Code Server commands copied!', 'info');
+        showBrowserNotification('💡 Run the copied commands in PowerShell to start the VS Code Server', 'info');
+        showBrowserNotification('🎯 Pro Tip: Use the 🔗 button to open in a separate browser window for full functionality', 'info');
       } catch (error) {
-        alert(`To start VS Code Server:\n\n${commands}`);
+        showBrowserNotification('⚠️ Failed to copy to clipboard - check console for commands', 'warning');
+        console.log('To start VS Code Server:', commands);
       }
     }
   };
@@ -523,12 +535,18 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               Server: {serverStatus === 'running' ? 'Running' : serverStatus === 'checking' ? 'Checking...' : 'Stopped'}
             </span>
             {serverStatus === 'stopped' && (
-              <button onClick={startVSCodeServer} className="start-server-btn">
+              <button onClick={() => {
+                startVSCodeServer();
+                showBrowserNotification('🚀 Starting VS Code Server...', 'info');
+              }} className="start-server-btn">
                 Launch VS Code Server
               </button>
             )}
             {serverStatus === 'running' && (
-              <button onClick={() => window.open('http://localhost:8080', '_blank')} className="open-external-btn">
+              <button onClick={() => {
+                window.open('http://localhost:8080', '_blank');
+                showBrowserNotification('🌐 Opening VS Code Server in new window', 'info');
+              }} className="open-external-btn">
                 🔗 Open in New Window
               </button>
             )}
@@ -664,15 +682,24 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="folder" /> Project Navigation</h4>
                 <div className="command-buttons">
-                  <button onClick={() => executeVSCodeCommand('workbench.action.files.openFolder')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('workbench.action.files.openFolder');
+                    showBrowserNotification('📁 Opening folder dialog...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="folder" />
                     Open Folder...
                   </button>
-                  <button onClick={() => executeVSCodeCommand('workbench.action.openWorkspace')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('workbench.action.openWorkspace');
+                    showBrowserNotification('📄 Opening workspace dialog...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="fileText" />
                     Open Workspace...
                   </button>
-                  <button onClick={() => executeVSCodeCommand('open-portfolio-workspace')} className="command-btn primary">
+                  <button onClick={() => {
+                    executeVSCodeCommand('open-portfolio-workspace');
+                    showBrowserNotification('⚙️ Opening Portfolio workspace...', 'info');
+                  }} className="command-btn primary">
                     <SvgIcon name="settings" />
                     Open Portfolio Workspace
                     <AutomationBadge show={true} />
@@ -683,7 +710,10 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="code" /> VS Code Tabs</h4>
                 <div className="command-buttons">
-                  <button onClick={() => executeVSCodeCommand('new-vscode-tab')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('new-vscode-tab');
+                    showBrowserNotification('➕ Creating new VS Code tab...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="plus" />
                     New VS Code Tab
                   </button>
@@ -693,15 +723,24 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="terminal" /> Terminal Commands</h4>
                 <div className="command-buttons">
-                  <button onClick={() => executeVSCodeCommand('terminal.new')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('terminal.new');
+                    showBrowserNotification('🖥️ Creating new terminal...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="plus" />
                     New Terminal
                   </button>
-                  <button onClick={() => executeVSCodeCommand('terminal.split')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('terminal.split');
+                    showBrowserNotification('📋 Splitting terminal...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="copy" />
                     Split Terminal
                   </button>
-                  <button onClick={() => executeVSCodeCommand('workbench.action.terminal.clear')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('workbench.action.terminal.clear');
+                    showBrowserNotification('🧹 Clearing terminal...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="x" />
                     Clear Terminal
                   </button>
@@ -711,22 +750,34 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="play" /> Development</h4>
                 <div className="command-buttons">
-                  <button onClick={() => executeVSCodeCommand('npm-run-dev')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('npm-run-dev');
+                    showBrowserNotification('🚀 Running npm dev...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="play" />
                     npm run dev
                     <AutomationBadge show={true} />
                   </button>
-                  <button onClick={() => executeVSCodeCommand('npm-install')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('npm-install');
+                    showBrowserNotification('📦 Installing npm packages...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="settings" />
                     npm install
                     <AutomationBadge show={true} />
                   </button>
-                  <button onClick={() => executeVSCodeCommand('git-status')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('git-status');
+                    showBrowserNotification('📊 Checking git status...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="github" />
                     git status
                     <AutomationBadge show={true} />
                   </button>
-                  <button onClick={() => executeVSCodeCommand('git-pull')} className="command-btn">
+                  <button onClick={() => {
+                    executeVSCodeCommand('git-pull');
+                    showBrowserNotification('⬇️ Pulling from git...', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="refreshCw" />
                     git pull
                     <AutomationBadge show={true} />
@@ -740,7 +791,10 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
                   {projects.map(project => (
                     <button 
                       key={project.id} 
-                      onClick={() => executeVSCodeCommand(`open-project-${project.id}`)} 
+                      onClick={() => {
+                        executeVSCodeCommand(`open-project-${project.id}`);
+                        showBrowserNotification(`📁 Opening ${project.title}...`, 'info');
+                      }} 
                       className="command-btn"
                     >
                       <SvgIcon name="folder" />
@@ -814,23 +868,23 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="github" /> Git Commands</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('git status', 'Check repository status')}>
                     <code>git status</code>
                     <span>Check repository status</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('git add .', 'Stage all changes')}>
                     <code>git add .</code>
                     <span>Stage all changes</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('git commit -m "message"', 'Commit with message')}>
                     <code>git commit -m "message"</code>
                     <span>Commit with message</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('git checkout -b feature-branch', 'Create and switch to new branch')}>
                     <code>git checkout -b feature-branch</code>
                     <span>Create and switch to new branch</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('git push origin main', 'Push to remote repository')}>
                     <code>git push origin main</code>
                     <span>Push to remote repository</span>
                   </div>
@@ -840,23 +894,23 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="package" /> Node.js & npm</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('npm init -y', 'Initialize new Node.js project')}>
                     <code>npm init -y</code>
                     <span>Initialize new Node.js project</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('npm install', 'Install dependencies from package.json')}>
                     <code>npm install</code>
                     <span>Install dependencies from package.json</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('npm run dev', 'Start development server')}>
                     <code>npm run dev</code>
                     <span>Start development server</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('npm run build', 'Build production version')}>
                     <code>npm run build</code>
                     <span>Build production version</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('npx create-react-app myapp', 'Create new React application')}>
                     <code>npx create-react-app myapp</code>
                     <span>Create new React application</span>
                   </div>
@@ -866,15 +920,15 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="code" /> VS Code Integration</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code .', 'Open current directory in VS Code')}>
                     <code>code .</code>
                     <span>Open current directory in VS Code</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code filename.js', 'Open specific file in VS Code')}>
                     <code>code filename.js</code>
                     <span>Open specific file in VS Code</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code serve-web --port 8080', 'Start VS Code server for remote access')}>
                     <code>code serve-web --port 8080</code>
                     <span>Start VS Code server for remote access</span>
                   </div>
@@ -884,19 +938,19 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="settings" /> System Commands</h4>
                 <div className="cheat-commands">
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Get-Process', 'List running processes')}>
                     <code>Get-Process</code>
                     <span>List running processes</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Stop-Process -Name "process" -Force', 'Kill process by name')}>
                     <code>Stop-Process -Name "process" -Force</code>
                     <span>Kill process by name</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('netstat -ano | findstr :3000', 'Check what\'s using port 3000')}>
                     <code>netstat -ano | findstr :3000</code>
                     <span>Check what's using port 3000</span>
                   </div>
-                  <div className="cheat-item">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('Get-Location', 'Show current directory path')}>
                     <code>Get-Location</code>
                     <span>Show current directory path</span>
                   </div>
@@ -923,17 +977,26 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="globe" /> Remote VS Code Extension Management</h4>
                 <div className="command-buttons">
-                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Install Extensions')} className="command-btn primary">
+                  <button onClick={() => {
+                    executeRemoteVSCodeCommand('Extensions: Install Extensions');
+                    showBrowserNotification('📦 Extension installation instructions copied', 'info');
+                  }} className="command-btn primary">
                     <SvgIcon name="plus" />
                     Install Extension (Remote)
                     <span className="remote-badge">🌐</span>
                   </button>
-                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Show Installed Extensions')} className="command-btn">
+                  <button onClick={() => {
+                    executeRemoteVSCodeCommand('Extensions: Show Installed Extensions');
+                    showBrowserNotification('📋 Show installed extensions command copied', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="package" />
                     Show Installed (Remote)
                     <span className="remote-badge">🌐</span>
                   </button>
-                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Show Enabled Extensions')} className="command-btn">
+                  <button onClick={() => {
+                    executeRemoteVSCodeCommand('Extensions: Show Enabled Extensions');
+                    showBrowserNotification('📋 Show enabled extensions command copied', 'info');
+                  }} className="command-btn">
                     <SvgIcon name="check" />
                     Show Enabled (Remote)
                     <span className="remote-badge">🌐</span>
@@ -1183,6 +1246,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
                   const portfolioProject = projects.find(p => p.id === 'portfolio');
                   if (portfolioProject) {
                     createVSCodeInstance(portfolioProject, 'Portfolio Hub');
+                    showBrowserNotification('📁 Opening Portfolio Hub in VS Code', 'info');
                   }
                 }}
                 className="quick-action-btn"
@@ -1192,7 +1256,10 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
                 Open VS Code
               </button>
               <button
-                onClick={() => executeVSCodeCommand('new-vscode-tab')}
+                onClick={() => {
+                  executeVSCodeCommand('new-vscode-tab');
+                  showBrowserNotification('➕ Creating new VS Code tab', 'info');
+                }}
                 className="quick-action-btn"
                 disabled={serverStatus !== 'running'}
               >

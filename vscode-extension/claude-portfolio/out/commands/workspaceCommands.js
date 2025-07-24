@@ -106,13 +106,8 @@ class WorkspaceCommands {
             const portfolioUrl = 'http://localhost:5173';
             const choice = await vscode.window.showInformationMessage('📱 Portfolio now runs as standalone React app with VS Code bridge!\n\nClick "Open Portfolio" to launch at http://localhost:5173', 'Open Portfolio', 'Copy URL');
             if (choice === 'Open Portfolio') {
-                // Try Simple Browser first, fallback to external browser
-                try {
-                    await vscode.commands.executeCommand('simpleBrowser.show', portfolioUrl);
-                }
-                catch (error) {
-                    await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
-                }
+                // Open in Edge browser for better debugging with Edge DevTools
+                await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
             }
             else if (choice === 'Copy URL') {
                 await vscode.env.clipboard.writeText(portfolioUrl);
@@ -455,14 +450,14 @@ class WorkspaceCommands {
             // First start the portfolio server
             const startSuccess = await securityService_1.VSCodeSecurityService.executeSecureCommand('npm run dev', 'Start VS Code Server', portfolioPath);
             if (startSuccess) {
-                // Wait a moment for server to start, then open in Simple Browser
+                // Wait a moment for server to start, then open in Edge browser
                 setTimeout(async () => {
                     try {
-                        await vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:5173');
-                        vscode.window.showInformationMessage('VS Code server started - opened in Simple Browser');
+                        await vscode.env.openExternal(vscode.Uri.parse('http://localhost:5173'));
+                        vscode.window.showInformationMessage('VS Code server started - opened in Edge browser');
                     }
                     catch (error) {
-                        console.error('Failed to open Simple Browser:', error);
+                        console.error('Failed to open in Edge:', error);
                         vscode.window.showInformationMessage('VS Code server started - manually open http://localhost:5173');
                     }
                 }, 3000); // 3 second delay for server startup

@@ -40,21 +40,8 @@ export default function ProjectActions({
   
   const handleProjectClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isRunning && project.localPort) {
-      // Open in new tab/browser if project is running
-      const url = `http://localhost:${project.localPort}`
-      console.log(`🔗 Opening ${project.title} from sidebar:`, url)
-      if (isVSCodeEnvironment()) {
-        const { openInBrowser, showNotification } = await import('../../utils/vsCodeIntegration')
-        openInBrowser(url)
-        showNotification(`Opening ${project.title} in browser`, 'info')
-      } else {
-        window.open(url, '_blank')
-      }
-    } else {
-      // Fallback to showing project info if not running
-      onSelectProject(project)
-    }
+    // Always go to landing page when clicking project title
+    onSelectProject(project)
   }
 
   const handleStartServer = async (e: React.MouseEvent) => {

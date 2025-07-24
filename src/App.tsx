@@ -9,7 +9,6 @@ import ProjectGrid from './components/ProjectGrid'
 import ProjectStatusDashboard from './components/ProjectStatusDashboard'
 import ProjectViewer from './components/ProjectViewer'
 import { RightSidebar } from './components/RightSidebar'
-import ServerToolbar from './components/ServerToolbar'
 import SvgIcon from './components/SvgIcon'
 import { useProjectData } from './hooks/useProjectData'
 import { usePortfolioStore } from './store/portfolioStore'
@@ -269,10 +268,10 @@ function PortfolioApp() {
       const fullCommand = commands.join('\n');
       try {
         await copyToClipboard(fullCommand);
-        alert(`VS Code Server commands copied!\n\n💡 Instructions:\n1. Open PowerShell as Administrator\n2. Paste and run the commands\n3. VS Code Server will start on http://localhost:8080`);
+        alert(`VS Code Server commands copied!\n\n💡 Setup Instructions:\n1. Open PowerShell as Administrator\n2. Paste and run the commands\n3. VS Code will be available in your browser at http://localhost:8080\n4. Click the blue VS Code icon again once running to open in new window\n\n🎯 Pro Tip: VS Code Server gives you full IDE functionality in your browser!`);
       } catch (error) {
         console.error('Failed to copy commands:', error);
-        alert(`VS Code Server commands:\n\n${fullCommand}`);
+        alert(`VS Code Server commands:\n\nRun these in PowerShell to launch VS Code in your browser:\n\n${fullCommand}\n\n💡 Once running, access at http://localhost:8080`);
       }
     }
   }
@@ -338,13 +337,15 @@ function PortfolioApp() {
                     <button 
                       className="refresh-icon-btn vscode-server-btn"
                       onClick={startVSCodeServer}
-                      title="Start VS Code Server (port 8080)"
+                      title="Launch VS Code Server in Browser (port 8080)"
                     >
                       <SvgIcon name="code" size={16} />
                     </button>
                   )}
                   {vsCodeServerStatus === 'running' && (
-                    <div className="vscode-server-status" title="VS Code Server running on port 8080">
+                    <div className="vscode-server-status" title="VS Code Server running on port 8080 - Click to open in new window"
+                         onClick={() => window.open('http://localhost:8080', '_blank')}
+                         style={{ cursor: 'pointer' }}>
                       <SvgIcon name="code" size={16} />
                       <span className="status-dot running"></span>
                     </div>
@@ -414,7 +415,6 @@ function PortfolioApp() {
                 </div>
               </div>
             </header>
-            <ServerToolbar globalViewMode={globalViewMode} />
             <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
           </>
         ) : selectedProject ? (

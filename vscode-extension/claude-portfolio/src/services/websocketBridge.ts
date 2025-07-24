@@ -372,12 +372,12 @@ export class WebSocketBridgeService {
                     message: `Live Preview opened: ${title || url}`
                 };
             } else {
-                // Fallback to Simple Browser
-                await vscode.commands.executeCommand('simpleBrowser.show', url);
+                // Fallback to Edge browser
+                await vscode.env.openExternal(vscode.Uri.parse(url));
                 return {
                     id,
                     success: true,
-                    message: `Opened in Simple Browser: ${title || url}`
+                    message: `Opened in Edge browser: ${title || url}`
                 };
             }
         } catch (error) {

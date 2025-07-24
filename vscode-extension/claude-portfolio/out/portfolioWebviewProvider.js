@@ -476,14 +476,12 @@ class PortfolioWebviewProvider {
     }
     async _openInBrowser(url) {
         try {
-            // Use VS Code Simple Browser for better integration
-            await vscode.commands.executeCommand('simpleBrowser.show', url);
-            console.log(`🌐 Opened ${url} in VS Code Simple Browser`);
+            // Open in Edge browser for better debugging with Edge DevTools
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            console.log(`🌐 Opened ${url} in Edge browser`);
         }
         catch (error) {
-            console.log(`Simple Browser not available, falling back to external browser for ${url}`);
-            // Fallback to external browser if Simple Browser is not available
-            await vscode.env.openExternal(vscode.Uri.parse(url));
+            console.log(`Failed to open ${url} in Edge browser:`, error);
         }
     }
     async _openInExternalBrowser(url, reason) {
@@ -721,21 +719,17 @@ class PortfolioWebviewProvider {
             const success = await securityService_1.VSCodeSecurityService.executeSecureCommand(serverCommand, 'VS Code Server Setup', workspaceRoot);
             const successCount = success ? 1 : 0;
             if (success) {
-                vscode.window.showInformationMessage(`✅ VS Code Server starting on port ${port}!\n\n💡 Tip: Once ready, open Simple Browser → http://localhost:${port} for live previews`);
-                // Offer to automatically open Simple Browser after delay
+                vscode.window.showInformationMessage(`✅ VS Code Server starting on port ${port}!\n\n💡 Tip: Once ready, projects will open in Edge browser with DevTools`);
+                // Offer to automatically open Edge browser after delay
                 setTimeout(async () => {
-                    const choice = await vscode.window.showInformationMessage('VS Code Server should be ready now. Open it in Simple Browser?', 'Open Simple Browser', 'Open External Browser', 'Later');
-                    if (choice === 'Open Simple Browser') {
+                    const choice = await vscode.window.showInformationMessage('VS Code Server should be ready now. Open it in Edge browser?', 'Open Edge', 'Later');
+                    if (choice === 'Open Edge') {
                         try {
-                            await vscode.commands.executeCommand('simpleBrowser.show', `http://localhost:${port}`);
-                        }
-                        catch (error) {
-                            console.log('Simple Browser not available, opening external browser');
                             await vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}`));
                         }
-                    }
-                    else if (choice === 'Open External Browser') {
-                        await vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}`));
+                        catch (error) {
+                            console.log('Failed to open in Edge browser:', error);
+                        }
                     }
                 }, 10000); // Wait 10 seconds for server to start
             }
@@ -1387,14 +1381,14 @@ class PortfolioWebviewProvider {
                 console.log(`✅ Live Preview started for ${title} after activating extension`);
             }
             else {
-                // Fallback to VS Code Simple Browser
-                await vscode.commands.executeCommand('simpleBrowser.show', url);
-                vscode.window.showInformationMessage(`Opened ${title} in Simple Browser. Install Live Preview extension for better experience.`, 'Install Live Preview').then(selection => {
+                // Fallback to Edge browser
+                await vscode.env.openExternal(vscode.Uri.parse(url));
+                vscode.window.showInformationMessage(`Opened ${title} in Edge browser. Install Live Preview extension for better experience.`, 'Install Live Preview').then(selection => {
                     if (selection === 'Install Live Preview') {
                         vscode.commands.executeCommand('workbench.extensions.search', 'ms-vscode.live-server');
                     }
                 });
-                console.log(`✅ Opened ${title} in Simple Browser (Live Preview not available)`);
+                console.log(`✅ Opened ${title} in Edge browser (Live Preview not available)`);
             }
         }
         catch (error) {

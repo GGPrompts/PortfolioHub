@@ -80,7 +80,7 @@ export const VSCodeManager: React.FC = () => {
     // Set default workspace for this instance
     setInstanceWorkspaces(prev => ({
       ...prev,
-      [instance.id]: 'D:\\ClaudeWindows\\claude-dev-portfolio\\portfolio-absolute-paths.code-workspace'
+      [instance.id]: project.path
     }));
     
     // Initialize tip state
@@ -149,6 +149,20 @@ export const VSCodeManager: React.FC = () => {
       return false;
     }
     */
+  };
+
+  const executeRemoteVSCodeCommand = async (command: string) => {
+    // For remote VS Code Server commands - always use clipboard
+    const remoteCommand = `# Execute this in the remote VS Code Server at http://localhost:8080
+# Use Ctrl+Shift+P in the remote browser VS Code and paste:
+${command}`;
+    
+    try {
+      await copyText(remoteCommand);
+      alert(`Remote VS Code command copied!\n\n📋 Command: ${command}\n\n💡 Instructions:\n1. Open http://localhost:8080 in browser\n2. Press Ctrl+Shift+P in the remote VS Code\n3. Paste and execute the command`);
+    } catch (error) {
+      alert(`Remote VS Code Command: ${command}\n\nExecute this in your remote VS Code Server at http://localhost:8080\nPress Ctrl+Shift+P and type the command.`);
+    }
   };
 
   const executeVSCodeCommand = async (command: string) => {
@@ -455,13 +469,13 @@ export const VSCodeManager: React.FC = () => {
         
         showNotification('VS Code Server startup initiated!', 'info');
         
-        // Show helpful message after startup
+        // Show helpful message after startup with new window option
         setTimeout(() => {
-          showNotification('💡 Once VS Code Server starts, open Simple Browser → http://localhost:8080 for full live previews!', 'info');
-        }, 8000);
+          showNotification('💡 VS Code Server starting! Use the 🔗 button to open in a new browser window for the best experience.', 'info');
+        }, 5000);
       }
     } else {
-      // For non-VS Code environments, copy the full command set
+      // For non-VS Code environments, copy the full command set with workspace setup
       const commands = `# Stop VS Code Server first (if running)
 Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue
 
@@ -471,12 +485,12 @@ Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"
 # Verify location
 Write-Host "Starting VS Code Server from: $(Get-Location)"
 
-# Start VS Code Server
+# Start VS Code Server with workspace
 code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms`;
 
       try {
         await copyText(commands);
-        alert(`VS Code Server commands copied!\n\n💡 Quick Setup:\n1. Paste and run in PowerShell\n2. Open http://localhost:8080 in your browser\n3. File → Open Workspace → Select "portfolio-dev.code-workspace"\n\nThe workspace file will automatically open all the right folders and apply your development settings!`);
+        alert(`VS Code Server commands copied!\n\n💡 Setup Instructions:\n1. Paste and run in PowerShell\n2. Once running, VS Code will be available at http://localhost:8080\n3. Use the 🔗 button to open in new browser window\n4. In VS Code: File → Open Workspace → Select "portfolio-dev.code-workspace"\n\n🎯 Pro Tip: Opening in a separate browser window gives you full VS Code functionality!`);
       } catch (error) {
         alert(`To start VS Code Server:\n\n${commands}`);
       }
@@ -500,7 +514,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
     <div className="vscode-manager">
       <div className="vscode-toolbar">
         <div className="toolbar-left">
-          <h3>VS Code Terminals</h3>
+          <h3>VS Code Server</h3>
           <div className="server-status">
             <span className={`status-indicator ${serverStatus}`}>
               {serverStatus === 'running' ? '●' : serverStatus === 'checking' ? '○' : '●'}
@@ -510,7 +524,12 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
             </span>
             {serverStatus === 'stopped' && (
               <button onClick={startVSCodeServer} className="start-server-btn">
-                Start Server
+                Launch VS Code Server
+              </button>
+            )}
+            {serverStatus === 'running' && (
+              <button onClick={() => window.open('http://localhost:8080', '_blank')} className="open-external-btn">
+                🔗 Open in New Window
               </button>
             )}
           </div>
@@ -521,11 +540,11 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
             <span className="info-text">
               {serverStatus === 'running' ? (
                 automationStatus === 'available' ? 
-                  '⚡ Automation enabled - Commands execute automatically!' :
+                  '⚡ Full VS Code in browser - Click 🔗 to open in new window' :
                   automationStatus === 'unavailable' ?
-                  '📋 Automation unavailable - Commands copy to clipboard' :
-                  'Click the ⚙️ Commands tab for VS Code operations'
-              ) : 'Start server to access commands'}
+                  '🌐 VS Code Server running - Use 🔗 button to open externally' :
+                  'VS Code Server ready - Use tabs below or open externally'
+              ) : 'Start server to launch VS Code in browser'}
             </span>
           </div>
         </div>
@@ -563,6 +582,17 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               title="Claude AI Prompts & Commands"
             >
               <SvgIcon name="github" className="tab-icon" />
+            </div>
+          )}
+          
+          {/* Extensions Tab - Always visible when server running */}
+          {serverStatus === 'running' && (
+            <div
+              className={`vscode-tab extensions-tab ${activeInstanceId === 'extensions' ? 'active' : ''}`}
+              onClick={() => setActiveInstanceId('extensions')}
+              title="VS Code Extensions & Remote Installation"
+            >
+              <SvgIcon name="package" className="tab-icon" />
             </div>
           )}
           
@@ -614,7 +644,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
             <div className="commands-header">
               <SvgIcon name="settings" className="header-icon" />
               <h3>VS Code Commands</h3>
-              <p>Quick access to common VS Code operations</p>
+              <p>Execute commands in your VS Code Server instance</p>
               {automationStatus !== 'unknown' && (
                 <div className={`automation-status ${automationStatus}`}>
                   {automationStatus === 'available' ? 
@@ -875,6 +905,145 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
           </div>
         )}
         
+        {activeInstanceId === 'extensions' && (
+          // VS Code Extensions Panel
+          <div className="vscode-commands-panel">
+            <div className="commands-header">
+              <SvgIcon name="package" className="header-icon" />
+              <h3>VS Code Extensions & Remote Installation</h3>
+              <p>Install and manage VS Code extensions for remote development</p>
+              <div className="keyboard-hint">
+                <SvgIcon name="package" />
+                <span>Commands copy to clipboard for execution in VS Code terminal</span>
+              </div>
+            </div>
+            
+            <div className="command-groups">
+              <div className="command-group">
+                <h4><SvgIcon name="globe" /> Remote VS Code Extension Management</h4>
+                <div className="command-buttons">
+                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Install Extensions')} className="command-btn primary">
+                    <SvgIcon name="plus" />
+                    Install Extension (Remote)
+                    <span className="remote-badge">🌐</span>
+                  </button>
+                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Show Installed Extensions')} className="command-btn">
+                    <SvgIcon name="package" />
+                    Show Installed (Remote)
+                    <span className="remote-badge">🌐</span>
+                  </button>
+                  <button onClick={() => executeRemoteVSCodeCommand('Extensions: Show Enabled Extensions')} className="command-btn">
+                    <SvgIcon name="check" />
+                    Show Enabled (Remote)
+                    <span className="remote-badge">🌐</span>
+                  </button>
+                </div>
+                <p className="command-group-note">
+                  <SvgIcon name="info" />
+                  These commands work in your remote VS Code Server at <code>http://localhost:8080</code>
+                </p>
+              </div>
+
+              <div className="command-group">
+                <h4><SvgIcon name="terminal" /> Terminal Extension Commands (For Remote Server)</h4>
+                <div className="command-buttons">
+                  <button onClick={() => copyTextToClipboard('code --install-extension ./vscode-extension/claude-portfolio/claude-portfolio-vscode-pages.vsix', 'Install Claude Portfolio extension in remote VS Code Server via terminal')}>
+                    <SvgIcon name="code" />
+                    Install Claude Portfolio Extension
+                    <span className="remote-badge">🖥️</span>
+                  </button>
+                  <button onClick={() => copyTextToClipboard('code --list-extensions', 'List all extensions installed in remote server')}>
+                    <SvgIcon name="search" />
+                    List All Remote Extensions
+                  </button>
+                  <button onClick={() => copyTextToClipboard('code --install-extension ms-python.python', 'Install Python extension in remote server')}>
+                    <SvgIcon name="package" />
+                    Install Python Extension
+                  </button>
+                </div>
+                <p className="command-group-note">
+                  <SvgIcon name="terminal" />
+                  Run these commands in a terminal on the machine hosting VS Code Server
+                </p>
+              </div>
+
+              <div className="command-group">
+                <h4><SvgIcon name="terminal" /> CLI Extension Commands</h4>
+                <div className="cheat-commands">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-python.python', 'Install Python extension via command line')}>
+                    <code>code --install-extension ms-python.python</code>
+                    <span>Install Python extension via CLI</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-vscode.vscode-typescript-next', 'Install TypeScript extension')}>
+                    <code>code --install-extension ms-vscode.vscode-typescript-next</code>
+                    <span>Install TypeScript Nightly extension</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension esbenp.prettier-vscode', 'Install Prettier code formatter')}>
+                    <code>code --install-extension esbenp.prettier-vscode</code>
+                    <span>Install Prettier code formatter</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension bradlc.vscode-tailwindcss', 'Install Tailwind CSS IntelliSense')}>
+                    <code>code --install-extension bradlc.vscode-tailwindcss</code>
+                    <span>Install Tailwind CSS IntelliSense</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --list-extensions', 'List all installed extensions')}>
+                    <code>code --list-extensions</code>
+                    <span>List all installed extensions</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --list-extensions --show-versions', 'List extensions with version numbers')}>
+                    <code>code --list-extensions --show-versions</code>
+                    <span>List extensions with version numbers</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="command-group">
+                <h4><SvgIcon name="globe" /> Remote Development Extensions</h4>
+                <div className="cheat-commands">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-vscode-remote.remote-ssh', 'Install Remote SSH extension')}>
+                    <code>code --install-extension ms-vscode-remote.remote-ssh</code>
+                    <span>Install Remote SSH extension for remote development</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-vscode-remote.remote-wsl', 'Install Remote WSL extension')}>
+                    <code>code --install-extension ms-vscode-remote.remote-wsl</code>
+                    <span>Install Remote WSL extension for Linux subsystem</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-vscode-remote.remote-containers', 'Install Remote Containers extension')}>
+                    <code>code --install-extension ms-vscode-remote.remote-containers</code>
+                    <span>Install Remote Containers for Docker development</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ms-vscode.remote-explorer', 'Install Remote Explorer')}>
+                    <code>code --install-extension ms-vscode.remote-explorer</code>
+                    <span>Install Remote Explorer for managing connections</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="command-group">
+                <h4><SvgIcon name="settings" /> Extension Management</h4>
+                <div className="cheat-commands">
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --disable-extension EXTENSION_ID', 'Disable specific extension')}>
+                    <code>code --disable-extension EXTENSION_ID</code>
+                    <span>Disable specific extension (replace EXTENSION_ID)</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --enable-extension EXTENSION_ID', 'Enable specific extension')}>
+                    <code>code --enable-extension EXTENSION_ID</code>
+                    <span>Enable specific extension (replace EXTENSION_ID)</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --uninstall-extension EXTENSION_ID', 'Uninstall specific extension')}>
+                    <code>code --uninstall-extension EXTENSION_ID</code>
+                    <span>Uninstall specific extension (replace EXTENSION_ID)</span>
+                  </div>
+                  <div className="cheat-item" onClick={() => copyTextToClipboard('code --install-extension ./path/to/extension.vsix', 'Install extension from VSIX file')}>
+                    <code>code --install-extension ./path/to/extension.vsix</code>
+                    <span>Install extension from local VSIX file</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {activeInstanceId === 'prompts' && (
           // Claude AI Prompts Panel
           <div className="vscode-commands-panel">
@@ -983,7 +1152,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
         )}
         
         {/* Empty state when no instances and no special tab selected */}
-        {instances.length === 0 && !['commands', 'cheatsheet', 'prompts'].includes(activeInstanceId || '') && (
+        {instances.length === 0 && !['commands', 'cheatsheet', 'prompts', 'extensions'].includes(activeInstanceId || '') && (
           <div className="vscode-empty-state">
             <SvgIcon name="code" className="empty-icon" />
             <h3>No VS Code Instances</h3>

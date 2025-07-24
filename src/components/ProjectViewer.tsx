@@ -365,6 +365,17 @@ export default function ProjectViewer({ project, onClose, isInline = false }: Pr
                     )}
                   </div>
 
+                  {project.features && project.features.length > 0 && (
+                    <div className={styles.featuresSection}>
+                      <h4>Key Features:</h4>
+                      <ul className={styles.featuresList}>
+                        {project.features.map((feature, index) => (
+                          <li key={index} className={styles.featureItem}>{feature}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className={styles.techStack}>
                     <h4>Technologies:</h4>
                     <div className={styles.techTags}>

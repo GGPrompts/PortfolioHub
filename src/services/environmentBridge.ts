@@ -68,8 +68,15 @@ class EnvironmentBridge {
                 this.mode = 'vscode-local';
                 console.log('🔗 Environment: VS Code Local - Enhanced features available');
             } else {
-                this.mode = 'web-local';
-                console.log('📱 Environment: Web Local - Clipboard commands available');
+                // Check if VS Code Server is running for enhanced clipboard mode
+                const remoteVSCodeAvailable = await this.checkRemoteVSCodeServer();
+                if (remoteVSCodeAvailable) {
+                    this.mode = 'web-local';
+                    console.log('📱 Environment: Web Local with VS Code Server - Enhanced clipboard mode');
+                } else {
+                    this.mode = 'web-local';
+                    console.log('📱 Environment: Web Local - Basic clipboard mode');
+                }
             }
         } else {
             // Remote environment (future)
@@ -78,6 +85,20 @@ class EnvironmentBridge {
         }
 
         return this.mode;
+    }
+
+    private async checkRemoteVSCodeServer(): Promise<boolean> {
+        try {
+            // Check if VS Code Server is accessible
+            const response = await fetch('http://localhost:8080', { 
+                method: 'HEAD', 
+                mode: 'no-cors',
+                signal: AbortSignal.timeout(2000)
+            });
+            return true; // Server is running
+        } catch {
+            return false; // Server not accessible
+        }
     }
 
     private async tryConnectToVSCode(): Promise<boolean> {
@@ -215,14 +236,17 @@ class EnvironmentBridge {
                     return response.success;
 
                 case 'web-local':
-                    await navigator.clipboard.writeText(command);
-                    this.showNotification(`📋 Command copied to clipboard: ${command}`, 'info');
+                    // Enhanced clipboard mode with VS Code Server detection
+                    const smartCommand = await this.createSmartClipboardCommand(command, projectPath);
+                    await navigator.clipboard.writeText(smartCommand);
+                    this.showNotification(`📋 Smart command copied - includes VS Code Server instructions`, 'info');
                     return false; // Indicates clipboard mode
 
                 case 'remote':
                     // Future: API call to remote server
-                    await navigator.clipboard.writeText(command);
-                    this.showNotification(`🌍 Remote mode - command copied: ${command}`, 'info');
+                    const remoteCommand = await this.createSmartClipboardCommand(command, projectPath, true);
+                    await navigator.clipboard.writeText(remoteCommand);
+                    this.showNotification(`🌍 Remote command copied with server instructions`, 'info');
                     return false;
 
                 default:
@@ -234,6 +258,35 @@ class EnvironmentBridge {
             await navigator.clipboard.writeText(command);
             this.showNotification(`❌ Command failed, copied to clipboard: ${command}`, 'error');
             return false;
+        }
+    }
+
+    private async createSmartClipboardCommand(command: string, projectPath?: string, isRemote: boolean = false): Promise<string> {
+        const vsCodeServerRunning = await this.checkRemoteVSCodeServer();
+        
+        if (vsCodeServerRunning) {
+            // VS Code Server is running - provide enhanced instructions
+            return `# 🚀 VS Code Server Command (Enhanced Mode)
+# VS Code Server detected at: http://localhost:8080
+# 
+# OPTION 1 - Command Palette (Recommended):
+# 1. Open: http://localhost:8080 in browser
+# 2. Press: Ctrl+Shift+P (Command Palette)
+# 3. Type: ${command}
+#
+# OPTION 2 - Terminal (For CLI commands):
+# 1. Open: http://localhost:8080 in browser  
+# 2. Press: Ctrl+\` (New Terminal)
+# 3. Execute: ${command}
+${projectPath ? `# 4. Directory: ${projectPath}` : ''}
+#
+# Raw Command:
+${command}`;
+        } else {
+            // Standard clipboard mode
+            return `# 📋 Command for execution:
+${projectPath ? `# Directory: ${projectPath}` : ''}
+${command}`;
         }
     }
 
@@ -483,12 +536,13 @@ class EnvironmentBridge {
         return this.wsConnection?.readyState === WebSocket.OPEN || false;
     }
 
-    getConnectionStatus(): string {
+    async getConnectionStatus(): Promise<string> {
         switch (this.mode) {
             case 'vscode-local':
                 return this.isConnected() ? '🔗 VS Code Connected' : '❌ VS Code Disconnected';
             case 'web-local':
-                return '📋 Clipboard Mode';
+                const serverRunning = await this.checkRemoteVSCodeServer();
+                return serverRunning ? '📋 Smart Clipboard (VS Code Server Detected)' : '📋 Basic Clipboard Mode';
             case 'remote':
                 return '🌍 Remote Mode';
             default:

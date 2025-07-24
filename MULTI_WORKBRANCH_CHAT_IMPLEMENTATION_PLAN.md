@@ -128,7 +128,7 @@ React App (xterm.js) ↔ WebSocket ↔ Terminal Service ↔ node-pty ↔ Real Sh
 | **Status Indicators** | Real-time status dashboard | `RightSidebar/Status` |
 | **Live Preview** | Enhanced project viewer | `RightSidebar/Preview` |
 
-### **Terminal Grid System**
+### **Terminal Grid System with Visual Selection**
 ```typescript
 // Flexible terminal layout configurations
 interface TerminalGridLayout {
@@ -139,13 +139,28 @@ interface TerminalGridLayout {
   vertical: '1x4';   // 4 vertical columns for monitoring
 }
 
-// Smart terminal assignment
+// Enhanced terminal with selection state
 interface TerminalConfig {
   id: string;
   workbranch: string;
   project?: string;
   shell: 'powershell' | 'bash' | 'cmd';
-  autoAssign: boolean; // Auto-assign based on project selection
+  selected: boolean;         // ✨ Checkbox selection state
+  title: string;             // Display name (ProjectA, Tools, etc.)
+  status: 'active' | 'idle'; // Visual status indicator
+  autoAssign: boolean;       // Auto-assign based on project selection
+}
+
+// Visual selection management
+interface TerminalSelection {
+  selectedCount: number;
+  selectedTerminals: string[];
+  toggleTerminal: (id: string) => void;
+  selectAll: () => void;
+  selectNone: () => void;
+  selectProjects: () => void;      // Select project terminals only
+  selectTools: () => void;         // Select utility terminals only
+  selectWorkbranch: (wb: string) => void; // Select by workbranch
 }
 ```
 
@@ -241,26 +256,58 @@ npm install -D nodemon pm2
 - Integrate with existing responsive design system
 - Use xterm.js + WebSocket for real terminal sessions
 
-### ⏳ Task 3: Create WorkbranchChatPanel Component  
+### ⏳ Task 3: Create TerminalGrid Component with Visual Selection System
 **Status**: PENDING  
 **Priority**: HIGH  
-**Location**: `src/components/PortfolioSidebar/WorkbranchChatPanel.tsx`  
-**Strategy**: **Migrate full VS Code ChatPanel functionality to React with enhancements**
+**Location**: `src/components/CenterArea/TerminalGrid.tsx`
+**Strategy**: **Visual checkbox selection for multi-target messaging**
 **Requirements**:
-- **Complete feature parity** with VS Code ChatPanel (templates, variables, multi-target)
-- **Enhanced UI/UX** optimized for ultra-widescreen desktop experience
-- **Workbranch isolation** and context switching capabilities
-- **Direct terminal integration** via xterm.js (not clipboard)
-- **Rich desktop interactions** (drag/drop, context menus, keyboard shortcuts)
+- **Flexible layouts**: 1x1, 1x2, 2x2, 1x4 terminal grid configurations
+- **Visual selection**: Checkbox in each terminal header for target selection
+- **xterm.js integration**: Real terminal emulation with WebSocket communication
+- **Selection management**: Quick select patterns (All, None, Projects, Tools, Workbranch)
+- **Desktop interactions**: Ctrl+Click, Shift+Click, right-click context menus
+- **Visual feedback**: Selected terminals highlighted with distinct styling
 
 **Design Specifications**:
-- **Multi-AI messaging**: Claude, Copilot, custom endpoints with target selection UI
-- **Terminal integration**: Send commands directly to selected terminals with real-time output
-- **VS Code variable support**: `${selectedText}`, `${workspaceFolder}`, etc. with enhanced picker
-- **Template system**: Code review, debugging, documentation templates with form-based input
-- **Message threading**: Conversation history with search, filtering, and project context
-- **Ultra-wide optimization**: Side-by-side chat + terminal output, message threading panel
-- **Enhanced input**: Auto-completion, syntax highlighting, command suggestions
+- **Terminal headers**: `☑️ Title | Status | Workbranch Badge`
+- **Selection counter**: Show "X terminals selected" in real-time
+- **Quick selection bar**: `[All] [None] [Projects] [Tools]` buttons
+- **Keyboard shortcuts**: Ctrl+A (select all), Escape (select none)
+- **Visual states**: Selected (highlighted), Active (running), Idle (waiting)
+
+**Multi-Workbranch Testing Benefits**:
+- **Efficient testing**: Click checkboxes to select terminals across different CLAUDE.md setups
+- **Same prompt, different configs**: Test identical prompts against various system prompt configurations
+- **Visual comparison**: See how different workbranches handle the same input side-by-side
+- **Rapid iteration**: Quickly switch between testing different combinations of terminals
+- **Context isolation**: Each workbranch maintains its own environment and configuration
+
+### ⏳ Task 4: Create ChatInterface Component with Visual Target Selection
+**Status**: PENDING  
+**Priority**: HIGH  
+**Location**: `src/components/CenterArea/ChatInterface.tsx`
+**Strategy**: **Multi-target messaging with visual terminal selection**
+**Requirements**:
+- **Visual targeting**: Show "Send to X selected terminals" based on checkbox selection
+- **Multi-AI messaging**: Claude, Copilot, custom endpoints with enhanced UI
+- **VS Code variable support**: `${selectedText}`, `${workspaceFolder}`, etc. with picker
+- **Template system**: Code review, debugging, documentation templates
+- **Message threading**: Conversation history with search and filtering
+- **Desktop-optimized input**: Auto-completion, syntax highlighting, command suggestions
+
+**Design Specifications**:
+- **Selection display**: "📟 Sending to: Term1, Term2 (2 selected)" 
+- **Quick actions**: Template buttons, variable picker, target override
+- **Message history**: Threaded conversations with terminal output correlation
+- **Enhanced input**: Rich text editor with syntax highlighting for commands
+
+**Multi-Workbranch Testing Integration**:
+- **Checkbox selection enables efficient testing**: Select multiple terminals across different workbranches
+- **CLAUDE.md testing workflow**: Same prompts tested against different system configurations
+- **Workbranch isolation**: Each terminal maintains its own CLAUDE.md context
+- **Cross-workbranch comparison**: Visual feedback shows how different setups handle identical prompts
+- **Testing automation**: Save prompt templates for consistent testing across workbranches
 
 ### ⏳ Task 4: Extend Zustand Store
 **Status**: PENDING  
@@ -601,9 +648,18 @@ curl http://localhost:8002/api/sessions
 - 🎯 **Decision**: Build on existing infrastructure rather than creating parallel systems
 
 ### Next Session Planning
-- Continue with Task 2: Extend PortfolioSidebar component
+- Continue with Task 2: Create Center Area Terminal + Chat Interface
 - Focus on maintaining existing architecture patterns
 - Preserve all current functionality while adding chat capabilities
+- Implement checkbox selection system for efficient multi-workbranch testing
+
+### Implementation Priority Notes
+**Why Checkbox Selection is Critical for Multi-Workbranch Development:**
+- **Testing Different CLAUDE.md Configurations**: User can maintain multiple workbranches with different system prompts and configurations
+- **Efficient A/B Testing**: Same prompts tested across different setups by simply selecting relevant terminals
+- **Visual Workflow**: Click checkboxes → type prompt → send to selected terminals → compare results
+- **Context Preservation**: Each workbranch maintains its own isolated environment and CLAUDE.md settings
+- **Rapid Iteration**: No need to manually type terminal names or remember IDs - visual selection is much faster
 
 ---
 

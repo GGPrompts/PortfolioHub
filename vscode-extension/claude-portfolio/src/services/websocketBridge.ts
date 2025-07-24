@@ -11,6 +11,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { VSCodeSecurityService } from '../securityService';
 import { ProjectService } from './projectService';
 import { PortDetectionService } from './portDetectionService';
+import { TerminalService } from './terminalService';
 import * as path from 'path';
 
 export interface BridgeMessage {
@@ -40,11 +41,13 @@ export class WebSocketBridgeService {
     private readonly portfolioPath: string;
     private projectService: ProjectService;
     private portDetectionService: PortDetectionService;
+    private terminalService: TerminalService;
 
     constructor(portfolioPath: string, projectService: ProjectService, portDetectionService: PortDetectionService) {
         this.portfolioPath = portfolioPath;
         this.projectService = projectService;
         this.portDetectionService = portDetectionService;
+        this.terminalService = new TerminalService(path.join(portfolioPath, '..'));
     }
 
     async start(): Promise<boolean> {
@@ -92,7 +95,9 @@ export class WebSocketBridgeService {
                         commands: true,
                         fileOperations: true,
                         livePreview: true,
-                        projectManagement: true
+                        projectManagement: true,
+                        terminals: true,
+                        multiWorkbranch: true
                     }
                 }));
             });
@@ -100,6 +105,14 @@ export class WebSocketBridgeService {
             this.server.on('error', (error) => {
                 console.error('WebSocket server error:', error);
             });
+
+            // Start terminal service
+            const terminalStarted = await this.terminalService.start();
+            if (terminalStarted) {
+                console.log('✅ Terminal service started on ws://localhost:8002');
+            } else {
+                console.warn('⚠️ Terminal service failed to start - terminal features will be limited');
+            }
 
             console.log(`🚀 WebSocket bridge started on ws://localhost:${this.port}`);
             return true;
@@ -111,6 +124,9 @@ export class WebSocketBridgeService {
 
     async stop(): Promise<void> {
         if (this.server) {
+            // Stop terminal service first
+            await this.terminalService.stop();
+
             // Close all client connections
             this.clients.forEach(ws => {
                 ws.close(1000, 'Server shutting down');
@@ -182,6 +198,27 @@ export class WebSocketBridgeService {
 
                 case 'project-status-sync':
                     return await this.handleProjectStatusSync(id);
+
+                case 'terminal-create':
+                    return await this.handleTerminalCreate(id, data);
+
+                case 'terminal-destroy':
+                    return await this.handleTerminalDestroy(id, data.sessionId);
+
+                case 'terminal-command':
+                    return await this.handleTerminalCommand(id, data.sessionId, data.command);
+
+                case 'terminal-resize':
+                    return await this.handleTerminalResize(id, data.sessionId, data.cols, data.rows);
+
+                case 'terminal-data':
+                    return await this.handleTerminalData(id, data.sessionId, data.data);
+
+                case 'terminal-status':
+                    return await this.handleTerminalStatus(id);
+
+                case 'terminal-list-sessions':
+                    return await this.handleTerminalListSessions(id, data.workbranchId);
 
                 default:
                     return {
@@ -748,5 +785,154 @@ export class WebSocketBridgeService {
                 error: error instanceof Error ? error.message : 'Failed to sync project status'
             };
         }
+    }
+
+    // Terminal-related handlers
+
+    private async handleTerminalCreate(id: string | undefined, data: any): Promise<BridgeResponse> {
+        try {
+            const { workbranchId, shell, title, cwd } = data;
+            
+            const response = await this.terminalService.createSession(
+                workbranchId,
+                shell || 'powershell',
+                undefined, // WebSocket will be handled by terminal service separately
+                title,
+                cwd
+            );
+
+            return {
+                id,
+                success: response.success,
+                result: response.data,
+                message: response.message || (response.success ? 'Terminal session created' : 'Failed to create terminal session')
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to create terminal session'
+            };
+        }
+    }
+
+    private async handleTerminalDestroy(id: string | undefined, sessionId: string): Promise<BridgeResponse> {
+        try {
+            const response = await this.terminalService.destroySession(sessionId);
+
+            return {
+                id,
+                success: response.success,
+                message: response.message || (response.success ? 'Terminal session destroyed' : 'Failed to destroy terminal session')
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to destroy terminal session'
+            };
+        }
+    }
+
+    private async handleTerminalCommand(id: string | undefined, sessionId: string, command: string): Promise<BridgeResponse> {
+        try {
+            const response = await this.terminalService.executeCommand(sessionId, command);
+
+            return {
+                id,
+                success: response.success,
+                message: response.message || (response.success ? 'Command executed' : 'Failed to execute command')
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to execute terminal command'
+            };
+        }
+    }
+
+    private async handleTerminalResize(id: string | undefined, sessionId: string, cols: number, rows: number): Promise<BridgeResponse> {
+        try {
+            const response = await this.terminalService.resizeTerminal(sessionId, cols, rows);
+
+            return {
+                id,
+                success: response.success,
+                message: response.message || (response.success ? 'Terminal resized' : 'Failed to resize terminal')
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to resize terminal'
+            };
+        }
+    }
+
+    private async handleTerminalData(id: string | undefined, sessionId: string, data: string): Promise<BridgeResponse> {
+        try {
+            const response = await this.terminalService.sendData(sessionId, data);
+
+            return {
+                id,
+                success: response.success,
+                message: response.message || (response.success ? 'Data sent to terminal' : 'Failed to send data to terminal')
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to send data to terminal'
+            };
+        }
+    }
+
+    private async handleTerminalStatus(id: string | undefined): Promise<BridgeResponse> {
+        try {
+            const status = this.terminalService.getStatus();
+
+            return {
+                id,
+                success: true,
+                result: status,
+                message: 'Terminal service status retrieved'
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to get terminal status'
+            };
+        }
+    }
+
+    private async handleTerminalListSessions(id: string | undefined, workbranchId?: string): Promise<BridgeResponse> {
+        try {
+            const status = this.terminalService.getStatus();
+            
+            let sessions = status.activeSessions;
+            if (workbranchId) {
+                sessions = sessions.filter(session => session.workbranchId === workbranchId);
+            }
+
+            return {
+                id,
+                success: true,
+                result: { sessions, totalSessions: sessions.length },
+                message: `Found ${sessions.length} terminal session(s)`
+            };
+        } catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to list terminal sessions'
+            };
+        }
+    }
+
+    // Get terminal service instance for external access
+    public getTerminalService(): TerminalService {
+        return this.terminalService;
     }
 }

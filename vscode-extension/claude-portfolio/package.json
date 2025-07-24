@@ -170,6 +170,54 @@
         "title": "Open AI Chat Interface",
         "category": "Claude Portfolio",
         "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "claudePortfolio.terminal.create",
+        "title": "Create Terminal Session",
+        "category": "Claude Portfolio",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "claudePortfolio.terminal.list",
+        "title": "List Terminal Sessions",
+        "category": "Claude Portfolio",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "claudePortfolio.terminal.destroy",
+        "title": "Destroy Terminal Session", 
+        "category": "Claude Portfolio",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "claudePortfolio.terminal.status",
+        "title": "Terminal Service Status",
+        "category": "Claude Portfolio",
+        "icon": "$(info)"
+      },
+      {
+        "command": "claudePortfolio.workbranch.create",
+        "title": "Create Workbranch",
+        "category": "Claude Portfolio",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "claudePortfolio.workbranch.switch",
+        "title": "Switch Workbranch",
+        "category": "Claude Portfolio",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "claudePortfolio.terminal.validateCommand",
+        "title": "Validate Terminal Command",
+        "category": "Claude Portfolio",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "claudePortfolio.terminal.attach",
+        "title": "Attach to Terminal Session",
+        "category": "Claude Portfolio",
+        "icon": "$(plug)"
       }
     ],
     "viewsContainers": {

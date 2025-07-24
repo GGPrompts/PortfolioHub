@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import './utils/consoleHelper' // Import console helper for development
+import CenterArea from './components/CenterArea'
 import EnhancedProjectViewer from './components/EnhancedProjectViewer'
 import GitUpdateButton from './components/GitUpdateButton'
 import PortfolioSidebar from './components/PortfolioSidebar'
@@ -66,6 +67,7 @@ function PortfolioApp() {
   const [vsCodeServerStatus, setVsCodeServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking')
   const [runningStatus, setRunningStatus] = useState<{[key: string]: boolean}>({})
   const [projectPorts, setProjectPorts] = useState<{[key: string]: number | null}>({})
+  const [centerAreaMode, setCenterAreaMode] = useState(false) // Toggle between ProjectGrid and CenterArea
 
   // Sync React Query projects with portfolio store
   useEffect(() => {
@@ -324,9 +326,9 @@ function PortfolioApp() {
               <div className="header-content">
                 <div className="header-text">
                   <div className="header-title-row">
-                    <h1>My Project Portfolio</h1>
+                    <h1>{centerAreaMode ? 'Multi-Terminal Grid + Chat' : 'My Project Portfolio'}</h1>
                   </div>
-                  <p>A collection of creative coding experiments and applications</p>
+                  <p>{centerAreaMode ? 'Visual terminal selection for multi-workbranch development and testing' : 'A collection of creative coding experiments and applications'}</p>
                 </div>
                 <div className="header-actions">
                   {/* VS Code Server Control */}
@@ -370,23 +372,45 @@ function PortfolioApp() {
                   >
                     <SvgIcon name="refreshCw" size={16} />
                   </button>
-                  {/* View Mode Toggle Buttons */}
+                  {/* Interface Mode Toggle */}
                   <div className="view-mode-toggle">
                     <button 
-                      className={`view-toggle-btn ${globalViewMode === 'mobile' ? 'active' : ''}`}
-                      onClick={() => setGlobalViewMode('mobile')}
-                      title="Mobile View"
+                      className={`view-toggle-btn ${!centerAreaMode ? 'active' : ''}`}
+                      onClick={() => setCenterAreaMode(false)}
+                      title="Project Grid View"
                     >
-                      <SvgIcon name="smartphone" size={16} />
+                      <SvgIcon name="grid" size={16} />
+                      <span>Grid</span>
                     </button>
                     <button 
-                      className={`view-toggle-btn ${globalViewMode === 'desktop' ? 'active' : ''}`}
-                      onClick={() => setGlobalViewMode('desktop')}
-                      title="Desktop View"
+                      className={`view-toggle-btn ${centerAreaMode ? 'active' : ''}`}
+                      onClick={() => setCenterAreaMode(true)}
+                      title="Terminal Grid + Chat Interface"
                     >
-                      <SvgIcon name="monitor" size={16} />
+                      <SvgIcon name="terminal" size={16} />
+                      <span>Terminals</span>
                     </button>
                   </div>
+                  
+                  {/* View Mode Toggle Buttons (only for Grid mode) */}
+                  {!centerAreaMode && (
+                    <div className="view-mode-toggle">
+                      <button 
+                        className={`view-toggle-btn ${globalViewMode === 'mobile' ? 'active' : ''}`}
+                        onClick={() => setGlobalViewMode('mobile')}
+                        title="Mobile View"
+                      >
+                        <SvgIcon name="smartphone" size={16} />
+                      </button>
+                      <button 
+                        className={`view-toggle-btn ${globalViewMode === 'desktop' ? 'active' : ''}`}
+                        onClick={() => setGlobalViewMode('desktop')}
+                        title="Desktop View"
+                      >
+                        <SvgIcon name="monitor" size={16} />
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Git Update Button */}
                   <div className="header-dropdown">
@@ -412,7 +436,23 @@ function PortfolioApp() {
                 </div>
               </div>
             </header>
-            <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
+            {centerAreaMode ? (
+              <CenterArea 
+                initialLayout="split"
+                maxTerminals={8}
+                onTerminalAdd={(terminal) => {
+                  console.log('Terminal added:', terminal);
+                }}
+                onTerminalRemove={(terminalId) => {
+                  console.log('Terminal removed:', terminalId);
+                }}
+                onLayoutChange={(layout) => {
+                  console.log('Layout changed to:', layout);
+                }}
+              />
+            ) : (
+              <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
+            )}
           </>
         ) : selectedProject ? (
           <EnhancedProjectViewer 

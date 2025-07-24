@@ -21,6 +21,7 @@ import { ProjectCommands } from './commands/projectCommands';
 import { BatchCommands } from './commands/batchCommands';
 import { SelectionCommands } from './commands/selectionCommands';
 import { WorkspaceCommands } from './commands/workspaceCommands';
+import { TerminalCommands } from './commands/terminalCommands';
 
 /**
  * Services container for dependency injection
@@ -54,6 +55,7 @@ interface ExtensionCommands {
     batchCommands: BatchCommands;
     selectionCommands: SelectionCommands;
     workspaceCommands: WorkspaceCommands;
+    terminalCommands: TerminalCommands;
 }
 
 /**
@@ -252,11 +254,16 @@ function createCommandHandlers(
         providers.multiProjectCommandsProvider
     );
 
+    const terminalCommands = new TerminalCommands(
+        services.websocketBridgeService.getTerminalService()
+    );
+
     return {
         projectCommands,
         batchCommands,
         selectionCommands,
-        workspaceCommands
+        workspaceCommands,
+        terminalCommands
     };
 }
 
@@ -268,6 +275,7 @@ function registerCommands(context: vscode.ExtensionContext, commands: ExtensionC
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
+    commands.terminalCommands.registerCommands(context);
     providers.terminalCommandsProvider.registerCommands(context);
     
     // Register Chat Panel command

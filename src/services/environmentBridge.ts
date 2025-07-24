@@ -105,17 +105,27 @@ class EnvironmentBridge {
         try {
             console.log('🔍 Attempting to connect to VS Code bridge...');
             
+            // Detect if we're in a VS Code webview where WebSocket connections are restricted
+            const isVSCodeWebview = window.location.protocol === 'vscode-webview:' || 
+                                   window.location.hostname.includes('vscode-webview') ||
+                                   (window as any).vscode !== undefined;
+            
+            if (isVSCodeWebview) {
+                console.log('📱 VS Code webview detected - WebSocket blocked, using clipboard mode');
+                return false;
+            }
+            
             this.wsConnection = new WebSocket('ws://localhost:8123');
             
             return new Promise((resolve) => {
                 const timeout = setTimeout(() => {
-                    console.log('⏰ VS Code bridge connection timeout');
+                    console.log('⏰ VS Code bridge connection timeout - falling back to clipboard mode');
                     if (this.wsConnection) {
                         this.wsConnection.close();
                         this.wsConnection = null;
                     }
                     resolve(false);
-                }, 3000); // 3 second timeout
+                }, 2000); // Reduced timeout for faster fallback
 
                 this.wsConnection!.onopen = () => {
                     clearTimeout(timeout);
@@ -239,25 +249,30 @@ class EnvironmentBridge {
                     // Enhanced clipboard mode with VS Code Server detection
                     const smartCommand = await this.createSmartClipboardCommand(command, projectPath);
                     await navigator.clipboard.writeText(smartCommand);
-                    this.showNotification(`📋 Smart command copied - includes VS Code Server instructions`, 'info');
-                    return false; // Indicates clipboard mode
+                    this.showNotification(`📋 Command copied to clipboard - paste in terminal to execute`, 'info');
+                    return true; // Successfully copied to clipboard
 
                 case 'remote':
                     // Future: API call to remote server
                     const remoteCommand = await this.createSmartClipboardCommand(command, projectPath, true);
                     await navigator.clipboard.writeText(remoteCommand);
                     this.showNotification(`🌍 Remote command copied with server instructions`, 'info');
-                    return false;
+                    return true; // Successfully copied to clipboard
 
                 default:
                     throw new Error('Unknown environment mode');
             }
         } catch (error) {
             console.error('Command execution failed:', error);
-            // Fallback to clipboard
-            await navigator.clipboard.writeText(command);
-            this.showNotification(`❌ Command failed, copied to clipboard: ${command}`, 'error');
-            return false;
+            try {
+                // Fallback to clipboard
+                await navigator.clipboard.writeText(command);
+                this.showNotification(`⚠️ Command execution failed - copied to clipboard for manual execution`, 'warning');
+                return true; // Successfully copied as fallback
+            } catch (clipboardError) {
+                this.showNotification(`❌ Command failed and clipboard unavailable`, 'error');
+                return false;
+            }
         }
     }
 
@@ -379,18 +394,26 @@ ${command}`;
                     url,
                     title
                 });
-                return response.success;
+                if (response.success) {
+                    return true;
+                } else {
+                    // VS Code Live Preview failed, fallback to browser
+                    window.open(url, '_blank');
+                    this.showNotification(`🌐 Live Preview unavailable - opened in browser: ${title || url}`, 'info');
+                    return true;
+                }
             } catch (error) {
                 console.error('Live Preview failed:', error);
                 // Fallback to regular browser
                 window.open(url, '_blank');
-                return false;
+                this.showNotification(`🌐 Live Preview error - opened in browser: ${title || url}`, 'info');
+                return true;
             }
         } else {
-            // Regular browser fallback
+            // Regular browser fallback (web-local mode)
             window.open(url, '_blank');
-            this.showNotification(`🌐 Opened in browser: ${title || url}`, 'info');
-            return false;
+            this.showNotification(`🌐 Opened in new browser tab: ${title || url}`, 'info');
+            return true;
         }
     }
 

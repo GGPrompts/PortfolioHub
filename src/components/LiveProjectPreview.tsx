@@ -557,7 +557,15 @@ export default function LiveProjectPreview({
 
       {/* Project Info */}
       <div className={styles.projectInfo}>
-        <h3 className={styles.projectTitle}>{project.title}</h3>
+        <h3 className={styles.projectTitle}>
+          <button 
+            onClick={() => onProjectClick(project)}
+            className={styles.projectTitleLink}
+            title={`View ${project.title} details`}
+          >
+            {project.title}
+          </button>
+        </h3>
         <p className={styles.projectDescription}>{project.description}</p>
         
         <div className={styles.projectMeta}>

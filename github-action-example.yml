@@ -1,0 +1,91 @@
+# GitHub Action for Daily Documentation Updates
+# Save this as: .github/workflows/update-docs.yml
+
+name: Update Project Documentation
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (adjust timezone as needed)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Check for projects needing documentation updates
+      run: |
+        echo "Checking project documentation status..."
+        # This would scan your projects and identify which need updates
+        node scripts/check-docs.js
+        
+    - name: Generate documentation update prompts
+      run: |
+        echo "Generating Claude prompts for documentation updates..."
+        # This would generate the same prompts your button creates
+        node scripts/generate-doc-prompts.js
+        
+    - name: Create Pull Request if changes needed
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'docs: generate documentation update prompts'
+        title: 'Daily Documentation Update Prompts'
+        body: |
+          🤖 **Automated Documentation Update**
+          
+          This PR contains generated Claude prompts for updating project documentation.
+          
+          **What's included:**
+          - Claude prompts for README.md updates
+          - Claude prompts for CLAUDE.md updates  
+          - Project-specific context and requirements
+          
+          **Next steps:**
+          1. Review the generated prompts
+          2. Use them with Claude to update documentation
+          3. Commit the updated documentation files
+          
+          Generated on: ${{ github.run_id }}
+        branch: docs/daily-update-${{ github.run_number }}
+        delete-branch: true
+
+# Alternative approach: Direct Claude API integration (if available)
+# This would require Claude API access and secrets configuration
+
+  # update-with-claude-api:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ secrets.CLAUDE_API_KEY }}
+  #   
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v4
+  #     
+  #   - name: Update documentation with Claude API
+  #     env:
+  #       CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+  #     run: |
+  #       # This would directly call Claude API to update docs
+  #       node scripts/update-docs-with-claude.js
+  #       
+  #   - name: Commit updated documentation
+  #     run: |
+  #       git config --local user.email "action@github.com"
+  #       git config --local user.name "GitHub Action"
+  #       git add -A
+  #       git commit -m "docs: automated documentation updates" -a || exit 0
+  #       git push

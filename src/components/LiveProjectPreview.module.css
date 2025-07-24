@@ -349,6 +349,25 @@
   line-height: 1.2;
 }
 
+.projectTitleLink {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 255, 136, 0.5);
+  transition: text-decoration-color 0.2s ease;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.projectTitleLink:hover {
+  text-decoration-color: #00ff88;
+}
+
 .projectDescription {
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;

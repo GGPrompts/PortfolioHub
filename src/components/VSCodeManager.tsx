@@ -593,6 +593,7 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               title="VS Code Extensions & Remote Installation"
             >
               <SvgIcon name="package" className="tab-icon" />
+              <span className="tab-title">VS Remote</span>
             </div>
           )}
           
@@ -947,16 +948,25 @@ code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-se
               <div className="command-group">
                 <h4><SvgIcon name="terminal" /> Terminal Extension Commands (For Remote Server)</h4>
                 <div className="command-buttons">
-                  <button onClick={() => copyTextToClipboard('code --install-extension ./vscode-extension/claude-portfolio/claude-portfolio-vscode-pages.vsix', 'Install Claude Portfolio extension in remote VS Code Server via terminal')}>
+                  <button 
+                    onClick={() => copyTextToClipboard('code --install-extension ./vscode-extension/claude-portfolio/claude-portfolio-vscode-pages.vsix', 'Install Claude Portfolio extension in remote VS Code Server via terminal')}
+                    className="command-btn"
+                  >
                     <SvgIcon name="code" />
                     Install Claude Portfolio Extension
                     <span className="remote-badge">🖥️</span>
                   </button>
-                  <button onClick={() => copyTextToClipboard('code --list-extensions', 'List all extensions installed in remote server')}>
+                  <button 
+                    onClick={() => copyTextToClipboard('code --list-extensions', 'List all extensions installed in remote server')}
+                    className="command-btn"
+                  >
                     <SvgIcon name="search" />
                     List All Remote Extensions
                   </button>
-                  <button onClick={() => copyTextToClipboard('code --install-extension ms-python.python', 'Install Python extension in remote server')}>
+                  <button 
+                    onClick={() => copyTextToClipboard('code --install-extension ms-python.python', 'Install Python extension in remote server')}
+                    className="command-btn"
+                  >
                     <SvgIcon name="package" />
                     Install Python Extension
                   </button>

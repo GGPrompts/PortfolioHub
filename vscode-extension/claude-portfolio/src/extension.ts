@@ -6,6 +6,7 @@ import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
 import { VSCodePageProvider } from './vscodePageProvider';
+import { ChatPanel } from './panels/ChatPanel';
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 
 // Services
@@ -262,6 +263,12 @@ function registerCommands(context: vscode.ExtensionContext, commands: ExtensionC
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
+    
+    // Register Chat Panel command
+    const chatCommand = vscode.commands.registerCommand('claudePortfolio.openChat', () => {
+        ChatPanel.createOrShow(context.extensionUri, context);
+    });
+    context.subscriptions.push(chatCommand);
 }
 
 /**

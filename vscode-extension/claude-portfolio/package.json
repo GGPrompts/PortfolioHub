@@ -164,6 +164,12 @@
         "command": "claude-portfolio.project.select",
         "title": "Select Project Action",
         "category": "Claude Portfolio"
+      },
+      {
+        "command": "claudePortfolio.openChat",
+        "title": "Open AI Chat Interface",
+        "category": "Claude Portfolio",
+        "icon": "$(comment-discussion)"
       }
     ],
     "viewsContainers": {
@@ -223,6 +229,11 @@
           "command": "claude-portfolio.refreshProjects",
           "when": "view == claudeProjects",
           "group": "navigation"
+        },
+        {
+          "command": "claudePortfolio.openChat",
+          "when": "view == claudeProjects",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -245,6 +256,12 @@
           "command": "claude-portfolio.openAIAssistant",
           "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject || viewItem == vsCodeProject || viewItem == selectedVSCodeProject)",
           "group": "2_ai"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claudePortfolio.openChat",
+          "when": "true"
         }
       ]
     },

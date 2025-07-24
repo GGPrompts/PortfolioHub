@@ -20,7 +20,7 @@ interface Tab {
 
 const tabs: Record<string, Tab> = {
   commands: { id: 'commands', label: 'Quick Commands', icon: 'terminal', width: 800 },
-  vscode: { id: 'vscode', label: 'VS Code Terminals', icon: 'code', width: 800 }
+  vscode: { id: 'vscode', label: 'VS Code Server', icon: 'code', width: 800 }
 };
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ className = '', onWidthChange }) => {

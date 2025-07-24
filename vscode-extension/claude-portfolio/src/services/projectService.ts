@@ -80,7 +80,7 @@ export class ProjectService {
                 if (portInfo.isRunning && portInfo.processId) {
                     try {
                         const success = await VSCodeSecurityService.executeSecureCommand(
-                            `taskkill /PID ${portInfo.processId} /F`,
+                            `taskkill /F /PID ${portInfo.processId}`,
                             `Stop ${project.title}`,
                             this.portfolioPath
                         );

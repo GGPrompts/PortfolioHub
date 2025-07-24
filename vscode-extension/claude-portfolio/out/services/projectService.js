@@ -97,7 +97,7 @@ class ProjectService {
             for (const portInfo of status.ports) {
                 if (portInfo.isRunning && portInfo.processId) {
                     try {
-                        const success = await securityService_1.VSCodeSecurityService.executeSecureCommand(`taskkill /PID ${portInfo.processId} /F`, `Stop ${project.title}`, this.portfolioPath);
+                        const success = await securityService_1.VSCodeSecurityService.executeSecureCommand(`taskkill /F /PID ${portInfo.processId}`, `Stop ${project.title}`, this.portfolioPath);
                         if (success) {
                             stoppedCount++;
                         }

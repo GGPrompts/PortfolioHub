@@ -49,7 +49,7 @@ export const SHARED_SECURITY_CONFIG = {
         /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // npm with args (supports quoted args, no pipe operations)
         /^git\s+(status|add|commit|push|pull|branch|checkout)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // git commands (supports quoted args, no pipe operations)
         /^powershell\.exe.*Get-NetTCPConnection/i,                        // Port management
-        /^taskkill\s+\/F\s+\/PID/i,                                      // Process management
+        /^taskkill\s+(\/F\s+\/PID|\/PID\s+[0-9]+\s+\/F)/i,               // Process management (flexible flag order)
         /^Get-Process.*\|.*Where-Object/i,                               // Process queries
         /^Stop-Process.*-Id.*-Force$/i,                                  // Process stopping
         /^Set-Location\s+"[^"]*"$/i,                                     // PowerShell cd

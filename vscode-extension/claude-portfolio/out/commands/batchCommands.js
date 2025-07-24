@@ -383,7 +383,7 @@ class BatchCommands {
                         const pid = parseInt(match[1]);
                         try {
                             // Kill the process
-                            const taskkill = spawn('taskkill', ['/PID', pid.toString(), '/F'], { shell: true });
+                            const taskkill = spawn('taskkill', ['/F', '/PID', pid.toString()], { shell: true });
                             taskkill.on('close', (killCode) => {
                                 resolve(killCode === 0);
                             });

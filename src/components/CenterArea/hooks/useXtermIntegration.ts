@@ -323,8 +323,21 @@ function handleTerminalServiceMessage(message: any, terminal: Terminal) {
       // Handle error messages
       terminal.write(`\r\n❌ Error: ${message.message}\r\n`);
       break;
+
+    case 'connected':
+      // Terminal service connection established
+      terminal.write(`\r\n✅ Connected to terminal service\r\n`);
+      break;
+
+    case 'status':
+      // Status update from terminal service
+      console.log('Terminal service status:', message);
+      break;
       
     default:
-      console.warn('Unknown terminal service message type:', message.type);
+      // Only warn for actual unknown types, ignore undefined/empty messages
+      if (message.type && message.type !== 'undefined') {
+        console.warn('Unknown terminal service message type:', message.type);
+      }
   }
 }

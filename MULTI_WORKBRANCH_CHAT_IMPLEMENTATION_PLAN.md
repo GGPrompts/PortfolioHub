@@ -9,18 +9,21 @@
 
 Transform the existing Claude Development Portfolio into a comprehensive chat system with **real terminal integration** using xterm.js, maintaining current project management capabilities while adding multi-workbranch isolation and remote access capabilities.
 
-**🎯 Design Philosophy**: **Desktop-first** with rich sidebars and content density, then mobile optimization later.
+**🎯 Design Philosophy**: **Ultra-widescreen desktop-first** - Move entire VS Code extension functionality into React app as the primary interface, VS Code runs as background service only.
 
 ## Key Architecture Decisions (Updated)
 
-- **Desktop-First Design**: Rich UI with multiple sidebars, content density priority over mobile-first
-- **Real Terminal Integration**: xterm.js + node-pty for actual terminal sessions (not clipboard commands)
-- **WebSocket Communication**: Extend existing VS Code bridge at `ws://localhost:8123` + new terminal service (8002)
-- **Cross-Platform Strategy**: Node.js scripts alongside PowerShell for broader compatibility
-- **Remote Access**: SSH tunneling for phone/remote access to desktop workstation
-- **Service Architecture**: Chat service (8001), Terminal service (8002), existing WebSocket bridge
-- **Database**: PostgreSQL for persistence, Redis optional for real-time features
-- **Security**: Extend existing `VSCodeSecurityService` patterns with terminal isolation
+- **🖥️ Ultra-Widescreen Primary Interface**: React app becomes the main development environment, full-screen on ultra-wide monitor
+- **🔄 VS Code as Background Service**: VS Code extension provides WebSocket bridge service only, React app has full UI functionality
+- **📊 Rich Multi-Sidebar Layout**: Left sidebar (Projects/Chat/Notes), center content, right sidebar (Commands/Terminals/Preview)
+- **🖱️ Complete Feature Parity**: All VS Code extension features replicated in React with better UX
+- **⚡ Real Terminal Integration**: xterm.js + node-pty for actual terminal sessions (not clipboard commands)
+- **🌐 WebSocket Communication**: Extend existing VS Code bridge at `ws://localhost:8123` + new terminal service (8002)
+- **🔀 Cross-Platform Strategy**: Node.js scripts alongside PowerShell for broader compatibility
+- **📱 Remote Access**: SSH tunneling for phone/remote access to desktop workstation
+- **🏗️ Service Architecture**: Chat service (8001), Terminal service (8002), existing WebSocket bridge
+- **💾 Database**: PostgreSQL for persistence, Redis optional for real-time features
+- **🔒 Security**: Extend existing `VSCodeSecurityService` patterns with terminal isolation
 
 ## Current Status Overview
 
@@ -84,6 +87,60 @@ React App (xterm.js) ↔ WebSocket ↔ Terminal Service ↔ node-pty ↔ Real Sh
 - **Windows**: PowerShell + cmd support, existing script ecosystem maintained
 - **Termux**: Full Linux compatibility with bash, can run VS Code Server
 - **Universal**: Node.js scripts work everywhere, package.json unified commands
+
+## 🖥️ Ultra-Widescreen Interface Vision
+
+### **Full-Screen React App as Primary Development Environment**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Claude Development Portfolio - Full-Screen Ultra-Wide Layout            │
+├───────────┬─────────────────────────────────────────────────┬───────────┤
+│ LEFT      │ CENTER CONTENT AREA                             │ RIGHT     │
+│ SIDEBAR   │                                                 │ SIDEBAR   │
+│           │                                                 │           │
+│ 📂 Projects│ 🖼️ Project Viewer / Grid                        │ ⚡ Commands│
+│ 💬 Chat    │ 📊 Dashboard / Analytics                        │ 📟 Terminals│
+│ 📝 Notes   │ 🎛️ Settings / Config                            │ 👁️ Preview │
+│ 🔧 Tools   │                                                 │ 📈 Status │
+│           │                                                 │           │
+│ [Rich UI] │ [Dynamic Content Based on Selection]            │ [Live Data]│
+│ [Context] │                                                 │ [Real-time]│
+└───────────┴─────────────────────────────────────────────────┴───────────┘
+```
+
+### **VS Code Extension Role: Service Layer Only**
+- **Background WebSocket Bridge**: Provides `ws://localhost:8123` service
+- **No UI Components**: All panels, commands, trees moved to React app
+- **API Provider**: File operations, terminal execution, workspace management
+- **Invisible to User**: Runs minimized, React app is the interface
+
+### **Feature Migration from VS Code to React**
+| VS Code Extension Component | React App Equivalent | Location |
+|---------------------------|---------------------|----------|
+| **Project Tree View** | Enhanced sidebar with checkboxes | `PortfolioSidebar/Projects` |
+| **Batch Commands Panel** | Integrated batch operations | `PortfolioSidebar/BatchCommands` |
+| **Chat Panel** | Full-featured chat interface | `PortfolioSidebar/Chat` ✨ **NEW** |
+| **Terminal Provider** | xterm.js embedded terminals | `RightSidebar/Terminals` ✨ **NEW** |
+| **Command Palette** | Rich command interface | `RightSidebar/Commands` |
+| **Status Indicators** | Real-time status dashboard | `RightSidebar/Status` |
+| **Live Preview** | Enhanced project viewer | `CenterContent/Viewer` |
+
+### **Ultra-Wide Monitor Optimization**
+- **Multi-column Layout**: 3-4 concurrent information streams
+- **Context Switching**: No more VS Code panel switching
+- **Information Density**: Maximum data visible simultaneously  
+- **Spatial Memory**: Consistent positioning of tools and data
+- **Minimal Context Loss**: Everything visible, nothing hidden
+
+### **Development Workflow**
+```bash
+# Morning routine
+1. npm run chat:dev                    # Starts React app + all services
+2. Full-screen browser (F11)           # Ultra-wide immersive experience
+3. VS Code runs hidden in background   # Service layer only
+4. All development through React UI    # Primary interface
+5. SSH tunnel for remote access        # Same interface on phone
+```
 
 ## 📦 Dependencies & Setup
 
@@ -157,22 +214,26 @@ npm install -D nodemon pm2
 - Create new chat panel component similar to `DevNotes.tsx`
 - Update `hooks.ts` to include chat state management
 
-### ⏳ Task 3: Create WorkbranchChatPanel Component
+### ⏳ Task 3: Create WorkbranchChatPanel Component  
 **Status**: PENDING  
 **Priority**: HIGH  
 **Location**: `src/components/PortfolioSidebar/WorkbranchChatPanel.tsx`  
+**Strategy**: **Migrate full VS Code ChatPanel functionality to React with enhancements**
 **Requirements**:
-- Use existing sidebar panel architecture patterns
-- Integrate with VS Code WebSocket bridge
-- Support workbranch isolation and context switching
-- Maintain security validation patterns
+- **Complete feature parity** with VS Code ChatPanel (templates, variables, multi-target)
+- **Enhanced UI/UX** optimized for ultra-widescreen desktop experience
+- **Workbranch isolation** and context switching capabilities
+- **Direct terminal integration** via xterm.js (not clipboard)
+- **Rich desktop interactions** (drag/drop, context menus, keyboard shortcuts)
 
 **Design Specifications**:
-- Multi-target messaging (Claude, terminals, multiple terminals)
-- Workbranch context awareness
-- Message history and threading
-- Terminal selection interface
-- Template system integration
+- **Multi-AI messaging**: Claude, Copilot, custom endpoints with target selection UI
+- **Terminal integration**: Send commands directly to selected terminals with real-time output
+- **VS Code variable support**: `${selectedText}`, `${workspaceFolder}`, etc. with enhanced picker
+- **Template system**: Code review, debugging, documentation templates with form-based input
+- **Message threading**: Conversation history with search, filtering, and project context
+- **Ultra-wide optimization**: Side-by-side chat + terminal output, message threading panel
+- **Enhanced input**: Auto-completion, syntax highlighting, command suggestions
 
 ### ⏳ Task 4: Extend Zustand Store
 **Status**: PENDING  

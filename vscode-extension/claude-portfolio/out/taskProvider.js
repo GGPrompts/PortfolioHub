@@ -122,8 +122,8 @@ class PortfolioTaskProvider {
     }
     createUtilityTasks() {
         return [
-            this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'start-all' }, vscode.TaskScope.Workspace, 'Utility: Start All Projects', 'powershell -ExecutionPolicy Bypass -File .\\scripts\\start-all-enhanced.ps1', this.portfolioPath),
-            this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'kill-all' }, vscode.TaskScope.Workspace, 'Utility: Kill All Servers', 'powershell -ExecutionPolicy Bypass -File .\\scripts\\kill-all-servers.ps1', this.portfolioPath),
+            this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'start-all' }, vscode.TaskScope.Workspace, 'Utility: Start All Projects', '.\\scripts\\start-all-enhanced.ps1', this.portfolioPath),
+            this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'kill-all' }, vscode.TaskScope.Workspace, 'Utility: Kill All Servers', '.\\scripts\\kill-all-servers.ps1', this.portfolioPath),
             this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'check-ports' }, vscode.TaskScope.Workspace, 'Utility: Check Ports', 'powershell -ExecutionPolicy Bypass -File .\\scripts\\check-ports.ps1', this.portfolioPath),
             this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'monitor-performance' }, vscode.TaskScope.Workspace, 'Utility: Monitor Performance', 'powershell -ExecutionPolicy Bypass -File .\\scripts\\monitor-performance.ps1', this.portfolioPath),
             this.createTask({ type: PortfolioTaskProvider.taskType, category: 'utility', command: 'monitor-watch' }, vscode.TaskScope.Workspace, 'Utility: Watch Performance', 'powershell -ExecutionPolicy Bypass -File .\\scripts\\monitor-performance.ps1 -Watch', this.portfolioPath)

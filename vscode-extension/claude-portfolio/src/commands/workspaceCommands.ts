@@ -137,7 +137,10 @@ export class WorkspaceCommands {
                 
                 // Also refresh other providers after a brief delay
                 setTimeout(() => {
-                    this.portfolioWebviewProvider.refreshProjectData();
+                    // Only refresh if webview provider exists (unified architecture may not have it)
+                    if (this.portfolioWebviewProvider) {
+                        this.portfolioWebviewProvider.refreshProjectData();
+                    }
                     if (this.multiProjectCommandsProvider) {
                         this.multiProjectCommandsProvider.refresh();
                     }
@@ -147,7 +150,9 @@ export class WorkspaceCommands {
             } else {
                 // Fallback if providers not available
                 console.log('⚠️ ProjectProvider not available, using basic refresh');
-                this.portfolioWebviewProvider.refreshProjectData();
+                if (this.portfolioWebviewProvider) {
+                    this.portfolioWebviewProvider.refreshProjectData();
+                }
                 vscode.window.showInformationMessage('Projects refreshed (basic mode)');
             }
         } catch (error) {

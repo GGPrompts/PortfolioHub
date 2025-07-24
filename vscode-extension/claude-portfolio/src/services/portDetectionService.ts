@@ -150,7 +150,10 @@ export class PortDetectionService {
                 // Parse netstat output
                 const lines = output.split('\n');
                 for (const line of lines) {
-                    const match = line.match(/^\s*TCP\s+.*:(\d+)\s+.*LISTENING\s+(\d+)/);
+                    // Match both IPv4 and IPv6 formats
+                    // IPv4: TCP    127.0.0.1:9323         0.0.0.0:0              LISTENING       13480
+                    // IPv6: TCP    [::1]:9323             [::]:0                 LISTENING       13480
+                    const match = line.match(/^\s*TCP\s+(?:\[.*?\]|[\d.]+):(\d+)\s+.*LISTENING\s+(\d+)/);
                     if (match) {
                         const port = parseInt(match[1]);
                         const pid = parseInt(match[2]);

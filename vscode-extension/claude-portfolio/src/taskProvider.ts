@@ -194,14 +194,14 @@ export class PortfolioTaskProvider implements vscode.TaskProvider {
                 { type: PortfolioTaskProvider.taskType, category: 'utility', command: 'start-all' },
                 vscode.TaskScope.Workspace,
                 'Utility: Start All Projects',
-                'powershell -ExecutionPolicy Bypass -File .\\scripts\\start-all-enhanced.ps1',
+                '.\\scripts\\start-all-enhanced.ps1',
                 this.portfolioPath
             ),
             this.createTask(
                 { type: PortfolioTaskProvider.taskType, category: 'utility', command: 'kill-all' },
                 vscode.TaskScope.Workspace,
                 'Utility: Kill All Servers',
-                'powershell -ExecutionPolicy Bypass -File .\\scripts\\kill-all-servers.ps1',
+                '.\\scripts\\kill-all-servers.ps1',
                 this.portfolioPath
             ),
             this.createTask(

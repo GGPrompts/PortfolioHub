@@ -59,8 +59,41 @@ class ProjectProvider {
     }
     getChildren(element) {
         if (!element) {
-            // Return root level projects with checkbox state
-            return Promise.resolve(this.projects.map(project => new ProjectItem(project, vscode.TreeItemCollapsibleState.None, this.isProjectSelected(project.id), this)));
+            // Create category sections for Online/Offline projects
+            const onlineProjects = this.projects.filter(p => p.status === 'active');
+            const offlineProjects = this.projects.filter(p => p.status === 'inactive');
+            const items = [];
+            // Online Projects Section
+            if (onlineProjects.length > 0) {
+                const allOnlineSelected = onlineProjects.every(p => this.isProjectSelected(p.id));
+                items.push(new ProjectItem({
+                    id: '__online_section__',
+                    title: `🟢 Online Projects (${onlineProjects.length})`,
+                    status: 'section',
+                    isSection: true,
+                    sectionType: 'online'
+                }, vscode.TreeItemCollapsibleState.Expanded, allOnlineSelected, this));
+            }
+            // Offline Projects Section
+            if (offlineProjects.length > 0) {
+                const allOfflineSelected = offlineProjects.every(p => this.isProjectSelected(p.id));
+                items.push(new ProjectItem({
+                    id: '__offline_section__',
+                    title: `🔴 Offline Projects (${offlineProjects.length})`,
+                    status: 'section',
+                    isSection: true,
+                    sectionType: 'offline'
+                }, vscode.TreeItemCollapsibleState.Expanded, allOfflineSelected, this));
+            }
+            return Promise.resolve(items);
+        }
+        else if (element.project.isSection) {
+            // Return child projects for the section
+            const sectionType = element.project.sectionType;
+            const sectionProjects = sectionType === 'online'
+                ? this.projects.filter(p => p.status === 'active')
+                : this.projects.filter(p => p.status === 'inactive');
+            return Promise.resolve(sectionProjects.map(project => new ProjectItem(project, vscode.TreeItemCollapsibleState.None, this.isProjectSelected(project.id), this)));
         }
         return Promise.resolve([]);
     }
@@ -103,6 +136,33 @@ class ProjectProvider {
     }
     selectAll() {
         this.projects.forEach(p => this.selectedProjects.add(p.id));
+        this._onDidChangeTreeData.fire();
+    }
+    selectAllOnline() {
+        this.projects
+            .filter(p => p.status === 'active')
+            .forEach(p => this.selectedProjects.add(p.id));
+        this._onDidChangeTreeData.fire();
+    }
+    selectAllOffline() {
+        this.projects
+            .filter(p => p.status === 'inactive')
+            .forEach(p => this.selectedProjects.add(p.id));
+        this._onDidChangeTreeData.fire();
+    }
+    toggleSectionSelection(sectionType) {
+        const sectionProjects = sectionType === 'online'
+            ? this.projects.filter(p => p.status === 'active')
+            : this.projects.filter(p => p.status === 'inactive');
+        const allSelected = sectionProjects.every(p => this.isProjectSelected(p.id));
+        if (allSelected) {
+            // Deselect all in section
+            sectionProjects.forEach(p => this.selectedProjects.delete(p.id));
+        }
+        else {
+            // Select all in section
+            sectionProjects.forEach(p => this.selectedProjects.add(p.id));
+        }
         this._onDidChangeTreeData.fire();
     }
     async loadProjects() {
@@ -197,32 +257,57 @@ class ProjectItem extends vscode.TreeItem {
         this.provider = provider;
         // Project label with checkbox support for VS Code tree view
         this.label = project.title;
-        // Status-based description showing port and status
-        const statusText = project.status === 'active' ? 'running' : 'stopped';
-        this.description = project.localPort ? `${statusText} :${project.localPort}` : statusText;
-        this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to open command palette\nRight-click for context menu`;
-        // Set checkbox state for VS Code tree view
-        this.checkboxState = isSelected ? vscode.TreeItemCheckboxState.Checked : vscode.TreeItemCheckboxState.Unchecked;
-        // Set contextValue based on project type and selection state
-        if (this.project.displayType === 'vscode-embedded') {
-            this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';
+        if (project.isSection) {
+            // Handle section items (Online/Offline headers)
+            this.description = '';
+            this.tooltip = `Click to select/deselect all projects in this section`;
+            // Set checkbox state based on whether all projects in section are selected
+            this.checkboxState = isSelected ? vscode.TreeItemCheckboxState.Checked : vscode.TreeItemCheckboxState.Unchecked;
+            // Set context for sections
+            this.contextValue = project.sectionType === 'online' ? 'onlineSection' : 'offlineSection';
+            // Set icon for sections
+            if (project.sectionType === 'online') {
+                this.iconPath = new vscode.ThemeIcon('folder-opened', new vscode.ThemeColor('testing.iconPassed'));
+            }
+            else {
+                this.iconPath = new vscode.ThemeIcon('folder-opened', new vscode.ThemeColor('testing.iconQueued'));
+            }
+            // Click to toggle section selection
+            this.command = {
+                command: 'claude-portfolio.section.toggle',
+                title: 'Toggle Section Selection',
+                arguments: [project.sectionType]
+            };
         }
         else {
-            this.contextValue = isSelected ? 'selectedProject' : 'project';
+            // Handle regular project items
+            // Status-based description showing port and status
+            const statusText = project.status === 'active' ? 'running' : 'stopped';
+            this.description = project.localPort ? `${statusText} :${project.localPort}` : statusText;
+            this.tooltip = `${this.project.description || 'No description'}\nPort: ${this.project.localPort || 'Not configured'}\nStatus: ${this.project.status}\n\nClick to open command palette\nRight-click for context menu`;
+            // Set checkbox state for VS Code tree view
+            this.checkboxState = isSelected ? vscode.TreeItemCheckboxState.Checked : vscode.TreeItemCheckboxState.Unchecked;
+            // Set contextValue based on project type and selection state
+            if (this.project.displayType === 'vscode-embedded') {
+                this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';
+            }
+            else {
+                this.contextValue = isSelected ? 'selectedProject' : 'project';
+            }
+            // Set icon based on status (gg-devhub style)
+            if (this.project.status === 'active') {
+                this.iconPath = new vscode.ThemeIcon('play-circle', new vscode.ThemeColor('testing.iconPassed'));
+            }
+            else {
+                this.iconPath = new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('testing.iconQueued'));
+            }
+            // Single click opens command palette for project actions
+            this.command = {
+                command: 'claude-portfolio.project.select',
+                title: 'Select Project Action',
+                arguments: [this.project.id] // Pass the project ID for clean command palette integration
+            };
         }
-        // Set icon based on status (gg-devhub style)
-        if (this.project.status === 'active') {
-            this.iconPath = new vscode.ThemeIcon('play-circle', new vscode.ThemeColor('testing.iconPassed'));
-        }
-        else {
-            this.iconPath = new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('testing.iconQueued'));
-        }
-        // Single click opens command palette for project actions
-        this.command = {
-            command: 'claude-portfolio.project.select',
-            title: 'Select Project Action',
-            arguments: [this.project.id] // Pass the project ID for clean command palette integration
-        };
     }
 }
 exports.ProjectItem = ProjectItem;

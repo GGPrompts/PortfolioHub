@@ -72,14 +72,15 @@ class MultiProjectCommandsProvider {
         const runningCount = selectedStatuses.filter(s => s.status === 'active').length;
         const stoppedCount = selectedStatuses.filter(s => s.status === 'inactive').length;
         const multipleCount = selectedStatuses.filter(s => s.status === 'multiple').length;
-        this.commands = [
-            // Server Control
+        // Define checkbox-affected commands (these are the core batch operations)
+        const batchOperations = [
+            // Server Control (checkbox-affected)
             {
                 label: `Start All Selected (${stoppedCount})`,
                 command: 'claude-portfolio.batchStartProjects',
                 icon: 'play',
                 description: `Start ${stoppedCount} stopped projects`,
-                category: 'Server Control',
+                category: 'Batch Operations',
                 requiresStopped: true
             },
             {
@@ -87,205 +88,152 @@ class MultiProjectCommandsProvider {
                 command: 'claude-portfolio.batchStopProjects',
                 icon: 'debug-stop',
                 description: `Stop ${runningCount} running projects${multipleCount > 0 ? ` (${multipleCount} have multiple instances)` : ''}`,
-                category: 'Server Control',
+                category: 'Batch Operations',
                 requiresRunning: true
             },
-            // Browse & Open
-            {
-                label: `Open All in Browser (${runningCount})`,
-                command: 'claude-portfolio.batchOpenBrowser',
-                icon: 'globe',
-                description: `Open ${runningCount} running projects in browser`,
-                category: 'Browse & Open',
-                requiresRunning: true
-            },
-            {
-                label: `Add All to Workspace`,
-                command: 'claude-portfolio.batchAddToWorkspace',
-                icon: 'folder-opened',
-                description: `Add ${selectedProjects.length} projects to VS Code workspace`,
-                category: 'Browse & Open'
-            },
-            // Development
+            // Development (checkbox-affected)
             {
                 label: `Install Dependencies (All)`,
                 command: 'claude-portfolio.batchNpmInstall',
                 icon: 'package',
                 description: `Run npm install on ${selectedProjects.length} projects`,
-                category: 'Development'
+                category: 'Batch Operations'
             },
             {
                 label: `Build All Projects`,
                 command: 'claude-portfolio.batchNpmBuild',
                 icon: 'tools',
                 description: `Run npm run build on ${selectedProjects.length} projects`,
-                category: 'Development'
+                category: 'Batch Operations'
             },
             {
                 label: `Test All Projects`,
                 command: 'claude-portfolio.batchNpmTest',
                 icon: 'beaker',
                 description: `Run npm test on ${selectedProjects.length} projects`,
-                category: 'Development'
+                category: 'Batch Operations'
             },
-            // Git Operations
+            // Workspace Management (checkbox-affected) - removed non-functioning Add All to Workspace
+            // Git Operations (checkbox-affected)
             {
                 label: `Git Status (All)`,
                 command: 'claude-portfolio.batchGitStatus',
                 icon: 'git-branch',
                 description: `Check git status for ${selectedProjects.length} projects`,
-                category: 'Git Operations'
+                category: 'Batch Operations'
             },
             {
                 label: `Git Pull (All)`,
                 command: 'claude-portfolio.batchGitPull',
                 icon: 'repo-pull',
                 description: `Pull latest changes for ${selectedProjects.length} projects`,
-                category: 'Git Operations'
-            },
-            // Portfolio Management
+                category: 'Batch Operations'
+            }
+        ];
+        // Define other commands that are NOT checkbox-affected (for separate review)
+        const otherCommands = [
+            // Portfolio Management (NOT checkbox-affected)
             {
                 label: 'Start Portfolio Server',
                 command: 'claude-portfolio.startPortfolioServer',
                 icon: 'server-environment',
                 description: 'Start the main portfolio development server',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
             {
                 label: 'Start VS Code Server',
                 command: 'claude-portfolio.startVSCodeServer',
                 icon: 'browser',
                 description: 'Start portfolio server and open in Simple Browser',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
             {
                 label: 'Start All Servers',
                 command: 'claude-portfolio.startAllServers',
                 icon: 'rocket',
                 description: 'Start portfolio and all project servers',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
             {
                 label: 'Start Projects (Tabbed)',
                 command: 'claude-portfolio.startAllProjectsTabbed',
                 icon: 'terminal',
                 description: 'Start all projects in Windows Terminal tabs',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
             {
                 label: 'Create New Project',
                 command: 'claude-portfolio.createNewProject',
                 icon: 'add',
                 description: 'Create a new project using template',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
             {
                 label: 'Check Portfolio Ports',
                 command: 'claude-portfolio.checkPortfolioports',
                 icon: 'ports-view-icon',
                 description: 'Check status of portfolio development ports',
-                category: 'Portfolio'
+                category: 'Other Commands'
             },
-            // Development Commands (from React QuickCommandsPanel)
-            {
-                label: 'Start Dev Server',
-                command: 'claude-portfolio.startDev',
-                icon: 'play',
-                description: 'Start portfolio development server (npm run dev)',
-                category: 'Development'
-            },
+            // Portfolio Development Commands (NOT checkbox-affected)
             {
                 label: 'Build React App',
                 command: 'claude-portfolio.buildReact',
                 icon: 'package',
                 description: 'Build the React portfolio app (npm run build)',
-                category: 'Development'
+                category: 'Other Commands'
             },
             {
                 label: 'Install Dependencies',
                 command: 'claude-portfolio.npmInstall',
                 icon: 'cloud-download',
                 description: 'Install npm dependencies (npm install)',
-                category: 'Development'
+                category: 'Other Commands'
             },
             {
                 label: 'Kill All Servers',
                 command: 'claude-portfolio.killAllServers',
                 icon: 'debug-stop',
                 description: 'Kill all running development servers',
-                category: 'Development'
+                category: 'Other Commands'
             },
             {
                 label: 'Start All Projects',
                 command: 'claude-portfolio.startAllProjects',
                 icon: 'run-all',
                 description: 'Start all project development servers',
-                category: 'Development'
+                category: 'Other Commands'
             },
-            // VS Code Commands (commonly used from React app)
-            {
-                label: 'New Terminal',
-                command: 'terminal.new',
-                icon: 'terminal',
-                description: 'Create a new integrated terminal',
-                category: 'VS Code'
-            },
-            {
-                label: 'Split Terminal',
-                command: 'terminal.split',
-                icon: 'split-horizontal',
-                description: 'Split the current terminal',
-                category: 'VS Code'
-            },
+            // VS Code Commands (NOT checkbox-affected) - Keep only essential ones
             {
                 label: 'Reload Window',
                 command: 'workbench.action.reloadWindow',
                 icon: 'refresh',
                 description: 'Reload VS Code window',
-                category: 'VS Code'
+                category: 'Other Commands'
             },
-            {
-                label: 'Open Folder',
-                command: 'workbench.action.files.openFolder',
-                icon: 'folder-opened',
-                description: 'Open a folder in VS Code',
-                category: 'VS Code'
-            },
-            {
-                label: 'Command Palette',
-                command: 'workbench.action.showCommands',
-                icon: 'symbol-event',
-                description: 'Show command palette (Ctrl+Shift+P)',
-                category: 'VS Code'
-            },
-            // Selection Management
+            // Selection Management (keep these - they manage checkboxes)
             {
                 label: `Clear Selection`,
                 command: 'claude-portfolio.clearProjectSelection',
                 icon: 'clear-all',
                 description: `Uncheck all selected projects`,
-                category: 'Selection'
+                category: 'Batch Operations'
             },
             {
                 label: `Select All Projects`,
                 command: 'claude-portfolio.selectAllProjects',
                 icon: 'select-all',
                 description: `Check all projects`,
-                category: 'Selection'
-            },
-            // Status & Diagnostics
-            {
-                label: 'Refresh Status',
-                command: 'claude-portfolio.refreshProjects',
-                icon: 'refresh',
-                description: 'Force refresh project status detection',
-                category: 'Diagnostics'
+                category: 'Batch Operations'
             }
-        ].filter(cmd => {
-            // Filter commands based on project states
-            if (cmd.requiresRunning && runningCount === 0)
+        ];
+        // Combine the commands - include both batch operations and other commands
+        this.commands = [...batchOperations, ...otherCommands].filter(cmd => {
+            // Filter commands based on project states (only apply to batch operations)
+            if ('requiresRunning' in cmd && cmd.requiresRunning && runningCount === 0)
                 return false;
-            if (cmd.requiresStopped && stoppedCount === 0)
+            if ('requiresStopped' in cmd && cmd.requiresStopped && stoppedCount === 0)
                 return false;
             return true;
         });
@@ -304,26 +252,21 @@ class MultiProjectCommandsProvider {
             if (projectsWithWarnings.length > 0) {
                 items.push(new BatchCommandItem(`⚠️ ${projectsWithWarnings.length} Issues Detected`, '', 'Warnings', 'warning', 'Click to see details', vscode.TreeItemCollapsibleState.Collapsed, true));
             }
-            // Always show core categories (Portfolio, Development, VS Code)
-            const alwaysShowCategories = ['Portfolio', 'Development', 'VS Code'];
+            // Show Batch Operations as primary category, Other Commands for review
             const allCategories = [...new Set(this.commands.map(c => c.category))];
-            // Add always-show categories first
-            alwaysShowCategories.forEach(cat => {
+            const primaryCategories = ['Batch Operations'];
+            const otherCategories = allCategories.filter(cat => !primaryCategories.includes(cat));
+            // Add primary categories (always show)
+            primaryCategories.forEach(cat => {
                 if (allCategories.includes(cat)) {
-                    const description = cat === 'Portfolio' ? 'Portfolio server and project management' :
-                        cat === 'Development' ? 'Development tools and build commands' :
-                            cat === 'VS Code' ? 'VS Code workspace commands' :
-                                `${cat} commands`;
+                    const description = cat === 'Batch Operations' ? 'Commands that work on selected projects' : `${cat} commands`;
                     items.push(new BatchCommandItem(cat, '', cat, 'folder', description, vscode.TreeItemCollapsibleState.Expanded, true));
                 }
             });
-            // Add project-specific categories only when projects are selected
-            if (selectedCount > 0) {
-                const projectSpecificCategories = allCategories.filter(cat => !alwaysShowCategories.includes(cat));
-                projectSpecificCategories.forEach(cat => {
-                    items.push(new BatchCommandItem(cat, '', cat, 'folder', `${cat} commands for selected projects`, vscode.TreeItemCollapsibleState.Expanded, true));
-                });
-            }
+            // Add other categories for review (collapsed by default)
+            otherCategories.forEach(cat => {
+                items.push(new BatchCommandItem(`🔍 ${cat} (Review)`, '', cat, 'folder', `${cat} - commands to review for keeping or removing`, vscode.TreeItemCollapsibleState.Collapsed, true));
+            });
             return Promise.resolve(items);
         }
         else if (element.category === 'Warnings') {
@@ -339,7 +282,14 @@ class MultiProjectCommandsProvider {
         else if (element.isCategory && element.category !== 'Selection' && element.category !== 'Warnings') {
             // Return commands for this category
             const categoryCommands = this.commands.filter(c => c.category === element.category);
-            return Promise.resolve(categoryCommands.map(cmd => new BatchCommandItem(cmd.label, cmd.command, cmd.category, cmd.icon, cmd.description, vscode.TreeItemCollapsibleState.None, false)));
+            return Promise.resolve(categoryCommands.map(cmd => {
+                // Add contextual info for commands in review sections
+                const isReviewCommand = !['Batch Operations'].includes(cmd.category);
+                const description = isReviewCommand ?
+                    `⚠️ REVIEW: ${cmd.description}` :
+                    cmd.description;
+                return new BatchCommandItem(cmd.label, cmd.command, cmd.category, cmd.icon, description, vscode.TreeItemCollapsibleState.None, false);
+            }));
         }
         return Promise.resolve([]);
     }

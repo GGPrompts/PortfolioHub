@@ -19,7 +19,8 @@ export class SelectionCommands {
             vscode.commands.registerCommand('claude-portfolio.toggleProjectSelection', this.toggleProjectSelectionCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.clearProjectSelection', this.clearProjectSelectionCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.selectAllProjects', this.selectAllProjectsCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.project.select', this.projectSelectCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.project.select', this.projectSelectCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.section.toggle', this.sectionToggleCommand.bind(this))
         ];
 
         commands.forEach(command => context.subscriptions.push(command));
@@ -285,6 +286,42 @@ export class SelectionCommands {
             const message = `Error selecting all projects: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
             console.error('Select all projects error:', error);
+        }
+    }
+
+    /**
+     * Toggle section selection (Online/Offline)
+     */
+    private async sectionToggleCommand(sectionType: 'online' | 'offline'): Promise<void> {
+        try {
+            console.log(`🔘 Toggle section selection called for: ${sectionType}`);
+            
+            // Toggle the section selection using the provider method
+            this.projectProvider.toggleSectionSelection(sectionType);
+            
+            // Get project counts for feedback
+            const allProjects = await this.projectProvider.getProjects();
+            const sectionProjects = sectionType === 'online' 
+                ? allProjects.filter(p => p.status === 'active')
+                : allProjects.filter(p => p.status === 'inactive');
+            
+            const selectedInSection = sectionProjects.filter(p => this.projectProvider.isProjectSelected(p.id));
+            const allSelected = selectedInSection.length === sectionProjects.length;
+            
+            // Show feedback
+            const sectionName = sectionType === 'online' ? 'Online' : 'Offline';
+            const icon = allSelected ? '✓' : '○';
+            const action = allSelected ? 'selected' : 'deselected';
+            
+            console.log(`${icon} ${sectionName} section ${action} (${selectedInSection.length}/${sectionProjects.length} projects)`);
+            vscode.window.showInformationMessage(
+                `${icon} ${sectionName} projects ${action} (${selectedInSection.length}/${sectionProjects.length})`
+            );
+            
+        } catch (error) {
+            const message = `Error toggling section selection: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Toggle section selection error:', error);
         }
     }
 

@@ -483,11 +483,32 @@ We welcome contributions! Here's how to get started:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## 📚 Documentation
+
+### **Primary Documentation**
+- **[CLAUDE.md](CLAUDE.md)** - Main development guide and project instructions
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and unified single-app design
+- **[PLAN.md](PLAN.md)** - Development roadmap and future features
+- **[COMPLETED_FEATURES.md](COMPLETED_FEATURES.md)** - Historical achievements and completed work
+
+### **VS Code Extension Documentation**
+- **[VS Code Extension Guide](vscode-extension/CLAUDE.md)** - Complete extension documentation
+- **[Extension Testing](vscode-extension/claude-portfolio/EXTENSION_TESTING_GUIDE.md)** - Testing procedures
+
+### **Development Resources**
+- **[Development Journals](projects/dev-journals/)** - Project-specific development logs
+- **[Scripts Documentation](scripts/)** - PowerShell automation scripts
+- **[Testing Guides](tests/)** - Security and integration tests
+
+### **Archived Documentation**
+- **[Documentation Archive](docs/archive/)** - Historical and reference documentation
+- **[Archive Index](docs/archive/README.md)** - Complete archive contents and policy
+
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/GGPrompts/claude-dev-portfolio/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/GGPrompts/claude-dev-portfolio/discussions)
-- **Documentation**: Check the `/docs` folder for detailed guides
+- **Documentation**: Check the navigation above for comprehensive guides
 
 ## 📄 License
 

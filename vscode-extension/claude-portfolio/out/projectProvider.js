@@ -195,12 +195,14 @@ class ProjectItem extends vscode.TreeItem {
         this.collapsibleState = collapsibleState;
         this.isSelected = isSelected;
         this.provider = provider;
-        // Clean project label without checkboxes (gg-devhub style)
+        // Project label with checkbox support for VS Code tree view
         this.label = project.title;
         // Status-based description showing port and status
         const statusText = project.status === 'active' ? 'running' : 'stopped';
         this.description = project.localPort ? `${statusText} :${project.localPort}` : statusText;
         this.tooltip = `${this.project.description}\nPort: ${this.project.localPort}\nStatus: ${this.project.status}\n\nClick to open command palette\nRight-click for context menu`;
+        // Set checkbox state for VS Code tree view
+        this.checkboxState = isSelected ? vscode.TreeItemCheckboxState.Checked : vscode.TreeItemCheckboxState.Unchecked;
         // Set contextValue based on project type and selection state
         if (this.project.displayType === 'vscode-embedded') {
             this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProjectProvider } from './projectProvider';
+import { ProjectProvider, ProjectItem } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
 import { ProjectCommandsProvider } from './projectCommandsProvider';
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
@@ -172,7 +172,30 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
  */
 function registerProviders(context: vscode.ExtensionContext, providers: ExtensionProviders): void {
     // Register tree data providers
-    vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
+    const projectTreeView = vscode.window.createTreeView('claudeProjects', {
+        treeDataProvider: providers.projectProvider,
+        canSelectMany: true
+    });
+    
+    // Handle checkbox state changes
+    projectTreeView.onDidChangeCheckboxState(e => {
+        e.items.forEach(([item, state]) => {
+            if (item instanceof ProjectItem) {
+                const projectId = item.project.id;
+                const isChecked = state === vscode.TreeItemCheckboxState.Checked;
+                
+                // Update provider's selection state to match checkbox
+                if (isChecked && !providers.projectProvider.isProjectSelected(projectId)) {
+                    providers.projectProvider.toggleProjectSelection(projectId);
+                } else if (!isChecked && providers.projectProvider.isProjectSelected(projectId)) {
+                    providers.projectProvider.toggleProjectSelection(projectId);
+                }
+            }
+        });
+    });
+    
+    context.subscriptions.push(projectTreeView);
+    
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);

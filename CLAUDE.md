@@ -384,6 +384,34 @@ code --install-extension extension-name.vsix
 // 🌍 Remote mode (future) → API-based commands
 ```
 
+**🤖 Browser Automation with Playwright (January 2025):**
+```bash
+# Launch Edge with debugging enabled for automation
+.\scripts\launch-edge-debug.ps1
+
+# Run portfolio automation tests
+node scripts/test-automation.js
+
+# Available automation capabilities:
+# 📸 Screenshot generation (portfolio + individual projects)
+# 🧪 Automated testing (React health checks, performance)
+# 🎮 User journey testing (navigation, interactions)
+# 📊 Performance auditing (Core Web Vitals, load times)
+```
+
+**🎯 Automation Features:**
+- **Edge DevTools Integration**: Connects to `localhost:9222` debug port
+- **Full Portfolio Screenshots**: Captures entire portfolio interface automatically
+- **Project Health Monitoring**: Tests all project ports and React error states
+- **Performance Metrics**: Automated Core Web Vitals and load time analysis
+- **Visual Regression Testing**: Compare screenshots before/after changes
+- **User Flow Automation**: Simulate clicks, navigation, form interactions
+
+**📸 Generated Outputs:**
+- `portfolio-screenshot.png` - Full portfolio capture
+- `project-{port}-screenshot.png` - Individual project screenshots
+- Console logs with detailed testing results and performance metrics
+
 ## Development Workflows
 
 ### Enhanced DEV NOTES System Workflow (January 2025)

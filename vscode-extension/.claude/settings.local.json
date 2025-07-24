@@ -4,7 +4,8 @@
       "Bash(npm run compile:*)",
       "Bash(npx vsce package:*)",
       "WebFetch(domain:code.visualstudio.com)",
-      "WebFetch(domain:code.visualstudio.com)"
+      "WebFetch(domain:code.visualstudio.com)",
+      "Bash(code:*)"
     ],
     "deny": []
   }

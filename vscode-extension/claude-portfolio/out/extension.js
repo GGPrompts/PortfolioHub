@@ -150,7 +150,27 @@ function createProviders(services, context) {
  */
 function registerProviders(context, providers) {
     // Register tree data providers
-    vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
+    const projectTreeView = vscode.window.createTreeView('claudeProjects', {
+        treeDataProvider: providers.projectProvider,
+        canSelectMany: true
+    });
+    // Handle checkbox state changes
+    projectTreeView.onDidChangeCheckboxState(e => {
+        e.items.forEach(([item, state]) => {
+            if (item instanceof projectProvider_1.ProjectItem) {
+                const projectId = item.project.id;
+                const isChecked = state === vscode.TreeItemCheckboxState.Checked;
+                // Update provider's selection state to match checkbox
+                if (isChecked && !providers.projectProvider.isProjectSelected(projectId)) {
+                    providers.projectProvider.toggleProjectSelection(projectId);
+                }
+                else if (!isChecked && providers.projectProvider.isProjectSelected(projectId)) {
+                    providers.projectProvider.toggleProjectSelection(projectId);
+                }
+            }
+        });
+    });
+    context.subscriptions.push(projectTreeView);
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);

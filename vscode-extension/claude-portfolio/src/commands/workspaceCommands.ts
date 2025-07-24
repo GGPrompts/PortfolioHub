@@ -3,6 +3,7 @@ import * as path from 'path';
 import { VSCodeSecurityService } from '../securityService';
 import { ConfigurationService } from '../services/configurationService';
 import { DashboardPanel } from '../dashboardPanel';
+import { CheatSheetPanel } from '../cheatSheetPanel';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { ProjectProvider } from '../projectProvider';
 import { MultiProjectCommandsProvider } from '../multiProjectCommandsProvider';
@@ -46,7 +47,8 @@ export class WorkspaceCommands {
             vscode.commands.registerCommand('claude-portfolio.startAllServers', this.startAllServersCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.startAllProjectsTabbed', this.startAllProjectsTabbedCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.createNewProject', this.createNewProjectCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.checkPortfolioports', this.checkPortfolioPortsCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.checkPortfolioports', this.checkPortfolioPortsCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.openCheatSheet', this.openCheatSheetCommand.bind(this))
         ];
 
         commands.forEach(command => context.subscriptions.push(command));
@@ -653,6 +655,24 @@ export class WorkspaceCommands {
             const message = `Error checking portfolio ports: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
             console.error('Check portfolio ports error:', error);
+        }
+    }
+
+    /**
+     * Open Windows Command Cheat Sheet in webview panel
+     */
+    private async openCheatSheetCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            
+            // Open cheat sheet in dedicated webview panel (like dashboard)
+            CheatSheetPanel.createOrShow(this.extensionContext.extensionUri, portfolioPath);
+            
+            vscode.window.showInformationMessage('📚 Windows Command Cheat Sheet opened');
+        } catch (error) {
+            const message = `Error opening cheat sheet: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Open cheat sheet error:', error);
         }
     }
 }

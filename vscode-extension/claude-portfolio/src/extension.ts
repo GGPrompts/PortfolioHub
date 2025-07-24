@@ -5,6 +5,7 @@ import { ProjectCommandsProvider } from './projectCommandsProvider';
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
+import { VSCodePageProvider } from './vscodePageProvider';
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 
 // Services
@@ -38,6 +39,7 @@ interface ExtensionProviders {
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     taskProvider: PortfolioTaskProvider;
+    vscodePageProvider: VSCodePageProvider;
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
 }
 
@@ -151,6 +153,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
+    const vscodePageProvider = new VSCodePageProvider();
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
 
     return {
@@ -159,6 +162,7 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
         multiProjectCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
+        vscodePageProvider,
         // cheatSheetProvider removed
     };
 }
@@ -171,6 +175,7 @@ function registerProviders(context: vscode.ExtensionContext, providers: Extensio
     vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
+    vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
 
     // Register task provider

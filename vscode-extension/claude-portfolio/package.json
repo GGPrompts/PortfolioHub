@@ -48,6 +48,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "claude-portfolio.openCheatSheet",
+        "title": "Open Windows Command Cheat Sheet",
+        "category": "Claude Portfolio",
+        "icon": "$(book)"
+      },
+      {
         "command": "claude-portfolio.test",
         "title": "Test Extension",
         "category": "Claude Portfolio"
@@ -186,6 +192,12 @@
           "id": "claudeMultiProjectCommands",
           "name": "Batch Commands",
           "contextualTitle": "Multi-Project Batch Commands",
+          "when": "true"
+        },
+        {
+          "id": "claudeVSCodePages",
+          "name": "VS Code Pages",
+          "contextualTitle": "VS Code Integrated Pages",
           "when": "true"
         }
       ]

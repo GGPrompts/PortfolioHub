@@ -167,7 +167,7 @@ export class OptimizedPortManager {
                         signal,
                         cache: 'no-cache'
                     });
-                    console.log(`✅ Port ${port} favicon.ico succeeded:`, response.type, response.status);
+                    // Reduced logging to prevent console spam
                     return true;
                 }
             ];

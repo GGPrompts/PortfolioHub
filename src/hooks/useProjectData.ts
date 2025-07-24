@@ -70,8 +70,8 @@ export function useProjectData() {
     queryKey: ['projectStatus', projects],
     queryFn: () => fetchProjectStatus(projects),
     enabled: projects.length > 0, // Only run when we have projects
-    staleTime: 60 * 1000, // 60 seconds (increased from 30)
-    refetchInterval: 15 * 1000, // 15 seconds (increased from 5) to reduce spam
+    staleTime: 2 * 60 * 1000, // 2 minutes - much less aggressive
+    refetchInterval: 60 * 1000, // 60 seconds - reduced spam significantly  
     refetchOnWindowFocus: false,
     retry: 1,
   })

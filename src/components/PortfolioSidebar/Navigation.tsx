@@ -1,6 +1,5 @@
 import React from 'react'
 import SvgIcon from '../SvgIcon'
-import EnvironmentBadge from '../EnvironmentBadge'
 import styles from '../PortfolioSidebar.module.css'
 
 interface Project {
@@ -35,10 +34,6 @@ export default function Navigation({
 
   return (
     <>
-      {/* Environment Badge */}
-      <div className={styles.environmentBadgeContainer}>
-        <EnvironmentBadge size="small" showDescription={false} />
-      </div>
       
       {/* Responsive mode indicator */}
       {layoutStrategy === 'overlay' && activeTabs.length > 0 && (

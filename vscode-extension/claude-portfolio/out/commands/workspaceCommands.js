@@ -38,6 +38,7 @@ const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const securityService_1 = require("../securityService");
 const dashboardPanel_1 = require("../dashboardPanel");
+const cheatSheetPanel_1 = require("../cheatSheetPanel");
 const portDetectionService_1 = require("../services/portDetectionService");
 /**
  * VS Code workspace and extension management commands
@@ -77,7 +78,8 @@ class WorkspaceCommands {
             vscode.commands.registerCommand('claude-portfolio.startAllServers', this.startAllServersCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.startAllProjectsTabbed', this.startAllProjectsTabbedCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.createNewProject', this.createNewProjectCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.checkPortfolioports', this.checkPortfolioPortsCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.checkPortfolioports', this.checkPortfolioPortsCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.openCheatSheet', this.openCheatSheetCommand.bind(this))
         ];
         commands.forEach(command => context.subscriptions.push(command));
     }
@@ -593,6 +595,22 @@ class WorkspaceCommands {
             const message = `Error checking portfolio ports: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
             console.error('Check portfolio ports error:', error);
+        }
+    }
+    /**
+     * Open Windows Command Cheat Sheet in webview panel
+     */
+    async openCheatSheetCommand() {
+        try {
+            const portfolioPath = this.configService.getPortfolioPath();
+            // Open cheat sheet in dedicated webview panel (like dashboard)
+            cheatSheetPanel_1.CheatSheetPanel.createOrShow(this.extensionContext.extensionUri, portfolioPath);
+            vscode.window.showInformationMessage('📚 Windows Command Cheat Sheet opened');
+        }
+        catch (error) {
+            const message = `Error opening cheat sheet: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Open cheat sheet error:', error);
         }
     }
 }

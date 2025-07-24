@@ -82,21 +82,20 @@ export default function PortfolioSidebar({
     // Fixed order: projects -> journals (left to right)
     const fixedOrder = ['projects', 'journals']
     
-    // Calculate cumulative width up to this tab's position
+    // Calculate cumulative width up to and including this tab's panel
     let cumulativeWidth = 0
     for (const orderedTabId of fixedOrder) {
-      // Stop when we reach the current tab
-      if (orderedTabId === tabId) {
-        break
-      }
-      // Add width if the tab is active
       if (activeTabs.includes(orderedTabId)) {
         if (tabs[orderedTabId as keyof typeof tabs]) {
           cumulativeWidth += tabs[orderedTabId as keyof typeof tabs].width
         }
       }
+      // Stop when we reach the current tab
+      if (orderedTabId === tabId) {
+        break
+      }
     }
-    return cumulativeWidth // Position at the left edge of where this tab should be
+    return cumulativeWidth // Position at the right edge of this panel
   }
   
   // Calculate total width based on active tabs only

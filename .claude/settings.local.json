@@ -56,7 +56,9 @@
       "Bash(npm test -- --run)",
       "Bash(grep -c '\"\"id\"\":' projects/manifest.json)",
       "Bash(grep -A 3 '\"\"claude-portfolio-unified\"\"' projects/manifest.json)",
-      "Bash(timeout 5s npm run dev)"
+      "Bash(timeout 5s npm run dev)",
+      "WebFetch(domain:learn.microsoft.com)",
+      "WebFetch(domain:marketplace.visualstudio.com)"
     ],
     "deny": []
   }

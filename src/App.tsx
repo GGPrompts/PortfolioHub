@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
+import './utils/consoleHelper' // Import console helper for development
 import EnhancedProjectViewer from './components/EnhancedProjectViewer'
 import GitUpdateButton from './components/GitUpdateButton'
 import PortfolioSidebar from './components/PortfolioSidebar'

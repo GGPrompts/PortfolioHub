@@ -42,6 +42,7 @@ const projectCommandsProvider_1 = require("./projectCommandsProvider");
 const multiProjectCommandsProvider_1 = require("./multiProjectCommandsProvider");
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 const taskProvider_1 = require("./taskProvider");
+const vscodePageProvider_1 = require("./vscodePageProvider");
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 // Services
 const projectService_1 = require("./services/projectService");
@@ -132,6 +133,7 @@ function createProviders(services, context) {
     const multiProjectCommandsProvider = new multiProjectCommandsProvider_1.MultiProjectCommandsProvider(projectProvider);
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new taskProvider_1.PortfolioTaskProvider(portfolioPath);
+    const vscodePageProvider = new vscodePageProvider_1.VSCodePageProvider();
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
     return {
         projectProvider,
@@ -139,6 +141,7 @@ function createProviders(services, context) {
         multiProjectCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
+        vscodePageProvider,
         // cheatSheetProvider removed
     };
 }
@@ -150,6 +153,7 @@ function registerProviders(context, providers) {
     vscode.window.registerTreeDataProvider('claudeProjects', providers.projectProvider);
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
+    vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
     // Register task provider
     const taskProviderDisposable = vscode.tasks.registerTaskProvider(taskProvider_1.PortfolioTaskProvider.taskType, providers.taskProvider);

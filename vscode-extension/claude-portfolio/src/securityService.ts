@@ -22,7 +22,15 @@ export class VSCodeSecurityService {
         '.\\scripts\\launch-projects-enhanced.ps1',
         '.\\scripts\\create-project-enhanced.ps1',
         '.\\scripts\\start-all-enhanced.ps1',
-        '.\\scripts\\fix-vscode-performance.ps1'
+        '.\\scripts\\fix-vscode-performance.ps1',
+        '.\\scripts\\enhanced-cleanup.ps1',
+        '.\\scripts\\close-all-terminals.ps1',
+        '.\\scripts\\scan-ports.ps1',
+        '.\\scripts\\scan-ports-enhanced.ps1',
+        '.\\scripts\\check-processes.ps1',
+        '.\\scripts\\kill-node.ps1',
+        '.\\scripts\\enhanced-kill-node.ps1',
+        '.\\scripts\\test-process-context.ps1'
     ];
 
     /**

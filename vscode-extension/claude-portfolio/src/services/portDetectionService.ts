@@ -95,9 +95,11 @@ export class PortDetectionService {
             });
         }
 
-        // Look for this project running on other ports (duplicate detection)
-        const potentialDuplicates = await this.findProjectOnOtherPorts(project, allPortProcesses);
-        projectPorts.push(...potentialDuplicates);
+        // DISABLED: Faulty duplicate detection logic
+        // The previous logic incorrectly flagged different projects as duplicates
+        // TODO: Implement proper duplicate detection based on project identification, not just HTTP servers
+        // const potentialDuplicates = await this.findProjectOnOtherPorts(project, allPortProcesses);
+        // projectPorts.push(...potentialDuplicates);
 
         // Determine overall status
         let status: 'active' | 'inactive' | 'multiple' | 'unknown' = 'inactive';

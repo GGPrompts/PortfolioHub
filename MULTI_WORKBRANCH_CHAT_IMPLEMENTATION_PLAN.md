@@ -93,18 +93,21 @@ React App (xterm.js) ↔ WebSocket ↔ Terminal Service ↔ node-pty ↔ Real Sh
 ### **Full-Screen React App as Primary Development Environment**
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ Claude Development Portfolio - Full-Screen Ultra-Wide Layout            │
+│ Claude Development Portfolio - Ultra-Wide Terminal + Chat Layout        │
 ├───────────┬─────────────────────────────────────────────────┬───────────┤
-│ LEFT      │ CENTER CONTENT AREA                             │ RIGHT     │
+│ LEFT      │ CENTER: TERMINAL + CHAT INTERFACE              │ RIGHT     │
 │ SIDEBAR   │                                                 │ SIDEBAR   │
-│           │                                                 │           │
-│ 📂 Projects│ 🖼️ Project Viewer / Grid                        │ ⚡ Commands│
-│ 💬 Chat    │ 📊 Dashboard / Analytics                        │ 📟 Terminals│
-│ 📝 Notes   │ 🎛️ Settings / Config                            │ 👁️ Preview │
-│ 🔧 Tools   │                                                 │ 📈 Status │
-│           │                                                 │           │
-│ [Rich UI] │ [Dynamic Content Based on Selection]            │ [Live Data]│
-│ [Context] │                                                 │ [Real-time]│
+│           │ 📟 TERMINAL GRID (xterm.js) - Flexible Layout   │           │
+│ 📂 Projects│ ┌─────────┬─────────┬─────────┬─────────┐       │ 📚 Prompts│
+│ 📝 Notes   │ │ Term 1  │ Term 2  │ Term 3  │ Term 4  │       │ 📋 Notes  │
+│ 🔧 Tools   │ │ProjectA │ProjectB │ProjectC │ Tools   │       │ 📁 Files  │
+│           │ │$ npm dev│$ build  │$ git    │$ ps aux │       │ 🔀 Git    │
+│           │ └─────────┴─────────┴─────────┴─────────┘       │ 🎛️ Config │
+│           │ ─────────────────────────────────────────       │ 📊 Status │
+│           │ 💬 CHAT INTERFACE - Multi-Target Messaging      │           │
+│           │ > Send to Term 1+2: npm test                    │           │
+│           │ > Route to all: git pull                        │           │
+│ [Context] │ [Terminal Output + Chat History Combined]       │ [Tools]   │
 └───────────┴─────────────────────────────────────────────────┴───────────┘
 ```
 
@@ -117,13 +120,34 @@ React App (xterm.js) ↔ WebSocket ↔ Terminal Service ↔ node-pty ↔ Real Sh
 ### **Feature Migration from VS Code to React**
 | VS Code Extension Component | React App Equivalent | Location |
 |---------------------------|---------------------|----------|
-| **Project Tree View** | Enhanced sidebar with checkboxes | `PortfolioSidebar/Projects` |
-| **Batch Commands Panel** | Integrated batch operations | `PortfolioSidebar/BatchCommands` |
-| **Chat Panel** | Full-featured chat interface | `PortfolioSidebar/Chat` ✨ **NEW** |
-| **Terminal Provider** | xterm.js embedded terminals | `RightSidebar/Terminals` ✨ **NEW** |
-| **Command Palette** | Rich command interface | `RightSidebar/Commands` |
+| **Project Tree View** | Enhanced sidebar with checkboxes | `LeftSidebar/Projects` |
+| **Batch Commands Panel** | Integrated batch operations | `LeftSidebar/BatchCommands` |
+| **Chat Panel** | Multi-target chat interface | `CenterArea/ChatInterface` ✨ **NEW** |
+| **Terminal Provider** | Flexible terminal grid (xterm.js) | `CenterArea/TerminalGrid` ✨ **NEW** |
+| **Command Palette** | Prompt library & templates | `RightSidebar/Prompts` ✨ **NEW** |
 | **Status Indicators** | Real-time status dashboard | `RightSidebar/Status` |
-| **Live Preview** | Enhanced project viewer | `CenterContent/Viewer` |
+| **Live Preview** | Enhanced project viewer | `RightSidebar/Preview` |
+
+### **Terminal Grid System**
+```typescript
+// Flexible terminal layout configurations
+interface TerminalGridLayout {
+  single: '1x1';     // Full-width single terminal
+  split: '1x2';      // Side-by-side terminals  
+  triple: '2x2-1';   // 2 top, 1 bottom (or vice versa)
+  quad: '2x2';       // Perfect 2×2 grid
+  vertical: '1x4';   // 4 vertical columns for monitoring
+}
+
+// Smart terminal assignment
+interface TerminalConfig {
+  id: string;
+  workbranch: string;
+  project?: string;
+  shell: 'powershell' | 'bash' | 'cmd';
+  autoAssign: boolean; // Auto-assign based on project selection
+}
+```
 
 ### **Ultra-Wide Monitor Optimization**
 - **Multi-column Layout**: 3-4 concurrent information streams
@@ -199,20 +223,23 @@ npm install -D nodemon pm2
   - Security validation through `VSCodeSecurityService`
   - Message queue system and variable resolution
 
-### ⏳ Task 2: Extend PortfolioSidebar Component
+### ⏳ Task 2: Create Center Area Terminal + Chat Interface
 **Status**: PENDING  
 **Priority**: HIGH  
-**Location**: `src/components/PortfolioSidebar/index.tsx`  
+**Location**: `src/components/CenterArea/` (new directory)
+**Strategy**: **Replace project grid with terminal grid + chat interface**
 **Requirements**:
-- Add Chat tab alongside existing Projects and Dev Notes tabs
-- Maintain existing modular component architecture (8 focused components)
-- Preserve responsive design with 3-mode layout system
-- Add chat state to existing `usePortfolioSidebarState()` hook
+- **TerminalGrid component**: Flexible xterm.js terminal layout (1x1, 1x2, 2x2, 1x4)
+- **ChatInterface component**: Multi-target messaging (Claude, terminals, AI models)
+- **Layout management**: Resizable split between terminals (top) and chat (bottom)
+- **Workbranch integration**: Terminal sessions isolated per workbranch
+- **Project context**: Auto-assign terminals based on selected projects
 
 **Implementation Notes**:
-- Follow existing tab pattern in `Navigation.tsx`
-- Create new chat panel component similar to `DevNotes.tsx`
-- Update `hooks.ts` to include chat state management
+- Create new `CenterArea` component hierarchy
+- Replace existing project grid layout in main App.tsx
+- Integrate with existing responsive design system
+- Use xterm.js + WebSocket for real terminal sessions
 
 ### ⏳ Task 3: Create WorkbranchChatPanel Component  
 **Status**: PENDING  

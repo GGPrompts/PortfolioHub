@@ -29,7 +29,7 @@ Hi Claude! I'm ready to continue implementing the multi-workbranch chat system f
 - ✅ Repository: Clean .gitignore, proper branch structure, all changes committed
 
 **Next Task to Implement:**
-- 🎯 **Task 2: Extend PortfolioSidebar component to add Chat tab alongside Projects and Dev Notes**
+- 🎯 **Task 2: Create Center Area Terminal + Chat Interface (replace project grid with terminal grid + chat)**
 
 **Current Component Architecture:**
 The PortfolioSidebar is already well-architected with 8 modular components:
@@ -46,17 +46,17 @@ The PortfolioSidebar is already well-architected with 8 modular components:
 
 1. **Read the current implementation plan** to understand the complete architecture
 2. **Check the current PortfolioSidebar structure** to understand existing patterns
-3. **Implement Task 2** - Add Chat tab to PortfolioSidebar following existing patterns:
-   - Add chat tab to Navigation.tsx alongside Projects and Dev Notes
-   - Update hooks.ts to include chat state management
-   - Follow the same modular component approach
-   - Preserve responsive design with 3-mode layout system
+3. **Implement Task 2** - Create Center Area with Terminal Grid + Chat Interface:
+   - Replace existing project grid with new CenterArea component
+   - Create TerminalGrid component with flexible layouts (1x1, 1x2, 2x2, 1x4)
+   - Create ChatInterface component below terminals for multi-target messaging
+   - Integrate with existing App.tsx layout and responsive design system
 
-4. **Prepare for Task 3** - Create the WorkbranchChatPanel component that will:
-   - Migrate full VS Code ChatPanel functionality to React
-   - Support multi-AI messaging (Claude, Copilot, terminals)
-   - Integrate directly with xterm.js terminals (no clipboard)
-   - Provide enhanced UX for ultra-widescreen desktop
+4. **Architecture Change** - Center-focused approach (not sidebar):
+   - **Top half**: Terminal grid with xterm.js integration
+   - **Bottom half**: Chat interface with direct terminal routing
+   - **Left sidebar**: Projects + DEV NOTES (existing)
+   - **Right sidebar**: Prompts, Files, Git, Status (enhanced tools)
 
 ## Key Implementation Notes
 

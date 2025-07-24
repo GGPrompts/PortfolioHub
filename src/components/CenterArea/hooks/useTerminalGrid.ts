@@ -170,32 +170,11 @@ function centerAreaReducer(state: CenterAreaState, action: CenterAreaAction): Ce
 
 // Helper function to create terminal instances
 function createTerminalInstance(workbranchId: string, projectId?: string): TerminalInstance {
-  const terminal = new Terminal({
-    theme: DEFAULT_THEME,
-    fontFamily: DEFAULT_THEME.fontFamily,
-    fontSize: DEFAULT_THEME.fontSize,
-    lineHeight: DEFAULT_THEME.lineHeight,
-    cursorBlink: true,
-    cursorStyle: 'bar',
-    allowTransparency: false,
-    convertEol: true,
-    rightClickSelectsWord: true,
-    allowProposedApi: true,
-    cols: 80,
-    rows: 24
-  });
-
-  // Add addons
-  const fitAddon = new FitAddon();
-  const webLinksAddon = new WebLinksAddon();
-  
-  terminal.loadAddon(fitAddon);
-  terminal.loadAddon(webLinksAddon);
-
+  // Don't create the terminal here - will be created when DOM is ready
   return {
     id: `terminal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: projectId ? `${projectId} Terminal` : `Terminal ${workbranchId}`,
-    terminal,
+    terminal: null as any, // Will be created when DOM is ready
     workbranchId,
     projectId,
     selected: false,

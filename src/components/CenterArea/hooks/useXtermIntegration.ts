@@ -58,13 +58,48 @@ export function useXtermIntegration(
 
   // Initialize terminal when DOM element is available
   useEffect(() => {
-    if (!terminalRef.current || isInitialized) return;
+    if (!terminalRef.current || isInitialized || terminalInstance.terminal) return;
 
-    const terminal = terminalInstance.terminal;
-    
     try {
-      // Note: Cannot modify cols/rows after terminal creation
-      // These options are set during Terminal constructor
+      // Create the terminal with dimensions from the start
+      const terminal = new Terminal({
+        theme: {
+          background: '#0f0f0f',
+          foreground: '#ffffff',
+          cursor: '#ffffff',
+          selection: 'rgba(255, 255, 255, 0.3)',
+          black: '#000000',
+          red: '#cd3131',
+          green: '#0dbc79',
+          yellow: '#e5e510',
+          blue: '#2472c8',
+          magenta: '#bc3fbc',
+          cyan: '#11a8cd',
+          white: '#e5e5e5',
+          brightBlack: '#666666',
+          brightRed: '#f14c4c',
+          brightGreen: '#23d18b',
+          brightYellow: '#f5f543',
+          brightBlue: '#3b8eea',
+          brightMagenta: '#d670d6',
+          brightCyan: '#29b8db',
+          brightWhite: '#e5e5e5'
+        },
+        fontFamily: 'Consolas, "Courier New", monospace',
+        fontSize: 14,
+        lineHeight: 1.2,
+        cursorBlink: true,
+        cursorStyle: 'bar',
+        allowTransparency: false,
+        convertEol: true,
+        rightClickSelectsWord: true,
+        allowProposedApi: true,
+        cols: dimensions.cols || 80,
+        rows: dimensions.rows || 24
+      });
+
+      // Store the terminal instance
+      terminalInstance.terminal = terminal;
 
       // Initialize addons
       const fitAddon = new FitAddon();
@@ -87,6 +122,27 @@ export function useXtermIntegration(
 
       // Setup terminal event handlers
       setupTerminalEventHandlers(terminal, terminalInstance.id, onStatusChange);
+
+      // Add mock terminal content for testing
+      terminal.writeln('🚀 Terminal initialized!');
+      terminal.writeln(`📊 Terminal ID: ${terminalInstance.id}`);
+      terminal.writeln(`🌿 Workbranch: ${terminalInstance.workbranchId}`);
+      if (terminalInstance.projectId) {
+        terminal.writeln(`📁 Project: ${terminalInstance.projectId}`);
+      }
+      terminal.writeln('WebSocket connection pending...');
+      terminal.write('$ ');
+
+      // Set up mock echo functionality for testing
+      terminal.onData((data) => {
+        if (data === '\r') {
+          terminal.write('\r\n$ ');
+        } else if (data === '\u007F') { // Backspace
+          terminal.write('\b \b');
+        } else {
+          terminal.write(data);
+        }
+      });
 
       setIsInitialized(true);
       console.log(`✅ Terminal ${terminalInstance.id} initialized successfully`);
@@ -125,7 +181,7 @@ export function useXtermIntegration(
     
     try {
       // Create WebSocket connection to terminal service
-      const wsUrl = `ws://localhost:8123/terminal/${terminalInstance.workbranchId}/${terminalInstance.id}`;
+      const wsUrl = `ws://localhost:8002/terminal/${terminalInstance.workbranchId}/${terminalInstance.id}`;
       const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
@@ -227,12 +283,16 @@ export function useXtermIntegration(
     }
   }, [terminalInstance.id]);
 
-  // Auto-connect when terminal is initialized
+  // Auto-connect when terminal is initialized (disabled for mock mode)
   useEffect(() => {
     if (isInitialized && !serviceConnectionRef.current.connected) {
-      connectToTerminalService();
+      // Temporarily disabled for testing - enable when backend is ready
+      // connectToTerminalService();
+      console.log('📡 WebSocket connection disabled for mock mode');
+      setConnectionStatus('connected'); // Mock connected state
+      onStatusChange?.(terminalInstance.id, 'running');
     }
-  }, [isInitialized, connectToTerminalService]);
+  }, [isInitialized, connectToTerminalService, terminalInstance.id, onStatusChange]);
 
   // Cleanup on unmount
   useEffect(() => {

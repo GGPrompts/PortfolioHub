@@ -63,11 +63,8 @@ export function useXtermIntegration(
     const terminal = terminalInstance.terminal;
     
     try {
-      // Configure terminal theme and options
-      terminal.options = {
-        ...terminal.options,
-        ...DEFAULT_TERMINAL_OPTIONS
-      };
+      // Note: Cannot modify cols/rows after terminal creation
+      // These options are set during Terminal constructor
 
       // Initialize addons
       const fitAddon = new FitAddon();

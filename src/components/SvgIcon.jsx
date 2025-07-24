@@ -411,6 +411,64 @@ const SvgIcon = ({
         <polyline points="1,4 1,10 7,10"/>
         <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
       </svg>
+    ),
+
+    // Terminal and chat icons
+    terminal: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="4,17 10,11 4,5"/>
+        <line x1="12" y1="19" x2="20" y2="19"/>
+      </svg>
+    ),
+
+    gitBranch: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <line x1="6" y1="3" x2="6" y2="15"/>
+        <circle cx="18" cy="6" r="3"/>
+        <circle cx="6" cy="18" r="3"/>
+        <path d="M18 9a9 9 0 0 1-9 9"/>
+      </svg>
+    ),
+
+    pause: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+      </svg>
+    ),
+
+    send: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22,2 15,22 11,13 2,9"/>
+      </svg>
+    ),
+
+    messageSquare: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+
+    grid: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7"/>
+        <rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/>
+      </svg>
+    ),
+
+    maximize: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+    ),
+
+    minimize: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+      </svg>
     )
   };
 

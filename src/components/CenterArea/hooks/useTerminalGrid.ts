@@ -180,7 +180,9 @@ function createTerminalInstance(workbranchId: string, projectId?: string): Termi
     allowTransparency: false,
     convertEol: true,
     rightClickSelectsWord: true,
-    allowProposedApi: true
+    allowProposedApi: true,
+    cols: 80,
+    rows: 24
   });
 
   // Add addons

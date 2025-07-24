@@ -91,20 +91,30 @@ function Stop-ProcessOnPort {
     return $false
 }
 
-# Function to build Windows Terminal command for a project
-function Build-WindowsTerminalTab {
-    param($Name, $Path, $Port, $EnvVars, $Command, $IsFirst = $false)
+# Function to prepare project command for batch execution
+function Prepare-ProjectCommand {
+    param($Name, $Path, $Port, $EnvVars, $Command)
+    
+    Write-Host "[CHECK] Checking $Name (port $Port)..." -ForegroundColor Cyan
+    
+    if (-not (Test-Path $Path)) {
+        Write-Host "  [WARN] Project $Name path not found: $Path" -ForegroundColor Red
+        return $null
+    }
     
     # Check if already running
     $isRunning = Test-NodeProjectRunning -Path $Path -Port $Port
+    Write-Verbose "Checked running status for $Name - $isRunning"
     
     if ($isRunning) {
         if ($Force) {
-            Write-Host "  [RESTART] Force restart requested for $Name - stopping existing server..." -ForegroundColor Yellow
+            Write-Host "  [RESTART] Force restart requested - stopping existing server..." -ForegroundColor Yellow
+            Write-Verbose "Force restart requested for $Name on port $Port"
             Stop-ProcessOnPort $Port
             Start-Sleep -Seconds 3
         } else {
-            Write-Host "  [SKIP] $Name already running on port $Port (use -Force to restart)" -ForegroundColor Green
+            Write-Host "  [RUNNING] $Name already running on port $Port (use -Force to restart)" -ForegroundColor Green
+            Write-Verbose "$Name already running, skipping start"
             return $null
         }
     }
@@ -112,25 +122,31 @@ function Build-WindowsTerminalTab {
     # Double-check port is free
     if (Test-Port $Port) {
         Write-Host "  [ERROR] Port $Port is still in use - cannot start $Name" -ForegroundColor Red
+        Write-Verbose "Port $Port is still in use after stop attempt"
         return $null
     }
     
-    # Build environment variables string
-    $envString = ""
+    Write-Host "  [READY] $Name will start in Windows Terminal tab" -ForegroundColor Green
+    
+    # Build the command with proper PowerShell syntax (same as enhanced script)
+    $commandParts = @()
+    $commandParts += "cd '$Path'"
+    $commandParts += "Write-Host '$Name running at http://localhost:$Port' -ForegroundColor Green"
+    
+    # Add environment variables
     foreach ($env in $EnvVars.GetEnumerator()) {
-        $envString += "`$env:$($env.Key) = '$($env.Value)'; "
+        $commandParts += "`$env:$($env.Key) = '$($env.Value)'"
     }
     
-    # Build the PowerShell command
-    $psCommand = @"
-cd '$Path'; $envString Write-Host '$Name running at http://localhost:$Port' -ForegroundColor Green; $Command
-"@
+    # Add the actual command
+    $commandParts += $Command
     
-    # Build Windows Terminal tab argument
-    if ($IsFirst) {
-        return "new-tab --title `"$Name`" powershell -NoExit -Command `"$psCommand`""
-    } else {
-        return "; new-tab --title `"$Name`" powershell -NoExit -Command `"$psCommand`""
+    $fullCommand = $commandParts -join '; '
+    
+    # Return the prepared command info
+    return @{
+        Name = $Name
+        Command = $fullCommand
     }
 }
 
@@ -150,7 +166,9 @@ function Show-ServerStatus {
     Write-Host ""
 }
 
-# Project configurations
+# Project configurations (using external Projects directory)
+$externalProjectsPath = "D:\ClaudeWindows\Projects"
+
 $projects = @{
     "Portfolio" = @{
         Path = (Resolve-Path $rootPath).Path
@@ -163,7 +181,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "3D Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/3d-matrix-cards-updated").Path
+        Path = (Resolve-Path "$externalProjectsPath/3d-matrix-cards-updated").Path
         Port = 3005
         EnvVars = @{
             PORT = "3005"
@@ -172,7 +190,7 @@ $projects = @{
         Command = "npm start"
     }
     "Matrix Cards" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/matrix-cards-react").Path
+        Path = (Resolve-Path "$externalProjectsPath/matrix-cards-react").Path
         Port = 3002
         EnvVars = @{
             PORT = "3002"
@@ -182,7 +200,7 @@ $projects = @{
         Command = "npm start"
     }
     "Sleak Card" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/sleak-card-updated").Path
+        Path = (Resolve-Path "$externalProjectsPath/sleak-card-updated").Path
         Port = 3003
         EnvVars = @{
             PORT = "3003"
@@ -192,7 +210,7 @@ $projects = @{
         Command = "npm start"
     }
     "GGPrompts" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/ggprompts").Path
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts").Path
         Port = 9323
         EnvVars = @{
             BROWSER = "none"
@@ -201,7 +219,7 @@ $projects = @{
         Command = "npm run dev"
     }
     "GGPrompts Style Guide" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/ggprompts-style-guide").Path
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts-style-guide").Path
         Port = 3001
         EnvVars = @{
             BROWSER = "none"
@@ -209,8 +227,18 @@ $projects = @{
         }
         Command = "npm run dev"
     }
+    "GGPrompts Professional" = @{
+        Path = (Resolve-Path "$externalProjectsPath/ggprompts-professional").Path
+        Port = 3006
+        EnvVars = @{
+            PORT = "3006"
+            BROWSER = "none"
+            OPEN_BROWSER = "false"
+        }
+        Command = "npm run dev"
+    }
     "3D File System" = @{
-        Path = (Resolve-Path "$rootPath/../Projects/3d-file-system").Path
+        Path = (Resolve-Path "$externalProjectsPath/3d-file-system").Path
         Port = 3004
         EnvVars = @{
             PORT = "3004"
@@ -241,47 +269,62 @@ if ($OnlyPortfolio) {
     $projectsToStart = $projects
 }
 
-# Build Windows Terminal command
-$wtCommand = "wt "
-$isFirst = $true
-$tabsCreated = 0
-
+# Prepare all project commands
+$projectCommands = @()
 foreach ($name in $projectsToStart.Keys) {
     $project = $projectsToStart[$name]
-    Write-Host "[CHECK] Preparing $name (port $($project.Port))..." -ForegroundColor Cyan
-    
-    if (-not (Test-Path $project.Path)) {
-        Write-Host "  [WARN] Project $name path not found: $($project.Path)" -ForegroundColor Red
-        continue
-    }
-    
-    $tabCommand = Build-WindowsTerminalTab -Name $name -Path $project.Path -Port $project.Port -EnvVars $project.EnvVars -Command $project.Command -IsFirst $isFirst
-    
-    if ($tabCommand) {
-        $wtCommand += $tabCommand
-        $isFirst = $false
-        $tabsCreated++
-        Write-Host "  [READY] $name will start in new tab" -ForegroundColor Green
+    $preparedCommand = Prepare-ProjectCommand -Name $name -Path $project.Path -Port $project.Port -EnvVars $project.EnvVars -Command $project.Command
+    if ($preparedCommand) {
+        $projectCommands += $preparedCommand
     }
 }
 
-if ($tabsCreated -eq 0) {
+if ($projectCommands.Count -eq 0) {
     Write-Host "[INFO] No projects to start (all already running or paths not found)" -ForegroundColor Yellow
     exit 0
 }
 
+# Build single Windows Terminal command with multiple tabs
 Write-Host ""
-Write-Host "[LAUNCH] Starting $tabsCreated projects in Windows Terminal..." -ForegroundColor Green
-Write-Host "Windows Terminal Command: $wtCommand" -ForegroundColor Gray
-Write-Host ""
+Write-Host "[LAUNCH] Starting $($projectCommands.Count) projects in Windows Terminal tabs..." -ForegroundColor Green
 
-# Execute the Windows Terminal command
+$wtArgs = @()
+$isFirst = $true
+
+foreach ($projectCmd in $projectCommands) {
+    if ($isFirst) {
+        $wtArgs += "new-tab"
+        $wtArgs += "--title"
+        $wtArgs += "`"$($projectCmd.Name)`""
+        $wtArgs += "--profile"
+        $wtArgs += "PowerShell"
+        $wtArgs += "powershell"
+        $wtArgs += "-NoExit"
+        $wtArgs += "-Command"
+        $wtArgs += "`"$($projectCmd.Command)`""
+        $isFirst = $false
+    } else {
+        $wtArgs += ";"
+        $wtArgs += "new-tab"
+        $wtArgs += "--title"
+        $wtArgs += "`"$($projectCmd.Name)`""
+        $wtArgs += "--profile"
+        $wtArgs += "PowerShell"
+        $wtArgs += "powershell"
+        $wtArgs += "-NoExit"
+        $wtArgs += "-Command"
+        $wtArgs += "`"$($projectCmd.Command)`""
+    }
+}
+
+# Execute Windows Terminal with all tabs
 try {
-    Invoke-Expression $wtCommand
-    Write-Host "[SUCCESS] Windows Terminal launched with $tabsCreated tabs!" -ForegroundColor Green
+    Start-Process "wt" -ArgumentList $wtArgs
+    Write-Host "[SUCCESS] Windows Terminal launched with $($projectCommands.Count) tabs!" -ForegroundColor Green
 } catch {
     Write-Host "[ERROR] Failed to launch Windows Terminal: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "[FALLBACK] Try running: $wtCommand" -ForegroundColor Yellow
+    Write-Host "[INFO] Make sure Windows Terminal default profile is set to PowerShell, not WSL/Ubuntu" -ForegroundColor Yellow
+    Write-Host "[INFO] Also check Windows Terminal Settings > Startup > New instance behavior should be 'Attach to most recent window'" -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -295,6 +338,7 @@ Write-Host "  Matrix Cards:           http://localhost:3002" -ForegroundColor Wh
 Write-Host "  Sleak Card:             http://localhost:3003" -ForegroundColor White
 Write-Host "  GGPrompts:              http://localhost:9323" -ForegroundColor White
 Write-Host "  GGPrompts Style Guide:  http://localhost:3001" -ForegroundColor White
+Write-Host "  GGPrompts Professional: http://localhost:3006" -ForegroundColor White
 Write-Host ""
 Write-Host "Tips:" -ForegroundColor Yellow
 Write-Host "  - Each project runs in its own tab in Windows Terminal" -ForegroundColor Gray

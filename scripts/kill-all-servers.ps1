@@ -1,6 +1,18 @@
 # PowerShell script to stop all portfolio development servers
+param(
+    [switch]$CloseTerminals,  # Also close all terminal windows
+    [switch]$Verbose
+)
+
+if ($Verbose) {
+    $VerbosePreference = "Continue"
+}
+
 Write-Host "STOPPING Portfolio Development Servers" -ForegroundColor Red
 Write-Host "=========================================" -ForegroundColor Red
+if ($CloseTerminals) {
+    Write-Host "WILL ALSO CLOSE ALL TERMINAL WINDOWS" -ForegroundColor Yellow
+}
 Write-Host ""
 
 # Function to get process using a specific port
@@ -94,5 +106,32 @@ if ($nodeProcesses) {
     Write-Host "No Node.js processes found" -ForegroundColor Green
 }
 
+# Close terminal windows if requested
+if ($CloseTerminals) {
+    Write-Host ""
+    Write-Host "Closing all terminal windows..." -ForegroundColor Cyan
+    
+    # Close Windows Terminal instances
+    $windowsTerminals = Get-Process -Name "WindowsTerminal" -ErrorAction SilentlyContinue
+    if ($windowsTerminals) {
+        Write-Host "Closing $($windowsTerminals.Count) Windows Terminal instance(s)..." -ForegroundColor Yellow
+        $windowsTerminals | ForEach-Object { Stop-Process -Id $_.Id -Force }
+        Write-Host "  Windows Terminal instances closed" -ForegroundColor Green
+    }
+    
+    # Close PowerShell windows (but not current one)
+    $currentPID = $PID
+    $powershellProcesses = Get-Process -Name "powershell" -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $currentPID }
+    if ($powershellProcesses) {
+        Write-Host "Closing $($powershellProcesses.Count) PowerShell window(s)..." -ForegroundColor Yellow
+        $powershellProcesses | ForEach-Object { Stop-Process -Id $_.Id -Force }
+        Write-Host "  PowerShell windows closed" -ForegroundColor Green
+    }
+}
+
 Write-Host ""
 Write-Host "Server shutdown complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Available cleanup commands:" -ForegroundColor Cyan
+Write-Host "  .\scripts\kill-all-servers.ps1 -CloseTerminals    # Stop servers + close terminals" -ForegroundColor Gray
+Write-Host "  .\scripts\close-all-terminals.ps1                # Close terminals only" -ForegroundColor Gray

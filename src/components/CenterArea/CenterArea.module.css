@@ -763,6 +763,8 @@
   flex: 1;
   position: relative;
   background: var(--color-bg-primary, #0d1117);
+  min-height: 300px;
+  min-width: 400px;
 }
 
 .terminalElement {

@@ -255,7 +255,9 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
     const terminal = state.terminals.find(t => t.id === terminalId);
     if (terminal) {
       // Clean up terminal resources
-      terminal.terminal.dispose();
+      if (terminal.terminal) {
+        terminal.terminal.dispose();
+      }
       if (terminal.websocket) {
         terminal.websocket.close();
       }
@@ -315,14 +317,20 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
       payload: { content, targets: messageTargets }
     });
 
-    // Actually send the command to terminals (would be implemented with WebSocket service)
+    // Send the command to terminals (mock mode - write directly to terminals)
     messageTargets.forEach(terminalId => {
       const terminal = state.terminals.find(t => t.id === terminalId);
-      if (terminal?.websocket && terminal.websocket.readyState === WebSocket.OPEN) {
-        terminal.websocket.send(JSON.stringify({
-          type: 'command',
-          data: content
-        }));
+      if (terminal?.terminal) {
+        // Clear current input line and write the command
+        terminal.terminal.write('\r\x1b[K'); // Clear line
+        terminal.terminal.write(`📤 Command from chat: ${content}\r\n`);
+        terminal.terminal.write(`$ ${content}\r\n`);
+        terminal.terminal.write('✅ Command executed (mock mode)\r\n');
+        terminal.terminal.write('$ ');
+        
+        console.log(`📤 Sent to terminal ${terminalId}: ${content}`);
+      } else {
+        console.warn(`❌ Terminal ${terminalId} not found or not ready`);
       }
     });
   }, [state.selectedTerminals, state.terminals, dispatchAction]);

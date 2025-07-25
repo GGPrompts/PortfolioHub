@@ -111,11 +111,27 @@ export function useXtermIntegration(
       terminal.loadAddon(fitAddon);
       terminal.loadAddon(webLinksAddon);
 
+      // Ensure the container has dimensions before opening
+      const container = terminalRef.current;
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        // Set minimum dimensions if container is not properly sized
+        container.style.width = '800px';
+        container.style.height = '600px';
+      }
+
       // Open terminal in DOM
-      terminal.open(terminalRef.current);
+      terminal.open(container);
       
-      // Initial fit to container
-      fitAddon.fit();
+      // Wait a moment for DOM to settle, then fit
+      setTimeout(() => {
+        if (fitAddon && terminalRef.current) {
+          try {
+            fitAddon.fit();
+          } catch (error) {
+            console.warn('FitAddon fit failed:', error);
+          }
+        }
+      }, 50);
 
       // Store element reference
       terminalInstance.element = terminalRef.current;

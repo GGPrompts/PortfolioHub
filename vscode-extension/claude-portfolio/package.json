@@ -13,7 +13,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -91,7 +93,7 @@
         "category": "Claude Portfolio"
       },
       {
-        "command": "claude-portfolio.stopProject", 
+        "command": "claude-portfolio.stopProject",
         "title": "Stop Project",
         "category": "Claude Portfolio"
       },
@@ -122,7 +124,7 @@
       },
       {
         "command": "claude-portfolio.batchStopProjects",
-        "title": "Stop Selected Projects", 
+        "title": "Stop Selected Projects",
         "category": "Claude Portfolio"
       },
       {
@@ -185,7 +187,7 @@
       },
       {
         "command": "claudePortfolio.terminal.destroy",
-        "title": "Destroy Terminal Session", 
+        "title": "Destroy Terminal Session",
         "category": "Claude Portfolio",
         "icon": "$(trash)"
       },
@@ -328,7 +330,12 @@
         },
         "claudePortfolio.defaultBrowser": {
           "type": "string",
-          "enum": ["chrome", "firefox", "edge", "default"],
+          "enum": [
+            "chrome",
+            "firefox",
+            "edge",
+            "default"
+          ],
           "default": "default",
           "description": "Default browser for opening projects"
         }
@@ -341,15 +348,19 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "rebuild:node-pty": "npm rebuild node-pty --build-from-source",
+    "test:node-pty": "node -e \"console.log('Testing node-pty...'); require('node-pty'); console.log('✓ Success')\""
   },
   "dependencies": {
+    "@homebridge/node-pty-prebuilt-multiarch": "^0.13.1",
+    "node-pty": "^1.0.0",
     "open": "^9.1.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",

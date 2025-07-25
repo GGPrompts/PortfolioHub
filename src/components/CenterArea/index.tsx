@@ -43,6 +43,7 @@ export default function CenterArea({
 
   const [showSelector, setShowSelector] = useState(false);
   const [viewMode, setViewMode] = useState<'terminals' | 'chat' | 'split'>('split');
+  const [isUltraWide, setIsUltraWide] = useState(window.innerWidth >= 2560);
 
   // Handle terminal operations
   const handleAddTerminal = useCallback((workbranchId?: string, projectId?: string) => {
@@ -93,6 +94,16 @@ export default function CenterArea({
       setTimeout(() => handleAddTerminal('feature', 'ggprompts'), 100);
       setTimeout(() => handleAddTerminal('tools'), 200);
     }
+  }, []);
+
+  // Monitor screen size for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsUltraWide(window.innerWidth >= 2560);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Keyboard shortcuts
@@ -243,14 +254,27 @@ export default function CenterArea({
       )}
 
       {/* Main Content Area */}
-      <div className={styles.mainContent} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div 
+        className={styles.mainContent} 
+        style={{ 
+          display: 'flex', 
+          flexDirection: isUltraWide && viewMode === 'split' ? 'row' : 'column', 
+          flex: 1,
+          gap: isUltraWide && viewMode === 'split' ? '8px' : '0'
+        }}
+      >
         {/* Terminal Grid */}
         {(viewMode === 'terminals' || viewMode === 'split') && (
           <div 
             className={styles.terminalSection}
             style={{ 
-              flex: viewMode === 'terminals' ? 1 : '1 1 60%',
-              minHeight: viewMode === 'split' ? '400px' : 'auto'
+              flex: viewMode === 'terminals' ? 1 : 
+                    isUltraWide && viewMode === 'split' ? '1 1 60%' : '1 1 60%',
+              minHeight: viewMode === 'split' && !isUltraWide ? '400px' : 'auto',
+              borderBottom: isUltraWide && viewMode === 'split' ? 'none' : '1px solid var(--color-border, #30363d)',
+              borderRight: isUltraWide && viewMode === 'split' ? '1px solid var(--color-border, #30363d)' : 'none',
+              maxHeight: isUltraWide && viewMode === 'split' ? 'none' : '60vh',
+              height: isUltraWide && viewMode === 'split' ? '100%' : 'auto'
             }}
           >
             <div ref={gridRef} style={{ width: '100%', height: '100%' }}>
@@ -261,6 +285,7 @@ export default function CenterArea({
                 onTerminalSelect={handleTerminalSelect}
                 onTerminalClose={handleRemoveTerminal}
                 onLayoutChange={handleLayoutChange}
+                dimensions={gridDimensions}
               />
             </div>
           </div>
@@ -271,8 +296,12 @@ export default function CenterArea({
           <div 
             className={styles.chatSection}
             style={{ 
-              flex: viewMode === 'chat' ? 1 : '0 0 auto',
-              minHeight: viewMode === 'split' ? '200px' : 'auto'
+              flex: viewMode === 'chat' ? 1 : 
+                    isUltraWide && viewMode === 'split' ? '1 1 40%' : '0 0 auto',
+              minHeight: viewMode === 'split' ? 
+                        isUltraWide ? 'auto' : '300px' : 'auto',
+              height: isUltraWide && viewMode === 'split' ? '100%' : 'auto',
+              minWidth: isUltraWide && viewMode === 'split' ? '500px' : 'auto'
             }}
           >
             <ChatInterface
@@ -281,6 +310,9 @@ export default function CenterArea({
               messageHistory={chatHistory}
               onSendMessage={handleSendMessage}
               onClearHistory={handleClearHistory}
+              onTerminalSelect={handleTerminalSelect}
+              onSelectAll={selectAllTerminals}
+              onDeselectAll={deselectAllTerminals}
             />
           </div>
         )}

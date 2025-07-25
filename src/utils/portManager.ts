@@ -28,10 +28,17 @@ export const DEFAULT_PORTS = {
 const FALLBACK_PORTS = [3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177];
 
 // Global flag to disable port checking (can be set by user preference)
-export let portCheckingEnabled = true;
+// DISABLED: Using optimizedPortManager instead to avoid conflicts
+export let portCheckingEnabled = false;
 
 export function setPortCheckingEnabled(enabled: boolean) {
   portCheckingEnabled = enabled;
+  console.log(`🔧 Port checking ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+// Quick disable function for development
+export function disablePortChecking() {
+  setPortCheckingEnabled(false);
 }
 
 // Silent port checking to avoid console errors

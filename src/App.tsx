@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import './utils/consoleHelper' // Import console helper for development
+import './services/environmentBridge' // Import environment bridge for initialization
 import 'xterm/css/xterm.css' // Essential for terminal rendering
 import CenterArea from './components/CenterArea'
 import EnhancedProjectViewer from './components/EnhancedProjectViewer'
@@ -11,6 +12,7 @@ import ProjectGrid from './components/ProjectGrid'
 import ProjectViewer from './components/ProjectViewer'
 import { RightSidebar } from './components/RightSidebar'
 import SvgIcon from './components/SvgIcon'
+import SetupCommandsPanel from './components/SetupCommandsPanel'
 import { useProjectData } from './hooks/useProjectData'
 import { usePortfolioStore } from './store/portfolioStore'
 import { getProjectPort, setPortCheckingEnabled } from './utils/portManager'
@@ -69,6 +71,7 @@ function PortfolioApp() {
   const [runningStatus, setRunningStatus] = useState<{[key: string]: boolean}>({})
   const [projectPorts, setProjectPorts] = useState<{[key: string]: number | null}>({})
   const [centerAreaMode, setCenterAreaMode] = useState(false) // Toggle between ProjectGrid and CenterArea
+  const [showSetupCommands, setShowSetupCommands] = useState(false) // Setup commands panel visibility
 
   // Sync React Query projects with portfolio store
   useEffect(() => {
@@ -83,19 +86,28 @@ function PortfolioApp() {
     setPortCheckingEnabled(!portCheckingDisabled)
   }, [portCheckingDisabled])
 
-  // Check VS Code Server status
+  // Check VS Code Server status (remote mode on port 8080)
   useEffect(() => {
     const checkVSCodeServerStatus = async () => {
       try {
-        const response = await fetch('http://localhost:8080', { method: 'HEAD' });
+        // Use fetch with no-cors mode to avoid CORS issues
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 2000);
+        
+        const response = await fetch('http://localhost:8080', { 
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal: controller.signal
+        });
         setVsCodeServerStatus('running');
-      } catch {
+      } catch (error) {
+        // Silently handle connection errors - this is expected when VS Code Server isn't running
         setVsCodeServerStatus('stopped');
       }
     };
     
     checkVSCodeServerStatus();
-    const interval = setInterval(checkVSCodeServerStatus, 10000); // Check every 10 seconds
+    const interval = setInterval(checkVSCodeServerStatus, 15000); // Check every 15 seconds (less frequent)
     return () => clearInterval(interval);
   }, [])
 
@@ -243,43 +255,51 @@ function PortfolioApp() {
   }
 
   const startVSCodeServer = async () => {
-    // Security-compliant VS Code Server startup
-    const commands = [
-      'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
-      'Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"',
-      'code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms'
-    ];
+    // Use the dedicated PowerShell script for better experience
+    const scriptCommand = 'powershell -File "D:\\ClaudeWindows\\claude-dev-portfolio\\scripts\\start-vscode-server.ps1"';
     
     if (isVSCodeEnvironment()) {
-      // Execute commands one by one for security compliance
-      for (const command of commands) {
+      try {
+        await executeCommand(scriptCommand, 'Start VS Code Server');
+        showNotification('VS Code Server starting... Check terminal for details and server URL.');
+        // Update status after a delay
+        setTimeout(() => setVsCodeServerStatus('checking'), 3000);
+      } catch (error) {
+        console.error('Failed to start VS Code server:', error);
+        showNotification('Failed to start VS Code server. Try manual setup using clipboard commands.', 'error');
+        
+        // Fallback to clipboard method
+        const fallbackCommands = [
+          'Stop-Process -Name "code-tunnel" -Force -ErrorAction SilentlyContinue',
+          'Set-Location "D:\\ClaudeWindows\\claude-dev-portfolio"',
+          'code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms'
+        ];
+        const fullCommand = fallbackCommands.join('\n');
         try {
-          await executeCommand(command, 'VS Code Server Setup');
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-          console.error('Failed to execute command:', command, error);
-          showNotification(`Failed to execute: ${command}`, 'error');
-          return;
+          await copyToClipboard(fullCommand);
+          alert(`VS Code Server commands copied!\n\n💡 Setup Instructions:\n1. Open PowerShell as Administrator\n2. Paste and run the commands\n3. VS Code will be available at http://localhost:8080`);
+        } catch (clipboardError) {
+          alert(`VS Code Server commands:\n\n${fullCommand}\n\n💡 Run in PowerShell to start server`);
         }
       }
-      showNotification('VS Code Server starting...');
-      // Update status after a delay
-      setTimeout(() => setVsCodeServerStatus('checking'), 2000);
     } else {
-      const fullCommand = commands.join('\n');
+      // Web mode - copy script command to clipboard
       try {
-        await copyToClipboard(fullCommand);
-        alert(`VS Code Server commands copied!\n\n💡 Setup Instructions:\n1. Open PowerShell as Administrator\n2. Paste and run the commands\n3. VS Code will be available in your browser at http://localhost:8080\n4. Click the blue VS Code icon again once running to open in new window\n\n🎯 Pro Tip: VS Code Server gives you full IDE functionality in your browser!`);
+        await copyToClipboard(scriptCommand);
+        alert(`VS Code Server script command copied!\n\n💡 Setup Instructions:\n1. Open PowerShell in the portfolio directory\n2. Paste and run: ${scriptCommand}\n3. Follow the script prompts\n4. VS Code will be available at http://localhost:8080\n\n🎯 The script includes error checking and helpful messages!`);
       } catch (error) {
-        console.error('Failed to copy commands:', error);
-        alert(`VS Code Server commands:\n\nRun these in PowerShell to launch VS Code in your browser:\n\n${fullCommand}\n\n💡 Once running, access at http://localhost:8080`);
+        console.error('Failed to copy script command:', error);
+        alert(`Run this command in PowerShell:\n\n${scriptCommand}\n\n💡 This will start VS Code Server with proper error handling`);
       }
     }
   }
 
   // Smart responsive layout strategy
   const getLayoutStrategy = () => {
-    if (isMobile) {
+    if (centerAreaMode) {
+      // Terminal mode: always overlay to prevent terminal resizing
+      return { marginLeft: 0, contentStrategy: 'overlay' }
+    } else if (isMobile) {
       // Mobile: sidebar overlays content
       return { marginLeft: 0, contentStrategy: 'overlay' }
     } else if (isNarrowScreen && sidebarWidth > 320) {
@@ -304,18 +324,21 @@ function PortfolioApp() {
       <RightSidebar onWidthChange={setRightSidebarWidth} />
       
       {/* Backdrop for overlay mode */}
-      {layout.contentStrategy === 'overlay' && sidebarWidth > 0 && (
+      {layout.contentStrategy === 'overlay' && (sidebarWidth > 0 || rightSidebarWidth > 0) && (
         <div 
           className="sidebar-backdrop"
           onClick={() => {
-            // Close sidebar when clicking backdrop - you can implement this if needed
+            // Close sidebars when clicking backdrop in terminal mode
+            if (centerAreaMode) {
+              // You can implement sidebar closing logic here if needed
+            }
           }}
         />
       )}
       
       <main 
-        className="main-content"
-        style={{ 
+        className={`main-content ${centerAreaMode ? 'terminal-mode' : ''}`}
+        style={centerAreaMode ? {} : { 
           marginLeft: `${currentMarginLeft}px`,
           marginRight: `${rightSidebarWidth}px`,
           transition: 'margin-left 0.3s ease, margin-right 0.3s ease'
@@ -323,15 +346,17 @@ function PortfolioApp() {
       >
         {showGrid ? (
           <>
-            <header className="portfolio-header">
-              <div className="header-content">
-                <div className="header-text">
-                  <div className="header-title-row">
-                    <h1>{centerAreaMode ? 'Multi-Terminal Grid + Chat' : 'My Project Portfolio'}</h1>
+            {/* Hide header completely in center area mode for full-height terminal grid */}
+            {!centerAreaMode && (
+              <header className="portfolio-header">
+                <div className="header-content">
+                  <div className="header-text">
+                    <div className="header-title-row">
+                      <h1>My Project Portfolio</h1>
+                    </div>
+                    <p>A collection of creative coding experiments and applications</p>
                   </div>
-                  <p>{centerAreaMode ? 'Visual terminal selection for multi-workbranch development and testing' : 'A collection of creative coding experiments and applications'}</p>
-                </div>
-                <div className="header-actions">
+                  <div className="header-actions">
                   {/* VS Code Server Control */}
                   {vsCodeServerStatus === 'stopped' && (
                     <button 
@@ -381,7 +406,6 @@ function PortfolioApp() {
                       title="Project Grid View"
                     >
                       <SvgIcon name="grid" size={16} />
-                      <span>Grid</span>
                     </button>
                     <button 
                       className={`view-toggle-btn ${centerAreaMode ? 'active' : ''}`}
@@ -389,7 +413,6 @@ function PortfolioApp() {
                       title="Terminal Grid + Chat Interface"
                     >
                       <SvgIcon name="terminal" size={16} />
-                      <span>Terminals</span>
                     </button>
                   </div>
                   
@@ -437,6 +460,29 @@ function PortfolioApp() {
                 </div>
               </div>
             </header>
+            )}
+            
+            {/* Mode toggle for center area - floating button when header is hidden */}
+            {centerAreaMode && (
+              <div className="floating-mode-toggle">
+                <button 
+                  className="floating-toggle-btn"
+                  onClick={() => setCenterAreaMode(false)}
+                  title="Return to Project Grid View"
+                >
+                  <SvgIcon name="grid" size={16} />
+                </button>
+              </div>
+            )}
+            
+            {/* Setup Commands Panel for Multi-Claude orchestration */}
+            {centerAreaMode && (
+              <SetupCommandsPanel 
+                isVisible={showSetupCommands}
+                onToggle={() => setShowSetupCommands(!showSetupCommands)}
+              />
+            )}
+            
             {centerAreaMode ? (
               <CenterArea 
                 initialLayout="split"

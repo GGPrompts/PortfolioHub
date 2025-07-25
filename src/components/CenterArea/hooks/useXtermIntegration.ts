@@ -56,13 +56,37 @@ export function useXtermIntegration(
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
+  const lastDimensionsRef = useRef<{ cols: number; rows: number }>({ cols: 0, rows: 0 });
 
   // Initialize terminal when DOM element is available
   useEffect(() => {
     if (!terminalRef.current || isInitialized || terminalInstance.terminal) return;
 
+    // Wait for DOM element to have proper dimensions
+    const containerRect = terminalRef.current.getBoundingClientRect();
+    if (containerRect.width === 0 || containerRect.height === 0) {
+      console.log('⏳ Terminal container not ready, delaying initialization...');
+      // Retry after a short delay
+      setTimeout(() => {
+        if (terminalRef.current && !isInitialized && !terminalInstance.terminal) {
+          const retryRect = terminalRef.current.getBoundingClientRect();
+          if (retryRect.width > 0 && retryRect.height > 0) {
+            console.log('🔄 Retrying terminal initialization...');
+            // Trigger re-render by updating a dummy state
+            setConnectionStatus(prev => prev);
+          }
+        }
+      }, 100);
+      return;
+    }
+
     try {
-      // Create the terminal with dimensions from the start
+      // Create the terminal with safe dimensions
+      const safeCols = Math.max((dimensions?.cols || 80), 10);
+      const safeRows = Math.max((dimensions?.rows || 24), 5);
+      
+      console.log(`🖥️ Initializing terminal ${terminalInstance.id} with dimensions: ${safeCols}x${safeRows}`);
+      
       const terminal = new Terminal({
         theme: {
           background: '#0f0f0f',
@@ -95,12 +119,49 @@ export function useXtermIntegration(
         convertEol: true,
         rightClickSelectsWord: true,
         allowProposedApi: true,
-        cols: dimensions.cols || 80,
-        rows: dimensions.rows || 24
+        cols: safeCols,
+        rows: safeRows
       });
 
-      // Store the terminal instance
+      // Store the terminal instance and protect it from being cleared
       terminalInstance.terminal = terminal;
+      
+      // Override the clear method to prevent accidental clearing
+      const originalClear = terminal.clear.bind(terminal);
+      terminal.clear = () => {
+        console.warn(`🚫 Terminal ${terminalInstance.id} clear() blocked to preserve content`);
+        // Don't actually clear - just log the attempt
+      };
+      
+      // Store original clear method in case we need it later
+      (terminal as any)._originalClear = originalClear;
+      
+      // Monitor all write operations to see what's happening
+      const originalWrite = terminal.write.bind(terminal);
+      terminal.write = (data: string | Uint8Array) => {
+        console.log(`📝 Terminal ${terminalInstance.id} write:`, typeof data === 'string' ? JSON.stringify(data) : 'Uint8Array');
+        return originalWrite(data);
+      };
+      
+      const originalWriteln = terminal.writeln.bind(terminal);
+      terminal.writeln = (data: string | Uint8Array) => {
+        console.log(`📝 Terminal ${terminalInstance.id} writeln:`, typeof data === 'string' ? JSON.stringify(data) : 'Uint8Array');
+        return originalWriteln(data);
+      };
+      
+      // Monitor reset and other potentially clearing operations
+      const originalReset = terminal.reset.bind(terminal);
+      terminal.reset = () => {
+        console.warn(`🔄 Terminal ${terminalInstance.id} reset() called - this will clear content!`);
+        return originalReset();
+      };
+      
+      // Monitor refresh calls too
+      const originalRefresh = terminal.refresh.bind(terminal);
+      terminal.refresh = (start?: number, end?: number) => {
+        console.log(`🔄 Terminal ${terminalInstance.id} refresh(${start}, ${end}) called`);
+        return originalRefresh(start, end);
+      };
 
       // Initialize addons
       const fitAddon = new FitAddon();
@@ -118,21 +179,89 @@ export function useXtermIntegration(
         // Set minimum dimensions if container is not properly sized
         container.style.width = '800px';
         container.style.height = '600px';
+        container.style.minWidth = '300px';
+        container.style.minHeight = '200px';
       }
 
-      // Open terminal in DOM
-      terminal.open(container);
+      // Ensure container is properly sized before opening terminal
+      container.style.width = container.offsetWidth > 0 ? `${container.offsetWidth}px` : '800px';
+      container.style.height = container.offsetHeight > 0 ? `${container.offsetHeight}px` : '400px';
+      container.style.position = 'relative';
+      container.style.display = 'block';
       
-      // Wait a moment for DOM to settle, then fit
+      // Open terminal in DOM with error handling
+      try {
+        console.log(`🎨 Opening terminal ${terminalInstance.id} in container:`, {
+          width: container.offsetWidth,
+          height: container.offsetHeight,
+          display: getComputedStyle(container).display,
+          position: getComputedStyle(container).position
+        });
+        
+        terminal.open(container);
+        
+        // Force canvas creation by ensuring DOM is ready
+        setTimeout(() => {
+          const canvasElements = container.querySelectorAll('canvas');
+          console.log(`🎨 After open - Terminal ${terminalInstance.id} canvas elements:`, canvasElements.length);
+          if (canvasElements.length === 0) {
+            console.warn(`⚠️ No canvas created for terminal ${terminalInstance.id}, forcing re-render`);
+            // Force refresh to create canvas
+            terminal.refresh(0, terminal.rows - 1);
+          }
+        }, 50);
+        
+      } catch (error) {
+        console.error('Failed to open terminal:', error);
+        // Retry with explicit dimensions
+        container.style.width = '800px';
+        container.style.height = '400px';
+        terminal.open(container);
+      }
+      
+      // Wait for DOM to settle and ensure terminal is properly sized
       setTimeout(() => {
-        if (fitAddon && terminalRef.current) {
+        if (fitAddon && terminalRef.current && terminal) {
           try {
-            fitAddon.fit();
+            // Double-check dimensions exist before fitting
+            if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+              // Ensure canvas exists before fitting
+              const canvasElements = container.querySelectorAll('canvas');
+              console.log(`🎨 Before fit - Terminal ${terminalInstance.id} canvas elements:`, canvasElements.length);
+              
+              if (canvasElements.length > 0) {
+                fitAddon.fit();
+                console.log(`📐 Terminal ${terminalInstance.id} fitted with dimensions:`, {
+                  containerWidth: container.offsetWidth,
+                  containerHeight: container.offsetHeight,
+                  terminalCols: terminal.cols,
+                  terminalRows: terminal.rows
+                });
+                
+                // Force a refresh of the terminal content
+                terminal.refresh(0, terminal.rows - 1);
+              } else {
+                console.warn(`⚠️ No canvas elements found for terminal ${terminalInstance.id}, skipping fit`);
+                // Try to force canvas creation
+                terminal.refresh(0, terminal.rows - 1);
+                
+                // Retry fit after canvas creation
+                setTimeout(() => {
+                  const retryCanvas = container.querySelectorAll('canvas');
+                  if (retryCanvas.length > 0) {
+                    fitAddon.fit();
+                    console.log(`🔄 Retry fit successful for terminal ${terminalInstance.id}`);
+                  }
+                }, 100);
+              }
+            } else {
+              console.warn(`⚠️ Container still has zero dimensions for terminal ${terminalInstance.id}`);
+            }
           } catch (error) {
             console.warn('FitAddon fit failed:', error);
           }
         }
-      }, 50);
+      }, 200); // Increased timeout to allow more time for canvas creation
 
       // Store element reference
       terminalInstance.element = terminalRef.current;
@@ -140,14 +269,44 @@ export function useXtermIntegration(
       // Setup terminal event handlers
       setupTerminalEventHandlers(terminal, terminalInstance.id, onStatusChange);
 
-      // Initial terminal content
-      terminal.writeln('🚀 Terminal initialized!');
-      terminal.writeln(`📊 Terminal ID: ${terminalInstance.id}`);
-      terminal.writeln(`🌿 Workbranch: ${terminalInstance.workbranchId}`);
-      if (terminalInstance.projectId) {
-        terminal.writeln(`📁 Project: ${terminalInstance.projectId}`);
-      }
-      terminal.writeln('Connecting to VS Code...');
+      // Initial terminal content with explicit formatting (no clear screen)
+      console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id}`);
+      
+      // Add content after a delay to ensure terminal is fully rendered
+      setTimeout(() => {
+        try {
+          console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 1`);
+          terminal.writeln('\x1b[32m🚀 Terminal initialized!\x1b[0m');
+          console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 2`);
+          terminal.writeln(`\x1b[36m📊 Terminal ID: ${terminalInstance.id}\x1b[0m`);
+          console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 3`);
+          terminal.writeln(`\x1b[33m🌿 Workbranch: ${terminalInstance.workbranchId}\x1b[0m`);
+          if (terminalInstance.projectId) {
+            console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 4`);
+            terminal.writeln(`\x1b[35m📁 Project: ${terminalInstance.projectId}\x1b[0m`);
+          }
+          console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 5`);
+          terminal.writeln('\x1b[34mConnecting to VS Code...\x1b[0m');
+          console.log(`🖥️ Writing initial content to terminal ${terminalInstance.id} - Step 6`);
+          terminal.write('\x1b[37m$ \x1b[0m'); // Show cursor prompt
+          console.log(`✅ Initial content written to terminal ${terminalInstance.id} - ALL STEPS COMPLETE`);
+          
+          // Force refresh to ensure content is visible
+          terminal.refresh(0, terminal.rows - 1);
+          console.log(`🔄 Terminal ${terminalInstance.id} content refreshed`);
+          
+          // Check if content is actually there
+          setTimeout(() => {
+            console.log(`🔍 Terminal ${terminalInstance.id} content check:`, {
+              rows: terminal.rows,
+              cols: terminal.cols,
+              bufferLength: terminal.buffer?.active?.length || 'unknown'
+            });
+          }, 100);
+        } catch (error) {
+          console.error(`❌ Failed to write initial content to terminal ${terminalInstance.id}:`, error);
+        }
+      }, 500); // Increased delay to ensure terminal is fully rendered
 
       // Set up terminal data handler to send to VS Code
       terminal.onData((data) => {
@@ -178,19 +337,28 @@ export function useXtermIntegration(
 
   // Handle dimension changes and terminal fitting
   useEffect(() => {
-    if (!isInitialized || !fitAddonRef.current) return;
+    if (!isInitialized || !fitAddonRef.current || !terminalInstance.terminal) return;
 
     try {
+      // Ensure we have valid dimensions
+      if (!dimensions || dimensions.cols <= 0 || dimensions.rows <= 0) {
+        console.warn(`⚠️ Invalid dimensions for terminal ${terminalInstance.id}:`, dimensions);
+        return;
+      }
+
       // Resize terminal to fit new dimensions
       fitAddonRef.current.fit();
       
-      // Update terminal dimensions
+      // Update terminal dimensions with safe values
       const terminal = terminalInstance.terminal;
-      if (terminal.rows !== dimensions.rows || terminal.cols !== dimensions.cols) {
-        terminal.resize(dimensions.cols, dimensions.rows);
+      const safeCols = Math.max(dimensions.cols, 10);
+      const safeRows = Math.max(dimensions.rows, 5);
+      
+      // Only resize if dimensions actually changed
+      if (terminal.rows !== safeRows || terminal.cols !== safeCols) {
+        terminal.resize(safeCols, safeRows);
+        console.log(`📏 Terminal ${terminalInstance.id} resized to ${safeCols}x${safeRows}`);
       }
-
-      console.log(`📏 Terminal ${terminalInstance.id} resized to ${dimensions.cols}x${dimensions.rows}`);
     } catch (error) {
       console.error(`❌ Failed to resize terminal ${terminalInstance.id}:`, error);
     }
@@ -198,8 +366,25 @@ export function useXtermIntegration(
 
   // Setup WebSocket connection for terminal service
   const connectToTerminalService = useCallback(async () => {
-    if (serviceConnectionRef.current.connected || !terminalInstance.workbranchId) return;
+    console.log(`🔗 connectToTerminalService called for ${terminalInstance.id}:`, {
+      alreadyConnected: serviceConnectionRef.current.connected,
+      hasWorkbranchId: !!terminalInstance.workbranchId,
+      workbranchId: terminalInstance.workbranchId,
+      connectionStatus: connectionStatus
+    });
+    
+    if (serviceConnectionRef.current.connected || !terminalInstance.workbranchId) {
+      console.log(`🔗 Skipping connection for ${terminalInstance.id}: already connected or no workbranchId`);
+      return;
+    }
+    
+    // Prevent multiple simultaneous connection attempts
+    if (connectionStatus === 'connecting') {
+      console.log(`🔗 Skipping connection for ${terminalInstance.id}: already connecting`);
+      return;
+    }
 
+    console.log(`🔗 Starting connection process for ${terminalInstance.id}...`);
     setConnectionStatus('connecting');
     
     try {
@@ -210,10 +395,31 @@ export function useXtermIntegration(
         terminalInstance.projectId
       );
 
-      // Register message handler for this terminal
+      // Register message handler for this terminal - will be re-registered with session ID later
       terminalWebSocketService.registerTerminalHandler(terminalInstance.id, (message) => {
+        console.log(`📺 Handler received message for ${terminalInstance.id}:`, message);
         if (message.type === 'output' && message.data && terminalInstance.terminal) {
-          terminalInstance.terminal.write(message.data);
+          // Extract the actual output text from the data
+          const outputText = message.data.output || message.data;
+          console.log(`📺 Writing to terminal ${terminalInstance.id}:`, JSON.stringify(outputText));
+          console.log(`📺 Terminal instance state:`, {
+            terminalExists: !!terminalInstance.terminal,
+            terminalId: terminalInstance.id,
+            isInitialized: terminalInstance.terminal?._initialized
+          });
+          
+          try {
+            terminalInstance.terminal.write(outputText);
+            console.log(`✅ Successfully wrote to terminal ${terminalInstance.id}`);
+          } catch (error) {
+            console.error(`❌ Failed to write to terminal ${terminalInstance.id}:`, error);
+          }
+        } else {
+          console.log(`📺 Handler for ${terminalInstance.id} - no output to process:`, {
+            messageType: message.type,
+            hasData: !!message.data,
+            hasTerminal: !!terminalInstance.terminal
+          });
         }
       });
 
@@ -221,23 +427,39 @@ export function useXtermIntegration(
       setConnectionStatus('connected');
       onStatusChange?.(terminalInstance.id, 'running');
       
-      // Update terminal to show connection status
-      if (terminalInstance.terminal) {
-        terminalInstance.terminal.write('\r\n✅ Connected to VS Code terminal\r\n');
-        terminalInstance.terminal.write('$ ');
-      }
+      // Update terminal to show connection status (after delay to not interfere with initial content)
+      setTimeout(() => {
+        if (terminalInstance.terminal) {
+          console.log(`🔗 Adding connection status to terminal ${terminalInstance.id}`);
+          terminalInstance.terminal.writeln('✅ Connected to VS Code via Environment Bridge');
+          terminalInstance.terminal.writeln('💡 Commands execute in VS Code and show status here');
+          terminalInstance.terminal.write('$ ');
+          console.log(`🔗 Connection status added to terminal ${terminalInstance.id}`);
+        }
+      }, 3000); // Increased delay to ensure initial content is visible first
 
     } catch (error) {
       console.error(`❌ Failed to connect terminal ${terminalInstance.id} to service:`, error);
       setConnectionStatus('error');
       onStatusChange?.(terminalInstance.id, 'error');
       
-      if (terminalInstance.terminal) {
-        terminalInstance.terminal.write('\r\n❌ Failed to connect to VS Code\r\n');
-        terminalInstance.terminal.write('Running in local mode\r\n$ ');
-      }
+      setTimeout(() => {
+        if (terminalInstance.terminal) {
+          terminalInstance.terminal.writeln('❌ Failed to connect to VS Code extension');
+          terminalInstance.terminal.writeln('💡 Start VS Code with Claude Portfolio extension to enable real terminals');
+          terminalInstance.terminal.writeln('For now, running in demo mode...');
+          terminalInstance.terminal.write('$ ');
+          
+          // Add a demo command to show it's working
+          setTimeout(() => {
+            terminalInstance.terminal?.writeln('echo "VS Code extension needed for real terminal functionality"');
+            terminalInstance.terminal?.writeln('VS Code extension needed for real terminal functionality');
+            terminalInstance.terminal?.write('$ ');
+          }, 1000);
+        }
+      }, 500); // Delay to avoid interfering with initial content
     }
-  }, [terminalInstance, onStatusChange]);
+  }, [terminalInstance, onStatusChange, connectionStatus]);
 
   // Disconnect from terminal service
   const disconnectFromTerminalService = useCallback(async () => {
@@ -274,13 +496,57 @@ export function useXtermIntegration(
     }
   }, [terminalInstance]);
 
-  // Auto-connect when terminal is initialized
+  // Auto-connect when terminal is initialized (with delay to preserve initial content)
   useEffect(() => {
+    console.log(`🔗 Auto-connect check for ${terminalInstance.id}:`, {
+      isInitialized,
+      alreadyConnected: serviceConnectionRef.current.connected,
+      willConnect: isInitialized && !serviceConnectionRef.current.connected
+    });
+    
     if (isInitialized && !serviceConnectionRef.current.connected) {
-      // Connect to VS Code terminal service
-      connectToTerminalService();
+      console.log(`🔗 Starting connection for ${terminalInstance.id}...`);
+      // Delay connection to allow initial content to be displayed first
+      setTimeout(() => {
+        connectToTerminalService();
+      }, 2000); // 2 second delay to ensure initial content is visible
     }
   }, [isInitialized, connectToTerminalService]);
+
+  // Handle terminal resize with terminal service integration (debounced and optimized)
+  useEffect(() => {
+    if (!isInitialized || !serviceConnectionRef.current.connected) return;
+
+    const safeCols = dimensions?.cols || 80;
+    const safeRows = dimensions?.rows || 24;
+    
+    // Only resize if dimensions actually changed significantly (avoid spam)
+    const lastDimensions = lastDimensionsRef.current;
+    const colsChanged = Math.abs(lastDimensions.cols - safeCols) > 5;  // Increased threshold
+    const rowsChanged = Math.abs(lastDimensions.rows - safeRows) > 3;  // Increased threshold
+    
+    if (!colsChanged && !rowsChanged) {
+      console.log(`📏 Skipping resize for ${terminalInstance.id}: dimensions haven't changed significantly (${lastDimensions.cols}x${lastDimensions.rows} vs ${safeCols}x${safeRows})`);
+      return;
+    }
+    
+    // Update our tracking
+    lastDimensionsRef.current = { cols: safeCols, rows: safeRows };
+    
+    // Debounce resize calls to avoid spam
+    const resizeTimer = setTimeout(() => {
+      console.log(`📏 Triggering resize for ${terminalInstance.id}: ${lastDimensions.cols}x${lastDimensions.rows} → ${safeCols}x${safeRows}`);
+      
+      // Non-blocking resize - don't let resize failures break the terminal
+      terminalWebSocketService.resizeTerminal(terminalInstance.id, safeCols, safeRows)
+        .catch(err => {
+          console.warn(`⚠️ Terminal resize failed for ${terminalInstance.id}, continuing anyway:`, err.message);
+          // Don't throw - resize failures are not critical
+        });
+    }, 500); // Further increased debounce to reduce spam and allow text rendering
+
+    return () => clearTimeout(resizeTimer);
+  }, [dimensions, isInitialized, terminalInstance.id]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -339,12 +605,3 @@ function setupTerminalEventHandlers(
     console.log(`📝 Terminal ${terminalId} title changed to:`, title);
   });
 }
-
-// Handle terminal resize with VS Code integration
-  useEffect(() => {
-    if (!isInitialized || !serviceConnectionRef.current.connected) return;
-
-    // Notify VS Code of terminal resize
-    terminalWebSocketService.resizeTerminal(terminalInstance.id, dimensions.cols, dimensions.rows)
-      .catch(err => console.error('Failed to resize VS Code terminal:', err));
-  }, [dimensions, isInitialized, terminalInstance.id]);

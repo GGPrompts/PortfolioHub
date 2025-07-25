@@ -52,7 +52,13 @@ class EnvironmentBridge {
     private pendingMessages = new Map<string, { resolve: Function; reject: Function }>();
 
     async initialize(): Promise<EnvironmentMode> {
+        console.log('🔍🔍🔍 ENVIRONMENT BRIDGE INITIALIZING 🔍🔍🔍');
+        console.log('Connection attempted before:', this.connectionAttempted);
+        console.log('Current mode:', this.mode);
+        console.log('Window location:', window.location.href);
+        
         if (this.connectionAttempted) {
+            console.log('🔍 Already attempted connection, returning current mode:', this.mode);
             return this.mode;
         }
 
@@ -60,10 +66,13 @@ class EnvironmentBridge {
 
         // Detect environment
         const hostname = window.location.hostname;
+        console.log('🔍 Detected hostname:', hostname);
         
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            console.log('🔍 Local environment detected, trying VS Code bridge...');
             // Local environment - try to connect to VS Code bridge
             const connected = await this.tryConnectToVSCode();
+            console.log('🔍 VS Code bridge connection result:', connected);
             if (connected) {
                 this.mode = 'vscode-local';
                 console.log('🔗 Environment: VS Code Local - Enhanced features available');
@@ -89,13 +98,16 @@ class EnvironmentBridge {
 
     private async checkRemoteVSCodeServer(): Promise<boolean> {
         try {
-            // Check if VS Code Server is accessible
+            // Check if VS Code Server is accessible on port 8080
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), 2000);
+            
             const response = await fetch('http://localhost:8080', { 
                 method: 'HEAD', 
                 mode: 'no-cors',
-                signal: AbortSignal.timeout(2000)
+                signal: controller.signal
             });
-            return true; // Server is running
+            return true; // VS Code Server is running
         } catch {
             return false; // Server not accessible
         }
@@ -103,18 +115,26 @@ class EnvironmentBridge {
 
     private async tryConnectToVSCode(): Promise<boolean> {
         try {
-            console.log('🔍 Attempting to connect to VS Code bridge...');
+            console.log('🔍 Attempting to connect to VS Code bridge at ws://localhost:8123...');
             
             // Detect if we're in a VS Code webview where WebSocket connections are restricted
             const isVSCodeWebview = window.location.protocol === 'vscode-webview:' || 
                                    window.location.hostname.includes('vscode-webview') ||
                                    (window as any).vscode !== undefined;
             
+            console.log('🔍 Environment check:', {
+                protocol: window.location.protocol,
+                hostname: window.location.hostname,
+                isVSCodeWebview,
+                hasVSCodeGlobal: !!(window as any).vscode
+            });
+            
             if (isVSCodeWebview) {
                 console.log('📱 VS Code webview detected - WebSocket blocked, using clipboard mode');
                 return false;
             }
             
+            console.log('🔌 Creating WebSocket connection to ws://localhost:8123...');
             this.wsConnection = new WebSocket('ws://localhost:8123');
             
             return new Promise((resolve) => {
@@ -129,14 +149,16 @@ class EnvironmentBridge {
 
                 this.wsConnection!.onopen = () => {
                     clearTimeout(timeout);
-                    console.log('✅ Connected to VS Code bridge');
+                    console.log('🎉🎉🎉 CONNECTED TO VS CODE BRIDGE 🎉🎉🎉');
                     this.setupMessageHandling();
                     resolve(true);
                 };
 
                 this.wsConnection!.onerror = (error) => {
                     clearTimeout(timeout);
-                    console.log('❌ Failed to connect to VS Code bridge:', error);
+                    console.log('❌❌❌ FAILED TO CONNECT TO VS CODE BRIDGE ❌❌❌');
+                    console.log('❌ Error details:', error);
+                    console.log('❌ This will cause fallback to clipboard mode');
                     this.wsConnection = null;
                     resolve(false);
                 };
@@ -845,6 +867,16 @@ export const environmentBridge = new EnvironmentBridge();
 
 // Initialize on module load
 environmentBridge.initialize();
+
+// Expose to window for debugging and React component access
+declare global {
+    interface Window {
+        environmentBridge: EnvironmentBridge;
+    }
+}
+
+// Attach to window object for global access
+(window as any).environmentBridge = environmentBridge;
 
 // Export additional methods for React components
 export const connectToVSCode = () => environmentBridge.attemptVSCodeConnection();

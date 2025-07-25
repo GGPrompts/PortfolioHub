@@ -499,10 +499,47 @@
   flex-direction: column;
   background: var(--color-bg-primary, #0d1117);
   border-bottom: 1px solid var(--color-border, #30363d);
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .chatSection {
   background: var(--color-bg-secondary, #161b22);
+  min-height: 300px;
+}
+
+/* Ultra-wide screen layout (≥2560px) */
+@media (min-width: 2560px) {
+  .mainContent {
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .terminalSection {
+    flex: 1 1 60%;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border, #30363d);
+    max-height: none;
+    height: 100%;
+  }
+  
+  .chatSection {
+    flex: 1 1 40%;
+    min-height: auto;
+    height: 100%;
+    min-width: 500px;
+  }
+}
+
+/* Wide screen layout (≥1800px and <2560px) */
+@media (min-width: 1800px) and (max-width: 2559px) {
+  .chatSection {
+    min-height: 350px;
+  }
+  
+  .terminalSection {
+    max-height: calc(100vh - 450px);
+  }
 }
 
 /* ============================================================================
@@ -590,7 +627,10 @@
   flex: 1;
   padding: 8px;
   background: var(--color-bg-primary, #0d1117);
-  overflow: hidden;
+  overflow: auto;
+  min-height: 200px;
+  height: 100%;
+  max-height: calc(100vh - 200px);
 }
 
 /* ============================================================================
@@ -605,6 +645,8 @@
   border-radius: 6px;
   overflow: hidden;
   transition: all 0.2s ease;
+  min-height: 250px;
+  height: 100%;
 }
 
 .terminalCell:hover {
@@ -763,8 +805,10 @@
   flex: 1;
   position: relative;
   background: var(--color-bg-primary, #0d1117);
-  min-height: 300px;
+  min-height: 200px;
+  max-height: 300px;
   min-width: 400px;
+  overflow: hidden;
 }
 
 .terminalElement {
@@ -773,6 +817,24 @@
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 1;
+  background: #0f0f0f !important;
+}
+
+/* Ensure xterm.js canvas elements are visible */
+.terminalElement canvas {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure xterm.js terminal elements are visible */
+.terminalElement .xterm {
+  background: transparent !important;
+}
+
+.terminalElement .xterm-viewport {
+  background: transparent !important;
 }
 
 .terminalLoading,
@@ -787,6 +849,11 @@
   gap: 8px;
   color: var(--color-text-secondary, #8b949e);
   font-size: 12px;
+  z-index: 2;
+  background: rgba(13, 17, 23, 0.9);
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #30363d);
 }
 
 .spinning {
@@ -1085,7 +1152,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--color-text-secondary, #8b949e);
   margin-bottom: 8px;
@@ -1128,14 +1195,14 @@
 .messageTextarea {
   flex: 1;
   resize: vertical;
-  min-height: 40px;
-  max-height: 120px;
-  padding: 8px 12px;
+  min-height: 60px;
+  max-height: 150px;
+  padding: 12px 16px;
   border: 1px solid var(--color-border, #30363d);
   background: var(--color-bg-primary, #0d1117);
   color: var(--color-text-primary, #c9d1d9);
   font-family: monospace;
-  font-size: 12px;
+  font-size: 16px;
   border-radius: 4px;
   outline: none;
   transition: border-color 0.2s ease;

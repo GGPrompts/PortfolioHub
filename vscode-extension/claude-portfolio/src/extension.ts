@@ -62,7 +62,9 @@ interface ExtensionCommands {
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('🚀 Claude Portfolio extension is now active!');
+    console.log('🚀🚀🚀 CLAUDE PORTFOLIO EXTENSION ACTIVATING 🚀🚀🚀');
+    console.log('Extension context:', context);
+    console.log('Workspace folders:', vscode.workspace.workspaceFolders);
 
     try {
         // Initialize services

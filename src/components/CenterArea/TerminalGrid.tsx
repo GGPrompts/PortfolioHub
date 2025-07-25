@@ -3,7 +3,34 @@ import { TerminalGridProps, GridPosition } from './types';
 import { useXtermIntegration } from './hooks/useXtermIntegration';
 import TerminalHeader from './TerminalHeader';
 import SvgIcon from '../SvgIcon';
+import SimpleTerminal from './SimpleTerminal';
 import styles from './CenterArea.module.css';
+
+// Function to create dynamic layout based on terminal count
+function createDynamicLayout(terminalCount: number) {
+  if (terminalCount <= 0) {
+    return { rows: 1, cols: 1, positions: [], description: 'No terminals' };
+  }
+  
+  // Calculate optimal grid size
+  const cols = Math.ceil(Math.sqrt(terminalCount));
+  const rows = Math.ceil(terminalCount / cols);
+  
+  // Generate positions for all terminals
+  const positions = [];
+  for (let i = 0; i < terminalCount; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    positions.push({ row, col, rowSpan: 1, colSpan: 1 });
+  }
+  
+  return {
+    rows,
+    cols,
+    positions,
+    description: `Dynamic ${cols}x${rows} grid for ${terminalCount} terminals`
+  };
+}
 
 // Layout configurations mapping
 const LAYOUT_CONFIGS = {
@@ -55,10 +82,20 @@ const LAYOUT_CONFIGS = {
     description: 'Four vertical columns'
   },
   custom: { 
-    rows: 2, 
+    rows: 3, 
     cols: 3, 
-    positions: [],
-    description: 'Custom layout'
+    positions: [
+      { row: 0, col: 0, rowSpan: 1, colSpan: 1 },
+      { row: 0, col: 1, rowSpan: 1, colSpan: 1 },
+      { row: 0, col: 2, rowSpan: 1, colSpan: 1 },
+      { row: 1, col: 0, rowSpan: 1, colSpan: 1 },
+      { row: 1, col: 1, rowSpan: 1, colSpan: 1 },
+      { row: 1, col: 2, rowSpan: 1, colSpan: 1 },
+      { row: 2, col: 0, rowSpan: 1, colSpan: 1 },
+      { row: 2, col: 1, rowSpan: 1, colSpan: 1 },
+      { row: 2, col: 2, rowSpan: 1, colSpan: 1 }
+    ],
+    description: 'Custom 3x3 grid layout'
   }
 };
 
@@ -82,8 +119,14 @@ function TerminalCell({
 }) {
   // Calculate terminal dimensions based on grid position
   const terminalDimensions = useMemo(() => {
-    const cellWidth = Math.floor(dimensions.width / LAYOUT_CONFIGS[dimensions.layout]?.cols || 1);
-    const cellHeight = Math.floor(dimensions.height / LAYOUT_CONFIGS[dimensions.layout]?.rows || 1);
+    // Provide safe defaults if dimensions is undefined
+    const safeWidth = dimensions?.width || 800;
+    const safeHeight = dimensions?.height || 600;
+    const safeLayout = dimensions?.layout || 'single';
+    
+    const layoutConfig = LAYOUT_CONFIGS[safeLayout];
+    const cellWidth = Math.floor(safeWidth / (layoutConfig?.cols || 1));
+    const cellHeight = Math.floor(safeHeight / (layoutConfig?.rows || 1));
     
     return {
       width: cellWidth * position.colSpan,
@@ -113,48 +156,22 @@ function TerminalCell({
       className={`${styles.terminalCell} ${selected ? styles.selected : ''}`}
       style={gridStyle}
     >
-      <TerminalHeader
-        terminal={terminal}
-        selected={selected}
-        onToggleSelection={(id) => onSelect(id, !selected)}
-        onClose={onClose}
-        onRename={onRename}
+      {/* Use SimpleTerminal instead of complex xterm.js for now */}
+      <SimpleTerminal
+        terminalId={terminal.id}
+        title={terminal.title || `Terminal ${terminal.id.slice(-8)}`}
+        workbranchId={terminal.workbranchId}
+        projectId={terminal.projectId}
+        onCommand={(command) => {
+          console.log(`Command from ${terminal.id}:`, command);
+          // Send command to VS Code via Environment Bridge
+          sendCommand(command);
+        }}
+        onClose={(terminalId) => {
+          console.log(`Closing terminal: ${terminalId}`);
+          onTerminalClose(terminalId);
+        }}
       />
-      
-      <div className={styles.terminalContainer}>
-        <div 
-          ref={terminalRef}
-          className={styles.terminalElement}
-          style={{
-            width: '100%',
-            height: '100%',
-            minHeight: '150px'
-          }}
-        />
-        
-        {!isInitialized && (
-          <div className={styles.terminalLoading}>
-            <SvgIcon name="loader" size={20} className={styles.spinning} />
-            <span>Initializing terminal...</span>
-          </div>
-        )}
-        
-        {isInitialized && !isConnected && (
-          <div className={styles.terminalDisconnected}>
-            <SvgIcon name="wifiOff" size={20} />
-            <span>Terminal disconnected</span>
-            <button 
-              className={styles.reconnectButton}
-              onClick={() => {
-                // Reconnect logic would be here
-                console.log('Attempting to reconnect terminal', terminal.id);
-              }}
-            >
-              Reconnect
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -166,20 +183,23 @@ export default function TerminalGrid({
   onTerminalSelect,
   onTerminalClose,
   onLayoutChange,
+  dimensions,
   className = ''
 }: TerminalGridProps) {
-  const layoutConfig = LAYOUT_CONFIGS[layout];
+  // Create dynamic layout for custom mode based on terminal count
+  const layoutConfig = layout === 'custom' 
+    ? createDynamicLayout(terminals.length)
+    : LAYOUT_CONFIGS[layout];
   
   // Calculate grid dimensions
   const gridDimensions = useMemo(() => {
-    // This would typically come from the parent container's dimensions
-    // For now, using placeholder values
+    // Use passed dimensions or fall back to defaults
     return {
-      width: 1200,
-      height: 800,
+      width: dimensions?.width || 1200,
+      height: dimensions?.height || 800,
       layout
     };
-  }, [layout]);
+  }, [dimensions, layout]);
 
   // Handle layout change
   const handleLayoutChange = (newLayout: typeof layout) => {
@@ -254,14 +274,20 @@ export default function TerminalGrid({
           <button
             className={styles.actionButton}
             onClick={() => {
-              // Tile all terminals
-              if (terminals.length <= 4) {
+              // Smart auto-tile based on terminal count
+              if (terminals.length === 1) {
+                handleLayoutChange('single');
+              } else if (terminals.length === 2) {
+                handleLayoutChange('split');
+              } else if (terminals.length === 3) {
+                handleLayoutChange('triple');
+              } else if (terminals.length === 4) {
                 handleLayoutChange('quad');
               } else {
                 handleLayoutChange('custom');
               }
             }}
-            title="Auto-arrange terminals"
+            title="Auto-arrange terminals based on count"
             disabled={terminals.length === 0}
           >
             <SvgIcon name="layout" size={14} />

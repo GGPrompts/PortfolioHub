@@ -1,0 +1,150 @@
+{
+  "timestamp": "2025-07-25T04:47:30.296Z",
+  "nodeVersion": "v22.17.0",
+  "platform": "win32",
+  "results": {
+    "fileChecks": [
+      {
+        "name": "terminal-integration-test-suite.js",
+        "passed": true,
+        "details": "Integration testing framework (29KB)"
+      },
+      {
+        "name": "terminal-performance-tests.js",
+        "passed": true,
+        "details": "Performance and load testing (28KB)"
+      },
+      {
+        "name": "terminal-workflow-tests.js",
+        "passed": true,
+        "details": "Multi-terminal workflow validation (32KB)"
+      },
+      {
+        "name": "run-all-terminal-tests.js",
+        "passed": true,
+        "details": "Test suite orchestrator (16KB)"
+      },
+      {
+        "name": "README.md",
+        "passed": true,
+        "details": "Testing documentation (10KB)"
+      },
+      {
+        "name": "results directory",
+        "passed": true,
+        "details": "Created successfully"
+      },
+      {
+        "name": "terminal-integration-test-suite.js structure",
+        "passed": true,
+        "details": "Valid test structure"
+      },
+      {
+        "name": "terminal-performance-tests.js structure",
+        "passed": true,
+        "details": "Valid test structure"
+      },
+      {
+        "name": "terminal-workflow-tests.js structure",
+        "passed": true,
+        "details": "Valid test structure"
+      },
+      {
+        "name": "run-all-terminal-tests.js structure",
+        "passed": true,
+        "details": "Valid test structure"
+      },
+      {
+        "name": "Integration test imports",
+        "passed": true,
+        "details": "TestUtils class available"
+      },
+      {
+        "name": "Performance test imports",
+        "passed": true,
+        "details": "PerformanceTestUtils available"
+      },
+      {
+        "name": "Workflow test imports",
+        "passed": true,
+        "details": "WorkflowTestUtils available"
+      },
+      {
+        "name": "Test runner imports",
+        "passed": true,
+        "details": "TerminalTestRunner available"
+      },
+      {
+        "name": "Utility functions",
+        "passed": true,
+        "details": "Generated ID: test-1753418850296-kh1ghdpem"
+      }
+    ],
+    "scriptChecks": [
+      {
+        "name": "npm run test",
+        "passed": true,
+        "details": "node tests/run-all-terminal-tests.js"
+      },
+      {
+        "name": "npm run test:quick",
+        "passed": true,
+        "details": "node tests/run-all-terminal-tests.js --quick"
+      },
+      {
+        "name": "npm run test:integration",
+        "passed": true,
+        "details": "node tests/terminal-integration-test-suite.js"
+      },
+      {
+        "name": "npm run test:performance",
+        "passed": true,
+        "details": "node tests/terminal-performance-tests.js"
+      },
+      {
+        "name": "npm run test:workflow",
+        "passed": true,
+        "details": "node tests/terminal-workflow-tests.js"
+      }
+    ],
+    "dependencyChecks": [
+      {
+        "name": "WebSocket library (ws)",
+        "passed": true,
+        "details": "^8.14.2"
+      },
+      {
+        "name": "Node.js module: ws",
+        "passed": true,
+        "details": "Available"
+      },
+      {
+        "name": "Node.js module: path",
+        "passed": true,
+        "details": "Available"
+      },
+      {
+        "name": "Node.js module: fs",
+        "passed": true,
+        "details": "Available"
+      },
+      {
+        "name": "Node.js module: http",
+        "passed": true,
+        "details": "Available"
+      },
+      {
+        "name": "Node.js version",
+        "passed": true,
+        "details": "v22.17.0 (requires >=16.0.0)"
+      }
+    ],
+    "passed": 26,
+    "failed": 0
+  },
+  "summary": {
+    "passed": 26,
+    "failed": 0,
+    "successRate": "100.0"
+  }
+}

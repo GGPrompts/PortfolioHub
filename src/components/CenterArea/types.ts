@@ -167,6 +167,7 @@ export interface TerminalGridProps {
   onTerminalSelect: (terminalId: string, selected: boolean) => void;
   onTerminalClose: (terminalId: string) => void;
   onLayoutChange: (layout: TerminalGridLayout) => void;
+  dimensions?: TerminalDimensions;
   className?: string;
 }
 
@@ -176,6 +177,9 @@ export interface ChatInterfaceProps {
   messageHistory: ChatMessage[];
   onSendMessage: (content: string, targets: string[]) => void;
   onClearHistory: () => void;
+  onTerminalSelect: (terminalId: string, selected: boolean) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
   className?: string;
 }
 

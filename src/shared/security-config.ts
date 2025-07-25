@@ -63,6 +63,7 @@ export const SHARED_SECURITY_CONFIG = {
         /^cd\s+"[^\.][^"]*"\s+&&\s+npm\s+(run\s+)?(dev|start|build|test)(\s+--.*)?$/,  // cd && npm
         /^cd\s+"[^\.][^"]*"\s+&&\s+(npm\s+(run\s+)?(dev|start|build|test)|yarn\s+(dev|start|build)|pnpm\s+(dev|start))(\s+--.*)?$/,  // cd && package manager
         /^cd\s+"[^\.][^"]*"\s+&&\s+code\s+serve-web\s+--port\s+\d+\s+--host\s+[\d\.]+\s+--without-connection-token\s+--accept-server-license-terms$/i, // cd && VS Code server
+        /^powershell\s+-File\s+"[^"]*[\\\/]scripts[\\\/]start-vscode-server\.ps1"(\s+-\w+\s+\w+)*$/i, // VS Code Server PowerShell script
         // PowerShell process management (portfolio specific)
         /^\$proc\s*=\s*Get-NetTCPConnection\s+-LocalPort\s+\d+.*;\s*if\s*\(\$proc\)\s*\{\s*Stop-Process\s+-Id\s+\$proc\.OwningProcess\s+-Force\s*\}$/i,
         /^taskkill\s+\/F\s+\/PID\s+\(Get-NetTCPConnection\s+-LocalPort\s+\d+.*\)$/i,

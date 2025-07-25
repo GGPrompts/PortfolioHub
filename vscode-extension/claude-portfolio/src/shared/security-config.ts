@@ -10,7 +10,8 @@ export const SHARED_SECURITY_CONFIG = {
         'npm', 'yarn', 'pnpm', 'node', 'git', 'powershell.exe', 'cmd.exe', 
         'cd', 'claude', 'explorer', 'code', 'taskkill', 'echo', 'dir', 'ls',
         'python', 'py', 'typescript', 'tsc', 'cursor', 'windsurf', 'aider',
-        'netstat', 'findstr'
+        'netstat', 'findstr', 'pwd', 'whoami', 'where', 'which', 'cat', 'type',
+        'clear', 'cls', 'help', 'man', 'ping', 'ipconfig', 'ifconfig'
     ],
     
     ALLOWED_NPM_SCRIPTS: [
@@ -48,6 +49,17 @@ export const SHARED_SECURITY_CONFIG = {
         /^cd\s+"[^\.][^"]*"$/,                               // cd "path" (not starting with .)  
         /^npm\s+(run\s+)?(dev|start|build|test|lint|format)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // npm with args (supports quoted args, no pipe operations)
         /^git\s+(status|add|commit|push|pull|branch|checkout)(?:\s+(?:[^|;&`$()"']|"[^"]*"|'[^']*')+)?$/,  // git commands (supports quoted args, no pipe operations)
+        // Basic terminal commands
+        /^(dir|ls)(\s+[^|;&`$()"']+)?$/,                      // dir, ls with optional simple args
+        /^(pwd|whoami|clear|cls|help)$/,                     // Simple info/utility commands
+        /^echo\s+"[^"]*"$/,                                  // echo with quoted string
+        /^cat\s+"[^"]*"$/,                                   // cat with quoted file path
+        /^type\s+"[^"]*"$/,                                  // Windows type command
+        /^ping\s+[\w\.-]+$/,                                 // ping hostname or IP
+        /^(where|which)\s+\w+$/,                             // where/which command lookup
+        /^(ipconfig|ifconfig)(\s+\/[a-z]+)?$/,               // network config commands
+        // Safe text patterns for terminal input (no dangerous chars)
+        /^[a-zA-Z0-9\s\._\-\/\\:]+$/,                        // alphanumeric text with common safe chars (no pipes, semicolons, etc.)
         /^powershell\.exe.*Get-NetTCPConnection/i,                        // Port management
         /^taskkill\s+(\/F\s+\/PID|\/PID\s+[0-9]+\s+\/F)/i,               // Process management (flexible flag order)
         /^Get-Process.*\|.*Where-Object/i,                               // Process queries

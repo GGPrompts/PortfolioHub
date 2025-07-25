@@ -306,56 +306,65 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
   }, [dispatchAction]);
 
   const sendMessage = useCallback((content: string, targets?: string[]) => {
-    console.log('🎯 useTerminalGrid sendMessage called:', { content, targets });
-    console.log('🔍 State selectedTerminals:', state.selectedTerminals);
-    console.log('🔍 Available terminals:', state.terminals.map(t => ({ id: t.id, title: t.title, hasTerminal: !!t.terminal })));
-    
     const messageTargets = targets || Array.from(state.selectedTerminals);
-    console.log('📋 Message targets:', messageTargets);
+    console.log('🎯 Sending command to terminals:', { command: content, targets: messageTargets.length });
     
     if (messageTargets.length === 0) {
       console.warn('❌ No terminals selected for message');
       return;
     }
 
-    console.log('✅ Dispatching SEND_MESSAGE action');
     dispatchAction({
       type: 'SEND_MESSAGE',
       payload: { content, targets: messageTargets }
     });
 
-    // Send the command to terminals via WebSocket
-    console.log('🚀 About to send to terminals:', messageTargets);
+    // Send the command to terminals via main WebSocket bridge
     messageTargets.forEach(async (terminalId) => {
       const terminal = state.terminals.find(t => t.id === terminalId);
-      console.log(`🔍 Looking for terminal ${terminalId}:`, terminal ? 'FOUND' : 'NOT FOUND');
       
       if (terminal) {
-        console.log(`📤 Sending command to terminal ${terminalId}: ${content}`);
         try {
-          // Import the WebSocket service
+          // Import the WebSocket service (connects to main bridge at 8123)
           const { terminalWebSocketService } = await import('../../../services/terminalWebSocketService');
           
-          // Send command via WebSocket to VS Code
+          // Check if we need to create a terminal session
+          const sessionStatus = terminalWebSocketService.getSessionStatus(terminalId);
+          if (!sessionStatus || sessionStatus === 'error') {
+            try {
+              await terminalWebSocketService.createTerminalSession(
+                terminalId,
+                terminal.workbranchId,
+                terminal.projectId
+              );
+            } catch (sessionError) {
+              console.error(`❌ Failed to create terminal session for ${terminalId}:`, sessionError);
+              // Don't continue if session creation failed
+              if (terminal.terminal) {
+                terminal.terminal.write(`\r\n❌ Failed to create VS Code terminal session\r\n`);
+                terminal.terminal.write(`💡 Make sure VS Code extension is active\r\n$ `);
+              }
+              return;
+            }
+          }
+          
+          // Send command via WebSocket to VS Code bridge
           await terminalWebSocketService.sendCommand(terminalId, content);
           
-          console.log(`✅ Successfully sent to terminal ${terminalId}: ${content}`);
+          // Update terminal to show the command was sent
+          if (terminal.terminal) {
+            terminal.terminal.write(`\r\n> ${content}\r\n`);
+            terminal.terminal.write('📤 Command sent to VS Code terminal...\r\n');
+          }
           
-          // Update message status
-          dispatchAction({
-            type: 'UPDATE_MESSAGE_STATUS',
-            payload: {
-              messageId: `msg-${Date.now()}`,
-              status: 'sent'
-            }
-          });
         } catch (error) {
           console.error(`❌ Error sending to terminal ${terminalId}:`, error);
           
           // Fallback: write locally if WebSocket fails
           if (terminal.terminal) {
             terminal.terminal.write(`\r\n$ ${content}\r\n`);
-            terminal.terminal.write('⚠️ WebSocket error - command may not have executed\r\n$ ');
+            terminal.terminal.write('⚠️ WebSocket connection failed - Running in local mode\r\n');
+            terminal.terminal.write('💡 Ensure VS Code extension is active for terminal integration\r\n$ ');
           }
         }
       } else {
@@ -385,24 +394,41 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
     layout: TerminalGridLayout
   ): TerminalDimensions => {
     const config = LAYOUT_CONFIGS[layout];
-    if (!config) return { width: 0, height: 0, rows: 24, cols: 80 };
+    if (!config) return { width: 800, height: 600, rows: 24, cols: 80 };
 
-    const termWidth = Math.floor(containerDimensions.width / config.cols);
-    const termHeight = Math.floor(containerDimensions.height / config.rows);
+    // Ensure we have valid container dimensions
+    const safeWidth = Math.max(containerDimensions.width || 800, 300);
+    const safeHeight = Math.max(containerDimensions.height || 600, 200);
+
+    const termWidth = Math.floor(safeWidth / config.cols);
+    const termHeight = Math.floor(safeHeight / config.rows);
     
     // Calculate terminal rows and columns based on font size
     const charWidth = 7; // Approximate character width
     const charHeight = 14; // Approximate character height
     
-    const cols = Math.floor(termWidth / charWidth);
-    const rows = Math.floor(termHeight / charHeight);
+    const cols = Math.floor(Math.max(termWidth, 300) / charWidth);
+    const rows = Math.floor(Math.max(termHeight, 200) / charHeight);
 
-    return {
-      width: termWidth,
-      height: termHeight,
+    const finalDimensions = {
+      width: Math.max(termWidth, 300),
+      height: Math.max(termHeight, 200),
       rows: Math.max(rows, 10),
       cols: Math.max(cols, 40)
     };
+
+    // Throttle dimension logging to prevent spam
+    const dimensionsKey = `${safeWidth}x${safeHeight}-${layout}`;
+    if (!calculateTerminalDimensions.lastLogKey || calculateTerminalDimensions.lastLogKey !== dimensionsKey) {
+      calculateTerminalDimensions.lastLogKey = dimensionsKey;
+      console.log(`📐 Terminal dimensions updated:`, {
+        container: { width: safeWidth, height: safeHeight },
+        layout,
+        terminal: finalDimensions
+      });
+    }
+
+    return finalDimensions;
   }, []);
 
   // Setup resize observer for dynamic grid sizing
@@ -413,12 +439,21 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
       const entry = entries[0];
       if (entry) {
         const { width, height } = entry.contentRect;
-        const dimensions = calculateTerminalDimensions({ width, height }, state.layout);
         
-        dispatchAction({
-          type: 'RESIZE_GRID',
-          payload: { dimensions }
-        });
+        // Only update if we have meaningful dimensions
+        if (width > 0 && height > 0) {
+          const dimensions = calculateTerminalDimensions({ width, height }, state.layout);
+          
+          // Verify calculated dimensions are valid before dispatching
+          if (dimensions.width > 0 && dimensions.height > 0 && dimensions.rows > 0 && dimensions.cols > 0) {
+            dispatchAction({
+              type: 'RESIZE_GRID',
+              payload: { dimensions }
+            });
+          } else {
+            console.warn('⚠️ Invalid dimensions calculated, skipping resize:', dimensions);
+          }
+        }
       }
     });
 

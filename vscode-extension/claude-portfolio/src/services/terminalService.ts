@@ -10,12 +10,14 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { VSCodeSecurityService } from '../securityService';
 import * as path from 'path';
 import * as os from 'os';
+import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 
 export interface TerminalSession {
     id: string;
     workbranchId: string;
     shell: 'powershell' | 'bash' | 'cmd';
-    terminal: vscode.Terminal;
+    terminal: vscode.Terminal; // Keep VS Code terminal for display
+    ptyTerminal: pty.IPty; // Add node-pty for real output streaming
     webSocket?: WebSocket;
     workingDirectory: string;
     createdAt: Date;
@@ -229,7 +231,7 @@ export class TerminalService {
                 // Directory may already exist, that's fine
             }
 
-            // Create VS Code terminal
+            // Create VS Code terminal for display
             const terminal = vscode.window.createTerminal({
                 name: title || `Terminal - ${workbranchId}`,
                 shellPath: shellInfo.executable,
@@ -241,12 +243,26 @@ export class TerminalService {
                 }
             });
 
+            // Create node-pty terminal for real output streaming
+            const ptyTerminal = pty.spawn(shellInfo.executable, shellInfo.args, {
+                name: 'xterm-color',
+                cols: 80,
+                rows: 30,
+                cwd: workingDirectory,
+                env: {
+                    ...process.env,
+                    WORKBRANCH_ID: workbranchId,
+                    PORTFOLIO_ROOT: this.workspaceRoot
+                }
+            });
+
             // Create session object
             const session: TerminalSession = {
                 id: sessionId,
                 workbranchId,
                 shell,
                 terminal,
+                ptyTerminal,
                 webSocket,
                 workingDirectory,
                 createdAt: new Date(),
@@ -254,12 +270,28 @@ export class TerminalService {
                 title: title || `Terminal - ${workbranchId}`
             };
 
-            // Note: VS Code terminals don't provide direct output streaming
-            // Instead, we'll use the WebSocket to simulate terminal interaction
-            // and rely on VS Code's built-in terminal display
-            
-            // Show the terminal (optional - user can choose)
-            // terminal.show();
+            // Set up real output streaming from node-pty to WebSocket
+            ptyTerminal.onData((data: string) => {
+                // Send output to connected WebSocket clients
+                this.broadcast({
+                    type: 'output',
+                    sessionId,
+                    data
+                });
+                
+                // Also send to VS Code terminal for dual display
+                terminal.sendText(data, false);
+            });
+
+            ptyTerminal.onExit((e: { exitCode: number; signal?: number }) => {
+                console.log(`Terminal ${sessionId} exited with code ${e.exitCode}, signal ${e.signal}`);
+                this.broadcast({
+                    type: 'exit',
+                    sessionId,
+                    exitCode: e.exitCode,
+                    signal: e.signal
+                });
+            });
 
             // Store session
             this.sessions.set(sessionId, session);
@@ -313,8 +345,9 @@ export class TerminalService {
                 };
             }
 
-            // Dispose the VS Code terminal
+            // Dispose both terminals
             session.terminal.dispose();
+            session.ptyTerminal.kill();
             this.sessions.delete(sessionId);
 
             console.log(`🗑️ Terminal session destroyed: ${sessionId}`);
@@ -341,8 +374,15 @@ export class TerminalService {
      */
     async executeCommand(sessionId: string, command: string, webSocket?: WebSocket): Promise<TerminalResponse> {
         try {
+            console.log(`🔍🔍🔍 TERMINAL SERVICE EXECUTE COMMAND 🔍🔍🔍`);
+            console.log(`Session ID: ${sessionId}`);
+            console.log(`Command: ${command}`);
+            console.log(`Available sessions:`, Array.from(this.sessions.keys()));
+            
             const session = this.sessions.get(sessionId);
             if (!session) {
+                console.error(`❌ Session not found: ${sessionId}`);
+                console.log(`Available sessions:`, Array.from(this.sessions.keys()));
                 return {
                     type: 'error',
                     success: false,
@@ -350,8 +390,17 @@ export class TerminalService {
                 };
             }
 
+            console.log(`✅ Session found:`, {
+                id: session.id,
+                workbranchId: session.workbranchId,
+                shell: session.shell,
+                title: session.title,
+                workingDirectory: session.workingDirectory
+            });
+
             // Verify ownership if WebSocket is provided
             if (webSocket && session.webSocket !== webSocket) {
+                console.error(`❌ Permission denied - WebSocket mismatch`);
                 return {
                     type: 'error',
                     success: false,
@@ -361,6 +410,7 @@ export class TerminalService {
 
             // Enhanced security validation for terminal commands
             if (!this.validateTerminalCommand(command, session.workbranchId)) {
+                console.error(`❌ Command blocked for security: ${command}`);
                 return {
                     type: 'error',
                     success: false,
@@ -368,11 +418,12 @@ export class TerminalService {
                 };
             }
 
+            console.log(`🎯 Sending command to VS Code terminal...`);
             // Send command to VS Code terminal
             session.terminal.sendText(command);
             session.lastActivity = new Date();
 
-            console.log(`📤 Command executed in ${sessionId}: ${command}`);
+            console.log(`📤✅ Command executed successfully in ${sessionId}: ${command}`);
 
             return {
                 type: 'status',
@@ -382,7 +433,8 @@ export class TerminalService {
             };
 
         } catch (error) {
-            console.error('Failed to execute terminal command:', error);
+            console.error('❌❌❌ TERMINAL SERVICE ERROR ❌❌❌:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
             return {
                 type: 'error',
                 success: false,

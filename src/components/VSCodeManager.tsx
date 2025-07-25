@@ -331,46 +331,21 @@ ${command}`;
 
   const checkVSCodeServerStatus = async () => {
     try {
-      // Use WebSocket to check if server is running (silent, no console errors)
-      return new Promise<boolean>((resolve) => {
-        const timeout = setTimeout(() => {
-          resolve(false);
-        }, 2000);
-        
-        try {
-          const ws = new WebSocket('ws://localhost:8080');
-          
-          ws.onopen = () => {
-            clearTimeout(timeout);
-            ws.close();
-            resolve(true);
-          };
-          
-          ws.onerror = () => {
-            clearTimeout(timeout);
-            resolve(false);
-          };
-          
-          // Fallback: Also try image loading as secondary check
-          const img = new Image();
-          img.onload = () => {
-            clearTimeout(timeout);
-            resolve(true);
-          };
-          
-          // Suppress error logging by handling it
-          img.onerror = () => {
-            // Silent fail - expected when server is not running
-          };
-          
-          // Use a non-existent endpoint to avoid 404 logs
-          img.src = `http://localhost:8080/vscode-server-check-${Date.now()}.png`;
-        } catch {
-          clearTimeout(timeout);
-          resolve(false);
-        }
+      // Use HTTP HEAD request to check if VS Code Server is running (port 8080)
+      // VS Code Server provides HTTP interface, not WebSocket
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch('http://localhost:8080', {
+        method: 'HEAD',
+        signal: controller.signal,
+        mode: 'no-cors'
       });
+      
+      clearTimeout(timeout);
+      return true; // If we get here, server is responding
     } catch (error) {
+      // Server not responding or timeout - this is expected when VS Code Server is not running
       return false;
     }
   };
@@ -464,19 +439,18 @@ ${command}`;
         });
         showNotification('Starting VS Code Server via extension...', 'info');
       } else {
-        // Fallback: Use secure combined command that's pre-approved
+        // Fallback: Use PowerShell script that's pre-approved
         try {
-          // Use a single combined command that should pass security validation
-          const serverCommand = 'cd "D:\\ClaudeWindows\\claude-dev-portfolio" && code serve-web --port 8080 --host 0.0.0.0 --without-connection-token --accept-server-license-terms';
-          console.log('Starting VS Code server with command:', serverCommand);
-          await executeCommand(serverCommand, 'Start VS Code Server');
+          // Use the dedicated PowerShell script for better error handling and user experience
+          const scriptCommand = 'powershell -File "D:\\ClaudeWindows\\claude-dev-portfolio\\scripts\\start-vscode-server.ps1"';
+          console.log('Starting VS Code server with PowerShell script:', scriptCommand);
+          await executeCommand(scriptCommand, 'Start VS Code Server');
+          showNotification('VS Code Server startup initiated! Check terminal for details.', 'info');
           
         } catch (error) {
           console.error('Failed to start VS Code server:', error);
           showNotification('Failed to start VS Code server. Commands may be blocked by security. Try manual setup using clipboard commands below.', 'error');
         }
-        
-        showNotification('VS Code Server startup initiated!', 'info');
         
         // Show helpful message after startup with new window option
         setTimeout(() => {

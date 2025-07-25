@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatInterfaceProps, ChatMessage, TerminalInstance } from './types';
 import SvgIcon from '../SvgIcon';
+import CompactTerminalSelector from './CompactTerminalSelector';
 import styles from './CenterArea.module.css';
 
 export default function ChatInterface({
@@ -9,6 +10,9 @@ export default function ChatInterface({
   messageHistory,
   onSendMessage,
   onClearHistory,
+  onTerminalSelect,
+  onSelectAll,
+  onDeselectAll,
   className = ''
 }: ChatInterfaceProps) {
   const [messageInput, setMessageInput] = useState('');
@@ -177,6 +181,15 @@ export default function ChatInterface({
 
       {isExpanded && (
         <>
+          {/* Compact Terminal Selector */}
+          <CompactTerminalSelector
+            terminals={terminals}
+            selectedTerminals={selectedTerminals}
+            onTerminalSelect={onTerminalSelect}
+            onSelectAll={onSelectAll}
+            onDeselectAll={onDeselectAll}
+          />
+
           {/* Target Terminals Display */}
           <div className={styles.targetTerminals}>
             <div className={styles.targetHeader}>

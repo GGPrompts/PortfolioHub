@@ -41,6 +41,18 @@ export class OptimizedPortManager {
         return OptimizedPortManager.instance;
     }
 
+    // Global toggle for port checking
+    private portCheckingEnabled = true;
+    
+    setPortCheckingEnabled(enabled: boolean) {
+        this.portCheckingEnabled = enabled;
+        console.log(`🔧 Optimized port checking ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    disablePortChecking() {
+        this.setPortCheckingEnabled(false);
+    }
+
     /**
      * Check if a port is available with caching
      * @param port The port to check
@@ -48,6 +60,10 @@ export class OptimizedPortManager {
      * @returns Promise<boolean> - true if port is available
      */
     async isPortAvailable(port: number, skipCache: boolean = false): Promise<boolean> {
+        // Skip if port checking is disabled
+        if (!this.portCheckingEnabled) {
+            return false;
+        }
         if (!skipCache) {
             const cached = this.getCachedResult(port);
             if (cached !== null) {
@@ -130,84 +146,95 @@ export class OptimizedPortManager {
      * @returns Promise<boolean>
      */
     private async doPortCheck(port: number, signal: AbortSignal): Promise<boolean> {
-        try {
-            console.log(`🔍 Checking port ${port}...`);
-            
-            // Try multiple approaches to detect the server
-            const approaches = [
-                // Approach 1: GET with no-cors (matches VS Code extension method)
-                async () => {
-                    const response = await fetch(`http://localhost:${port}`, {
-                        method: 'GET',
-                        mode: 'no-cors',
-                        signal,
-                        cache: 'no-cache'
-                    });
-                    console.log(`✅ Port ${port} GET no-cors succeeded:`, response.type, response.status);
-                    return true;
-                },
-                
-                // Approach 2: HEAD with no-cors (fallback)
-                async () => {
-                    const response = await fetch(`http://localhost:${port}`, {
-                        method: 'HEAD',
-                        mode: 'no-cors',
-                        signal,
-                        cache: 'no-cache'
-                    });
-                    console.log(`✅ Port ${port} HEAD no-cors succeeded:`, response.type, response.status);
-                    return true;
-                },
-                
-                // Approach 3: Try favicon.ico (like VS Code extension does)
-                async () => {
-                    const response = await fetch(`http://localhost:${port}/favicon.ico`, {
-                        method: 'HEAD',
-                        mode: 'no-cors',
-                        signal,
-                        cache: 'no-cache'
-                    });
-                    // Reduced logging to prevent console spam
-                    return true;
-                }
-            ];
-            
-            // Try approaches in sequence
-            for (let i = 0; i < approaches.length; i++) {
-                try {
-                    const result = await approaches[i]();
-                    if (result) {
-                        console.log(`✅ Port ${port} detected using approach ${i + 1}`);
-                        return true;
-                    }
-                } catch (error: any) {
-                    console.log(`⚠️ Port ${port} approach ${i + 1} failed:`, error.name, error.message);
-                    if (i === approaches.length - 1) {
-                        // Last approach failed, throw the error
-                        throw error;
-                    }
-                }
-            }
-            
-            return false;
-            
-        } catch (error: any) {
-            // Check if request was aborted
-            if (signal.aborted) {
-                throw error;
-            }
-
-            console.log(`❌ Port ${port} all approaches failed:`, error.name, error.message);
-
-            // Network errors usually mean the server is not running
-            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                return false;
-            }
-
-            // For other errors, assume server is not available
-            return false;
-        }
+    try {
+    // Check if port checking is disabled
+    const settings = JSON.parse(localStorage.getItem('performanceSettings') || '{}');
+    if (!settings.portCheckingEnabled) {
+      return false;
     }
+    
+    // Self-detection: If we're checking our own port (5173), we're obviously running
+    if (port === 5173 && window.location.port === '5173') {
+      return true;
+    }
+    
+    // Suppress console errors during port checking
+    const originalError = console.error;
+    console.error = () => {}; // Temporarily disable console.error
+    
+    try {
+    // Try multiple approaches to detect the server
+    const approaches = [
+    // Approach 1: GET with no-cors (matches VS Code extension method)
+      async () => {
+        const response = await fetch(`http://localhost:${port}`, {
+          method: 'GET',
+          mode: 'no-cors',
+        signal,
+      cache: 'no-cache'
+    });
+    return true;
+    },
+    
+    // Approach 2: HEAD with no-cors (fallback)
+    async () => {
+        const response = await fetch(`http://localhost:${port}`, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal,
+        cache: 'no-cache'
+    });
+    return true;
+    },
+    
+    // Approach 3: Try favicon.ico (like VS Code extension does)
+    async () => {
+      const response = await fetch(`http://localhost:${port}/favicon.ico`, {
+          method: 'HEAD',
+            mode: 'no-cors',
+            signal,
+            cache: 'no-cache'
+          });
+        return true;
+    }
+    ];
+    
+    // Try approaches in sequence
+    for (let i = 0; i < approaches.length; i++) {
+      try {
+      const result = await approaches[i]();
+      if (result) {
+      console.error = originalError; // Restore console.error
+      return true;
+      }
+      } catch (error: any) {
+          // Expected when port is not in use
+          if (i === approaches.length - 1) {
+            throw error;
+          }
+          }
+      }
+      
+    return false;
+    } finally {
+        console.error = originalError; // Always restore console.error
+    }
+      
+    } catch (error: any) {
+    // Check if request was aborted
+    if (signal.aborted) {
+      throw error;
+      }
+
+    // Network errors usually mean the server is not running
+      if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+          return false;
+      }
+
+      // For other errors, assume server is not available
+      return false;
+    }
+  }
 
     /**
      * Batch check multiple ports efficiently
@@ -252,27 +279,26 @@ export class OptimizedPortManager {
             .filter(p => p.localPort)
             .map(p => p.localPort!);
 
-        console.log(`📊 Checking ${projects.length} projects, ${portsToCheck.length} have ports:`, 
-            projects.map(p => `${p.id}:${p.localPort}`));
-
         if (portsToCheck.length === 0) {
             return new Map();
         }
 
         const portResults = await this.batchCheckPorts(portsToCheck);
         const projectResults = new Map<string, boolean>();
+        let runningCount = 0;
 
         projects.forEach(project => {
             if (project.localPort) {
                 const isRunning = portResults.get(project.localPort) || false;
                 projectResults.set(project.id, isRunning);
-                console.log(`📊 Project ${project.id} (port ${project.localPort}): ${isRunning ? '✅ RUNNING' : '❌ STOPPED'}`);
+                if (isRunning) runningCount++;
             } else {
                 projectResults.set(project.id, false);
-                console.log(`📊 Project ${project.id}: ❌ NO PORT CONFIGURED`);
             }
         });
 
+        // Only log summary - much less spam
+        console.log(`📊 Portfolio: ${runningCount}/${projects.length} projects running`);
         return projectResults;
     }
 

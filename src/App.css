@@ -31,6 +31,19 @@ body {
   min-width: 0; /* Allow content to shrink below its intrinsic width */
 }
 
+/* Terminal mode: full screen without sidebar interference */
+.main-content.terminal-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  margin: 0 !important;
+  width: 100vw;
+  height: 100vh;
+}
+
 /* Sidebar Backdrop for overlay mode */
 .sidebar-backdrop {
   position: fixed;
@@ -38,11 +51,12 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3); /* Reduced opacity */
   z-index: 99; /* Below sidebar but above main content */
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px); /* Reduced blur */
   opacity: 0;
   animation: fadeIn 0.3s ease forwards;
+  pointer-events: none; /* Allow clicks through to content */
 }
 
 @keyframes fadeIn {
@@ -658,4 +672,131 @@ body {
   .main-content {
     overflow-x: hidden; /* Prevent horizontal scroll on mobile */
   }
+}
+
+/* Floating Mode Toggle for Full-Screen Terminal */
+.floating-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+.floating-toggle-btn {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: #00ff88;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.floating-toggle-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+  transform: translateY(-1px);
+}
+
+/* Setup Commands Panel */
+.setup-commands-panel {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 400px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.setup-commands-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #00ff88;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.setup-command {
+  margin-bottom: 8px;
+}
+
+.setup-command-label {
+  display: block;
+  color: #cccccc;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.setup-command-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.setup-command-text {
+  flex: 1;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  color: #ffffff;
+  word-break: break-all;
+}
+
+.setup-copy-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: #00ff88;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.setup-copy-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+}
+
+.setup-copy-btn.copied {
+  background: rgba(0, 255, 136, 0.3);
+  color: #ffffff;
+}
+
+.setup-toggle-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: #00ff88;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.setup-toggle-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+}
 }

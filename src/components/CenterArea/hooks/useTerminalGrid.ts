@@ -324,30 +324,42 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
       payload: { content, targets: messageTargets }
     });
 
-    // Send the command to terminals (mock mode - write directly to terminals)
+    // Send the command to terminals via WebSocket
     console.log('🚀 About to send to terminals:', messageTargets);
-    messageTargets.forEach(terminalId => {
+    messageTargets.forEach(async (terminalId) => {
       const terminal = state.terminals.find(t => t.id === terminalId);
       console.log(`🔍 Looking for terminal ${terminalId}:`, terminal ? 'FOUND' : 'NOT FOUND');
-      console.log(`🔍 Terminal has xterm instance:`, terminal?.terminal ? 'YES' : 'NO');
       
-      if (terminal?.terminal) {
-        console.log(`📤 Writing to terminal ${terminalId}: ${content}`);
+      if (terminal) {
+        console.log(`📤 Sending command to terminal ${terminalId}: ${content}`);
         try {
-          // Clear current input line and write the command
-          terminal.terminal.write('\r\x1b[K'); // Clear line
-          terminal.terminal.write(`📤 Command from chat: ${content}\r\n`);
-          terminal.terminal.write(`$ ${content}\r\n`);
-          terminal.terminal.write('✅ Command executed (mock mode)\r\n');
-          terminal.terminal.write('$ ');
+          // Import the WebSocket service
+          const { terminalWebSocketService } = await import('../../../services/terminalWebSocketService');
+          
+          // Send command via WebSocket to VS Code
+          await terminalWebSocketService.sendCommand(terminalId, content);
           
           console.log(`✅ Successfully sent to terminal ${terminalId}: ${content}`);
+          
+          // Update message status
+          dispatchAction({
+            type: 'UPDATE_MESSAGE_STATUS',
+            payload: {
+              messageId: `msg-${Date.now()}`,
+              status: 'sent'
+            }
+          });
         } catch (error) {
-          console.error(`❌ Error writing to terminal ${terminalId}:`, error);
+          console.error(`❌ Error sending to terminal ${terminalId}:`, error);
+          
+          // Fallback: write locally if WebSocket fails
+          if (terminal.terminal) {
+            terminal.terminal.write(`\r\n$ ${content}\r\n`);
+            terminal.terminal.write('⚠️ WebSocket error - command may not have executed\r\n$ ');
+          }
         }
       } else {
-        console.warn(`❌ Terminal ${terminalId} not found or not ready`);
-        console.log('Available terminals:', state.terminals.map(t => ({ id: t.id, hasTerminal: !!t.terminal })));
+        console.warn(`❌ Terminal ${terminalId} not found`);
       }
     });
   }, [state.selectedTerminals, state.terminals, dispatchAction]);

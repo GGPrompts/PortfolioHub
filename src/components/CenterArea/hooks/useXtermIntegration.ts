@@ -3,6 +3,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { TerminalInstance, TerminalDimensions } from '../types';
+import { terminalWebSocketService } from '../../../services/terminalWebSocketService';
 
 // Terminal service interface for WebSocket communication
 interface TerminalServiceConnection {
@@ -139,24 +140,30 @@ export function useXtermIntegration(
       // Setup terminal event handlers
       setupTerminalEventHandlers(terminal, terminalInstance.id, onStatusChange);
 
-      // Add mock terminal content for testing
+      // Initial terminal content
       terminal.writeln('🚀 Terminal initialized!');
       terminal.writeln(`📊 Terminal ID: ${terminalInstance.id}`);
       terminal.writeln(`🌿 Workbranch: ${terminalInstance.workbranchId}`);
       if (terminalInstance.projectId) {
         terminal.writeln(`📁 Project: ${terminalInstance.projectId}`);
       }
-      terminal.writeln('WebSocket connection pending...');
-      terminal.write('$ ');
+      terminal.writeln('Connecting to VS Code...');
 
-      // Set up mock echo functionality for testing
+      // Set up terminal data handler to send to VS Code
       terminal.onData((data) => {
-        if (data === '\r') {
-          terminal.write('\r\n$ ');
-        } else if (data === '\u007F') { // Backspace
-          terminal.write('\b \b');
+        // Send keystrokes to VS Code terminal
+        if (serviceConnectionRef.current.connected) {
+          terminalWebSocketService.sendData(terminalInstance.id, data)
+            .catch(err => console.error('Failed to send data to VS Code:', err));
         } else {
-          terminal.write(data);
+          // Fallback to local echo if not connected
+          if (data === '\r') {
+            terminal.write('\r\n$ ');
+          } else if (data === '\u007F') { // Backspace
+            terminal.write('\b \b');
+          } else {
+            terminal.write(data);
+          }
         }
       });
 
@@ -196,119 +203,84 @@ export function useXtermIntegration(
     setConnectionStatus('connecting');
     
     try {
-      // Create WebSocket connection to terminal service
-      const wsUrl = `ws://localhost:8002/terminal/${terminalInstance.workbranchId}/${terminalInstance.id}`;
-      const websocket = new WebSocket(wsUrl);
+      // Create terminal session via WebSocket service
+      await terminalWebSocketService.createTerminalSession(
+        terminalInstance.id,
+        terminalInstance.workbranchId,
+        terminalInstance.projectId
+      );
+
+      // Register message handler for this terminal
+      terminalWebSocketService.registerTerminalHandler(terminalInstance.id, (message) => {
+        if (message.type === 'output' && message.data && terminalInstance.terminal) {
+          terminalInstance.terminal.write(message.data);
+        }
+      });
+
+      serviceConnectionRef.current.connected = true;
+      setConnectionStatus('connected');
+      onStatusChange?.(terminalInstance.id, 'running');
       
-      websocket.onopen = () => {
-        console.log(`🔌 Terminal ${terminalInstance.id} connected to service`);
-        serviceConnectionRef.current.websocket = websocket;
-        serviceConnectionRef.current.connected = true;
-        serviceConnectionRef.current.reconnectAttempts = 0;
-        setConnectionStatus('connected');
-        onStatusChange?.(terminalInstance.id, 'running');
-        
-        // Send initial terminal setup
-        websocket.send(JSON.stringify({
-          type: 'init',
-          terminalId: terminalInstance.id,
-          workbranchId: terminalInstance.workbranchId,
-          projectId: terminalInstance.projectId,
-          dimensions: {
-            rows: dimensions.rows,
-            cols: dimensions.cols
-          }
-        }));
-      };
-
-      websocket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          handleTerminalServiceMessage(message, terminalInstance.terminal);
-        } catch (error) {
-          console.error(`❌ Failed to parse terminal service message:`, error);
-        }
-      };
-
-      websocket.onclose = (event) => {
-        console.log(`🔌 Terminal ${terminalInstance.id} disconnected from service`);
-        serviceConnectionRef.current.connected = false;
-        serviceConnectionRef.current.websocket = null;
-        setConnectionStatus('disconnected');
-        onStatusChange?.(terminalInstance.id, 'idle');
-        
-        // Attempt reconnection if not intentionally closed
-        if (event.code !== 1000 && serviceConnectionRef.current.reconnectAttempts < WEBSOCKET_CONFIG.maxReconnectAttempts) {
-          setTimeout(() => {
-            serviceConnectionRef.current.reconnectAttempts++;
-            connectToTerminalService();
-          }, WEBSOCKET_CONFIG.reconnectDelay * serviceConnectionRef.current.reconnectAttempts);
-        }
-      };
-
-      websocket.onerror = (error) => {
-        console.error(`❌ Terminal ${terminalInstance.id} WebSocket error:`, error);
-        setConnectionStatus('error');
-        onStatusChange?.(terminalInstance.id, 'error');
-      };
-
-      // Set connection timeout
-      setTimeout(() => {
-        if (websocket.readyState === WebSocket.CONNECTING) {
-          websocket.close();
-          setConnectionStatus('error');
-          onStatusChange?.(terminalInstance.id, 'error');
-        }
-      }, WEBSOCKET_CONFIG.connectionTimeout);
+      // Update terminal to show connection status
+      if (terminalInstance.terminal) {
+        terminalInstance.terminal.write('\r\n✅ Connected to VS Code terminal\r\n');
+        terminalInstance.terminal.write('$ ');
+      }
 
     } catch (error) {
       console.error(`❌ Failed to connect terminal ${terminalInstance.id} to service:`, error);
       setConnectionStatus('error');
       onStatusChange?.(terminalInstance.id, 'error');
+      
+      if (terminalInstance.terminal) {
+        terminalInstance.terminal.write('\r\n❌ Failed to connect to VS Code\r\n');
+        terminalInstance.terminal.write('Running in local mode\r\n$ ');
+      }
     }
-  }, [terminalInstance, dimensions, onStatusChange]);
+  }, [terminalInstance, onStatusChange]);
 
   // Disconnect from terminal service
-  const disconnectFromTerminalService = useCallback(() => {
-    const connection = serviceConnectionRef.current;
-    if (connection.websocket) {
-      connection.websocket.close(1000); // Normal closure
-      connection.websocket = null;
-      connection.connected = false;
+  const disconnectFromTerminalService = useCallback(async () => {
+    if (serviceConnectionRef.current.connected) {
+      try {
+        await terminalWebSocketService.destroyTerminalSession(terminalInstance.id);
+      } catch (error) {
+        console.error('Failed to destroy terminal session:', error);
+      }
+      serviceConnectionRef.current.connected = false;
     }
     setConnectionStatus('disconnected');
-  }, []);
+  }, [terminalInstance.id]);
 
   // Send command to terminal
-  const sendCommand = useCallback((command: string) => {
-    const connection = serviceConnectionRef.current;
-    if (!connection.connected || !connection.websocket) {
+  const sendCommand = useCallback(async (command: string) => {
+    if (!serviceConnectionRef.current.connected) {
       console.warn(`Terminal ${terminalInstance.id} not connected - cannot send command`);
+      
+      // Fallback: write command locally
+      if (terminalInstance.terminal) {
+        terminalInstance.terminal.write(`\r\n$ ${command}\r\n`);
+        terminalInstance.terminal.write('⚠️  Not connected to VS Code - command not executed\r\n$ ');
+      }
       return false;
     }
 
     try {
-      connection.websocket.send(JSON.stringify({
-        type: 'command',
-        data: command
-      }));
+      await terminalWebSocketService.sendCommand(terminalInstance.id, command);
       return true;
     } catch (error) {
       console.error(`❌ Failed to send command to terminal ${terminalInstance.id}:`, error);
       return false;
     }
-  }, [terminalInstance.id]);
+  }, [terminalInstance]);
 
-  // Auto-connect when terminal is initialized (disabled for mock mode)
+  // Auto-connect when terminal is initialized
   useEffect(() => {
     if (isInitialized && !serviceConnectionRef.current.connected) {
-      // Temporarily disabled for testing - enable when backend is ready
-      // connectToTerminalService();
-      console.log('📡 WebSocket connection disabled for mock mode');
-      setConnectionStatus('connected'); // Mock connected state
-      onStatusChange?.(terminalInstance.id, 'running');
+      // Connect to VS Code terminal service
+      connectToTerminalService();
     }
-  }, [isInitialized, connectToTerminalService, terminalInstance.id, onStatusChange]);
+  }, [isInitialized, connectToTerminalService]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -368,52 +340,11 @@ function setupTerminalEventHandlers(
   });
 }
 
-// Handle messages from terminal service
-function handleTerminalServiceMessage(message: any, terminal: Terminal) {
-  switch (message.type) {
-    case 'output':
-      // Write output to terminal
-      terminal.write(message.data);
-      break;
-      
-    case 'clear':
-      // Clear terminal
-      terminal.clear();
-      break;
-      
-    case 'resize':
-      // Resize terminal
-      if (message.rows && message.cols) {
-        terminal.resize(message.cols, message.rows);
-      }
-      break;
-      
-    case 'title':
-      // Set terminal title
-      if (message.title) {
-        terminal.setOption('title', message.title);
-      }
-      break;
-      
-    case 'error':
-      // Handle error messages
-      terminal.write(`\r\n❌ Error: ${message.message}\r\n`);
-      break;
+// Handle terminal resize with VS Code integration
+  useEffect(() => {
+    if (!isInitialized || !serviceConnectionRef.current.connected) return;
 
-    case 'connected':
-      // Terminal service connection established
-      terminal.write(`\r\n✅ Connected to terminal service\r\n`);
-      break;
-
-    case 'status':
-      // Status update from terminal service
-      console.log('Terminal service status:', message);
-      break;
-      
-    default:
-      // Only warn for actual unknown types, ignore undefined/empty messages
-      if (message.type && message.type !== 'undefined') {
-        console.warn('Unknown terminal service message type:', message.type);
-      }
-  }
-}
+    // Notify VS Code of terminal resize
+    terminalWebSocketService.resizeTerminal(terminalInstance.id, dimensions.cols, dimensions.rows)
+      .catch(err => console.error('Failed to resize VS Code terminal:', err));
+  }, [dimensions, isInitialized, terminalInstance.id]);

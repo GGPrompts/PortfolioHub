@@ -509,6 +509,82 @@ const SvgIcon = ({
         <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
         <line x1="12" y1="20" x2="12.01" y2="20"/>
       </svg>
+    ),
+
+    // Missing icons for terminal interface
+    layout: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="3" x2="9" y2="21"/>
+        <line x1="15" y1="3" x2="15" y2="21"/>
+      </svg>
+    ),
+
+    selectAll: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <rect x="3" y="3" width="18" height="7" rx="1"/>
+        <rect x="3" y="14" width="18" height="7" rx="1"/>
+        <circle cx="7" cy="6.5" r="1" fill={color}/>
+        <circle cx="7" cy="17.5" r="1" fill={color}/>
+      </svg>
+    ),
+
+    checkSquare: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <polyline points="9,11 12,14 16,8"/>
+      </svg>
+    ),
+
+    menu: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    ),
+
+    history: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="1,4 1,10 7,10"/>
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+      </svg>
+    ),
+
+    trash2: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="3,6 5,6 21,6"/>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/>
+        <line x1="14" y1="11" x2="14" y2="17"/>
+      </svg>
+    ),
+
+    chevronUp: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <polyline points="18,15 12,9 6,15"/>
+      </svg>
+    ),
+
+    target: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="12" r="2"/>
+      </svg>
+    ),
+
+    clock: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12,6 12,12 16,14"/>
+      </svg>
+    ),
+
+    circle: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+      </svg>
     )
   };
 

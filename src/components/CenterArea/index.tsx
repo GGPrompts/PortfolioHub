@@ -73,8 +73,11 @@ export default function CenterArea({
 
   // Handle message sending
   const handleSendMessage = useCallback((content: string, targets: string[]) => {
+    console.log('🚀 CenterArea handleSendMessage called:', { content, targets });
+    console.log('📊 Available terminals:', terminals.map(t => ({ id: t.id, title: t.title, hasTerminal: !!t.terminal })));
+    console.log('📋 Selected terminals:', selectedTerminals);
     sendMessage(content, targets);
-  }, [sendMessage]);
+  }, [sendMessage, terminals, selectedTerminals]);
 
   // Clear chat history
   const handleClearHistory = useCallback(() => {

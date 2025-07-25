@@ -306,31 +306,48 @@ export function useTerminalGrid(initialLayout: TerminalGridLayout = 'single', ma
   }, [dispatchAction]);
 
   const sendMessage = useCallback((content: string, targets?: string[]) => {
+    console.log('🎯 useTerminalGrid sendMessage called:', { content, targets });
+    console.log('🔍 State selectedTerminals:', state.selectedTerminals);
+    console.log('🔍 Available terminals:', state.terminals.map(t => ({ id: t.id, title: t.title, hasTerminal: !!t.terminal })));
+    
     const messageTargets = targets || Array.from(state.selectedTerminals);
+    console.log('📋 Message targets:', messageTargets);
+    
     if (messageTargets.length === 0) {
-      console.warn('No terminals selected for message');
+      console.warn('❌ No terminals selected for message');
       return;
     }
 
+    console.log('✅ Dispatching SEND_MESSAGE action');
     dispatchAction({
       type: 'SEND_MESSAGE',
       payload: { content, targets: messageTargets }
     });
 
     // Send the command to terminals (mock mode - write directly to terminals)
+    console.log('🚀 About to send to terminals:', messageTargets);
     messageTargets.forEach(terminalId => {
       const terminal = state.terminals.find(t => t.id === terminalId);
+      console.log(`🔍 Looking for terminal ${terminalId}:`, terminal ? 'FOUND' : 'NOT FOUND');
+      console.log(`🔍 Terminal has xterm instance:`, terminal?.terminal ? 'YES' : 'NO');
+      
       if (terminal?.terminal) {
-        // Clear current input line and write the command
-        terminal.terminal.write('\r\x1b[K'); // Clear line
-        terminal.terminal.write(`📤 Command from chat: ${content}\r\n`);
-        terminal.terminal.write(`$ ${content}\r\n`);
-        terminal.terminal.write('✅ Command executed (mock mode)\r\n');
-        terminal.terminal.write('$ ');
-        
-        console.log(`📤 Sent to terminal ${terminalId}: ${content}`);
+        console.log(`📤 Writing to terminal ${terminalId}: ${content}`);
+        try {
+          // Clear current input line and write the command
+          terminal.terminal.write('\r\x1b[K'); // Clear line
+          terminal.terminal.write(`📤 Command from chat: ${content}\r\n`);
+          terminal.terminal.write(`$ ${content}\r\n`);
+          terminal.terminal.write('✅ Command executed (mock mode)\r\n');
+          terminal.terminal.write('$ ');
+          
+          console.log(`✅ Successfully sent to terminal ${terminalId}: ${content}`);
+        } catch (error) {
+          console.error(`❌ Error writing to terminal ${terminalId}:`, error);
+        }
       } else {
         console.warn(`❌ Terminal ${terminalId} not found or not ready`);
+        console.log('Available terminals:', state.terminals.map(t => ({ id: t.id, hasTerminal: !!t.terminal })));
       }
     });
   }, [state.selectedTerminals, state.terminals, dispatchAction]);

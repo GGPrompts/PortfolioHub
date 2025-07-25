@@ -33,9 +33,23 @@ export default function ChatInterface({
 
   // Handle message send
   const handleSendMessage = () => {
-    if (!messageInput.trim() || selectedTerminals.size === 0) return;
+    console.log('💬 ChatInterface handleSendMessage called');
+    console.log('📝 Message input:', messageInput);
+    console.log('🎯 Selected terminals:', selectedTerminals);
+    console.log('📊 Selected terminals size:', selectedTerminals.size);
+    
+    if (!messageInput.trim()) {
+      console.warn('❌ Message is empty');
+      return;
+    }
+    
+    if (selectedTerminals.size === 0) {
+      console.warn('❌ No terminals selected');
+      return;
+    }
 
     const targets = Array.from(selectedTerminals);
+    console.log('📤 Sending message to targets:', targets);
     onSendMessage(messageInput.trim(), targets);
     setMessageInput('');
     

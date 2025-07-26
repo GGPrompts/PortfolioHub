@@ -164,77 +164,6 @@
         "command": "claude-portfolio.project.select",
         "title": "Select Project Action",
         "category": "Claude Portfolio"
-      },
-      {
-        "command": "claudePortfolio.openChat",
-        "title": "Open AI Chat Interface",
-        "category": "Claude Portfolio",
-        "icon": "$(comment-discussion)"
-      },
-      {
-        "command": "claude-portfolio.runAIComparison",
-        "title": "🔬 Compare AI Models (Claude vs Copilot)",
-        "category": "AI Testing",
-        "icon": "$(beaker)"
-      },
-      {
-        "command": "claude-portfolio.runScenarioTest",
-        "title": "🧪 Run Predefined Test Scenario",
-        "category": "AI Testing",
-        "icon": "$(test-view-icon)"
-      },
-      {
-        "command": "claude-portfolio.quickAITest",
-        "title": "⚡ Quick AI Test (Selected Code)",
-        "category": "AI Testing",
-        "icon": "$(zap)"
-      },
-      {
-        "command": "claude-portfolio.viewTestResults",
-        "title": "📊 View AI Test Results",
-        "category": "AI Testing",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "claude-portfolio.sendToCopilotDirect",
-        "title": "Send to Copilot (Direct API)",
-        "category": "AI Testing",
-        "icon": "$(rocket)"
-      },
-      {
-        "command": "claude-portfolio.sendToCopilotUI",
-        "title": "Send to Copilot (UI Integration)",
-        "category": "AI Testing",
-        "icon": "$(browser)"
-      },
-      {
-        "command": "claude-portfolio.aiTestingQuickStart",
-        "title": "🚀 AI Testing Quick Start",
-        "category": "AI Testing",
-        "icon": "$(rocket)"
-      },
-      {
-        "command": "claude-portfolio.showTestingTips",
-        "title": "💡 AI Testing Pro Tips",
-        "category": "AI Testing",
-        "icon": "$(lightbulb)"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "claude-portfolio.runAIComparison",
-        "key": "ctrl+alt+t",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "claude-portfolio.quickAITest",
-        "key": "ctrl+alt+q",
-        "when": "editorHasSelection"
-      },
-      {
-        "command": "claude-portfolio.aiTestingQuickStart",
-        "key": "ctrl+alt+shift+t",
-        "when": "true"
       }
     ],
     "viewsContainers": {
@@ -297,11 +226,6 @@
           "command": "claude-portfolio.refreshProjects",
           "when": "view == claudeProjects",
           "group": "navigation"
-        },
-        {
-          "command": "claudePortfolio.openChat",
-          "when": "view == claudeProjects",
-          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -324,12 +248,6 @@
           "command": "claude-portfolio.openAIAssistant",
           "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject || viewItem == vsCodeProject || viewItem == selectedVSCodeProject)",
           "group": "2_ai"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "claudePortfolio.openChat",
-          "when": "true"
         }
       ]
     },

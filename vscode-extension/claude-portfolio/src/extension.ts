@@ -6,7 +6,6 @@ import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
 import { VSCodePageProvider } from './vscodePageProvider';
-import { ChatPanel } from './panels/ChatPanel';
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
 
 // Services
@@ -20,9 +19,6 @@ import { ProjectCommands } from './commands/projectCommands';
 import { BatchCommands } from './commands/batchCommands';
 import { SelectionCommands } from './commands/selectionCommands';
 import { WorkspaceCommands } from './commands/workspaceCommands';
-
-// AI Testing Services
-import { activateCopilotIntegration } from './services/CopilotActivation';
 
 /**
  * Services container for dependency injection
@@ -102,24 +98,6 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         });
 
-        // Initialize AI Testing Services
-        await activateCopilotIntegration(context);
-        console.log('✅ AI Testing services activated');
-
-        // Show welcome message for AI testing
-        const showTestingGuide = await vscode.window.showInformationMessage(
-            '🧪 AI Model Testing is now available! Compare Claude Max vs Copilot Pro.',
-            'Show Testing Guide',
-            'Try Quick Test',
-            'Dismiss'
-        );
-
-        if (showTestingGuide === 'Show Testing Guide') {
-            const guideUri = vscode.Uri.file(context.asAbsolutePath('src/docs/AI_TESTING_GUIDE.md'));
-            await vscode.commands.executeCommand('markdown.showPreview', guideUri);
-        } else if (showTestingGuide === 'Try Quick Test') {
-            await vscode.commands.executeCommand('claude-portfolio.runAIComparison');
-        }
 
         console.log('🎉 Claude Portfolio extension fully activated!');
 
@@ -285,12 +263,6 @@ function registerCommands(context: vscode.ExtensionContext, commands: ExtensionC
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
-    
-    // Register Chat Panel command
-    const chatCommand = vscode.commands.registerCommand('claudePortfolio.openChat', () => {
-        ChatPanel.createOrShow(context.extensionUri, context);
-    });
-    context.subscriptions.push(chatCommand);
 }
 
 /**

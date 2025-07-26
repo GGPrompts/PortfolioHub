@@ -43,7 +43,9 @@
       "WebFetch(domain:xtermjs.org)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:www.eddymens.com)",
-      "WebFetch(domain:www.qovery.com)"
+      "WebFetch(domain:www.qovery.com)",
+      "Bash(start \"D:\\ClaudeWindows\\claude-dev-portfolio\\test_port_check.html\")",
+      "Bash(explorer.exe:*)"
     ],
     "deny": []
   }

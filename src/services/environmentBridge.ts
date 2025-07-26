@@ -388,6 +388,51 @@ ${command}`;
         }
     }
 
+    async getAllProjectStatus(): Promise<Map<string, boolean> | null> {
+        if (this.mode === 'vscode-local') {
+            try {
+                console.log('🔍 Getting all project status from VS Code...');
+                const response = await this.sendMessage({
+                    type: 'project-status-sync'
+                });
+                
+                if (response.success && response.result) {
+                    console.log('✅ VS Code project status received:', response.result);
+                    const statusMap = new Map<string, boolean>();
+                    
+                    // Convert VS Code status format to Map
+                    if (Array.isArray(response.result)) {
+                        // Array of project status objects
+                        response.result.forEach((status: any) => {
+                            if (status.projectId && typeof status.isRunning === 'boolean') {
+                                statusMap.set(status.projectId, status.isRunning);
+                            }
+                        });
+                    } else if (typeof response.result === 'object') {
+                        // Object with projectId -> boolean mapping
+                        Object.entries(response.result).forEach(([projectId, isRunning]) => {
+                            if (typeof isRunning === 'boolean') {
+                                statusMap.set(projectId, isRunning);
+                            }
+                        });
+                    }
+                    
+                    console.log('📊 Processed VS Code status map:', Array.from(statusMap.entries()));
+                    return statusMap;
+                } else {
+                    console.warn('⚠️ VS Code status sync failed:', response.error);
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Failed to get all project status from VS Code:', error);
+                return null;
+            }
+        } else {
+            console.log('📱 Web mode - VS Code status not available');
+            return null;
+        }
+    }
+
     async openInVSCode(projectPath: string): Promise<boolean> {
         if (this.mode === 'vscode-local') {
             try {

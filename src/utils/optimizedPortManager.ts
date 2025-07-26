@@ -26,8 +26,8 @@ export interface CachedPortInfo {
  */
 export class OptimizedPortManager {
     private cache = new Map<number, CachedPortInfo>();
-    private readonly CACHE_TTL = 30000; // 30 seconds instead of 2 minutes
-    private readonly CACHE_TTL_FAILED = 10000; // 10 seconds instead of 30
+    private readonly CACHE_TTL = 15000; // 15 seconds for faster updates
+    private readonly CACHE_TTL_FAILED = 5000; // 5 seconds for failed checks
     private readonly MAX_RETRY_COUNT = 3;
     private readonly REQUEST_TIMEOUT = 2000; // 2 second timeout
     
@@ -44,8 +44,8 @@ export class OptimizedPortManager {
     // Global toggle for port checking
     private portCheckingEnabled = true;
     
-    // Debug mode toggle
-    private debugMode = localStorage.getItem('debugPortChecks') === 'true';
+    // Debug mode toggle - enabled by default for diagnosis
+    private debugMode = true;
     
     setPortCheckingEnabled(enabled: boolean) {
         this.portCheckingEnabled = enabled;
@@ -170,34 +170,67 @@ export class OptimizedPortManager {
         
         // Self-detection: If we're checking our own port (5173), we're obviously running
         if (port === 5173 && window.location.port === '5173') {
-            return true;
+            if (this.debugMode) {
+                console.log(`[PortCheck] Port ${port} - Self-detection: Portfolio is running = PORT NOT AVAILABLE`);
+            }
+            return false; // Portfolio is running, so port is NOT available
         }
         
         try {
-            // Use Image object to bypass CORB - this method works reliably for port detection
+            // Use fetch with no-cors mode to detect server presence
+            // This is more reliable than Image objects and prevents race conditions
             return await new Promise<boolean>((resolve) => {
-                const img = new Image();
+                const controller = new AbortController();
+                let resolved = false;
+                
+                // Set timeout for the request
                 const timeout = setTimeout(() => {
-                    if (this.debugMode) {
-                        console.log(`[PortCheck] Port ${port} - Timeout = PORT AVAILABLE (no server running)`);
+                    if (!resolved) {
+                        resolved = true;
+                        controller.abort();
+                        if (this.debugMode) {
+                            console.log(`[PortCheck] Port ${port} - Timeout = PORT AVAILABLE (no server running)`);
+                        }
+                        resolve(true); // Port is available because no server responded
                     }
-                    resolve(true); // Port is available because no server responded
                 }, 2000);
                 
-                // Both onload and onerror mean the server responded
-                const handleResponse = (isLoad: boolean) => {
-                    clearTimeout(timeout);
-                    if (this.debugMode) {
-                        console.log(`[PortCheck] Port ${port} - ${isLoad ? 'Image loaded' : 'Server responded (404/error)'} = PORT NOT AVAILABLE (server running)`);
+                // Try to fetch from the port
+                fetch(`http://localhost:${port}/`, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal,
+                    cache: 'no-cache'
+                })
+                .then(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        if (this.debugMode) {
+                            console.log(`[PortCheck] Port ${port} - Fetch success = PORT NOT AVAILABLE (server running)`);
+                        }
+                        resolve(false); // Port is NOT available because server is running
                     }
-                    resolve(false); // Port is NOT available because server is running
-                };
-                
-                img.onload = () => handleResponse(true);
-                img.onerror = () => handleResponse(false);
-                
-                // Try to load favicon.ico from the port - any response means server is running
-                img.src = `http://localhost:${port}/favicon.ico?t=${Date.now()}`;
+                })
+                .catch((error) => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        
+                        // Check if it's a network error (no server) vs other errors (server exists)
+                        if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                            if (this.debugMode) {
+                                console.log(`[PortCheck] Port ${port} - Network error = PORT AVAILABLE (no server running)`);
+                            }
+                            resolve(true); // Port is available (no server)
+                        } else {
+                            if (this.debugMode) {
+                                console.log(`[PortCheck] Port ${port} - Other error = PORT NOT AVAILABLE (server running)`);
+                            }
+                            resolve(false); // Port is not available (server exists)
+                        }
+                    }
+                });
             });
               
         } catch (error: any) {

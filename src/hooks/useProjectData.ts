@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Project } from '../store/portfolioStore'
 import { optimizedPortManager } from '../utils/optimizedPortManager'
 import { isVSCodeEnvironment } from '../utils/vsCodeIntegration'
+import { environmentBridge } from '../services/environmentBridge'
 
 /**
  * Fetch project data from manifest (unified architecture always uses manifest)
@@ -30,14 +31,31 @@ async function fetchProjectData(): Promise<Project[]> {
 
 /**
  * Fetch project status (running/stopped) for all projects
- * In unified architecture, always use optimized port checking
+ * Prioritizes VS Code WebSocket data when available, falls back to port checking
  */
 async function fetchProjectStatus(projects: Project[]): Promise<Map<string, boolean>> {
   if (projects.length === 0) {
     return new Map()
   }
 
-  console.log(`🔍 Checking status for ${projects.length} projects using optimized port manager`)
+  // Try to get status from VS Code bridge first (most reliable)
+  console.log('🔍 Checking if VS Code bridge is available for project status...')
+  
+  // Wait a moment for VS Code bridge to establish connection if it's still connecting
+  if (environmentBridge.getMode() === 'vscode-local' && !environmentBridge.isConnected()) {
+    console.log('⏳ VS Code bridge initializing, waiting 500ms...')
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+  
+  const vsCodeStatus = await environmentBridge.getAllProjectStatus()
+  
+  if (vsCodeStatus) {
+    console.log(`✅ Using VS Code project status data for ${vsCodeStatus.size} projects`)
+    return vsCodeStatus
+  }
+
+  // Fallback to local port checking when VS Code not available
+  console.log(`📱 VS Code not available, falling back to local port checking for ${projects.length} projects`)
   return await optimizedPortManager.checkProjectPorts(projects)
 }
 
@@ -64,16 +82,20 @@ export function useProjectData() {
   const {
     data: projectStatus = new Map(),
     isLoading: isLoadingStatus,
+    isFetching: isFetchingStatus,
     error: statusError,
     refetch: refetchStatus
   } = useQuery({
     queryKey: ['projectStatus', projects],
     queryFn: () => fetchProjectStatus(projects),
     enabled: projects.length > 0, // Only run when we have projects
-    staleTime: 5 * 60 * 1000, // 5 minutes - much less aggressive
-    refetchInterval: 5 * 60 * 1000, // 5 minutes - greatly reduced spam  
+    staleTime: 10 * 1000, // 10 seconds for faster initial updates
+    refetchInterval: 10 * 1000, // 10 seconds for status checks  
     refetchOnWindowFocus: false,
     retry: 1,
+    initialData: new Map(), // Start with empty map instead of showing false positives
+    refetchOnMount: true, // Always fetch fresh data on mount
+    refetchIntervalInBackground: false, // Don't fetch when tab is inactive
   })
 
   /**
@@ -111,8 +133,20 @@ export function useProjectData() {
     console.log('🔄🔄🔄 REFRESH PROJECT STATUS STARTED 🔄🔄🔄')
     console.log('📊 Current status before refresh:', projectStatus)
     
-    optimizedPortManager.clearCache()
-    console.log('🧹 Port cache cleared for status refresh')
+    // Check if VS Code bridge is available
+    if (environmentBridge.isVSCodeAvailable()) {
+      console.log('🔗 VS Code bridge available - requesting fresh status data')
+      // Give VS Code bridge time to respond before clearing cache
+      await new Promise(resolve => setTimeout(resolve, 100))
+      // Only clear local cache as backup, don't clear React Query cache
+      optimizedPortManager.clearCache()
+    } else {
+      console.log('📱 Web mode - clearing local port cache')
+      optimizedPortManager.clearCache()
+    }
+    
+    // Invalidate only the status query to force fresh fetch without clearing cache completely
+    queryClient.invalidateQueries({ queryKey: ['projectStatus'] })
     
     const statusResult = await refetchStatus()
     console.log('📊 Status refresh result:', statusResult.data?.size, 'entries')
@@ -161,8 +195,8 @@ export function useProjectData() {
     
     // Loading states
     isLoadingProjects,
-    isLoadingStatus,
-    isLoading: isLoadingProjects || isLoadingStatus,
+    isLoadingStatus: isLoadingStatus || isFetchingStatus,
+    isLoading: isLoadingProjects || isLoadingStatus || isFetchingStatus,
     
     // Errors
     projectError,

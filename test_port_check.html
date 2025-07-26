@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Port Check Test</title>
+</head>
+<body>
+    <h1>Port Check Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        async function testPortCheck(port) {
+            console.log(`Testing port ${port}...`);
+            results.innerHTML += `<p>Testing port ${port}...</p>`;
+            
+            try {
+                const isAvailable = await new Promise((resolve) => {
+                    const img = new Image();
+                    const timeout = setTimeout(() => {
+                        console.log(`Port ${port} - Timeout = PORT AVAILABLE (no server running)`);
+                        results.innerHTML += `<p>Port ${port} - Timeout = PORT AVAILABLE (no server running)</p>`;
+                        resolve(true); // Port is available because no server responded
+                    }, 2000);
+                    
+                    const handleResponse = (isLoad) => {
+                        clearTimeout(timeout);
+                        console.log(`Port ${port} - ${isLoad ? 'Image loaded' : 'Server responded (404/error)'} = PORT NOT AVAILABLE (server running)`);
+                        results.innerHTML += `<p>Port ${port} - ${isLoad ? 'Image loaded' : 'Server responded (404/error)'} = PORT NOT AVAILABLE (server running)</p>`;
+                        resolve(false); // Port is NOT available because server is running
+                    };
+                    
+                    img.onload = () => handleResponse(true);
+                    img.onerror = () => handleResponse(false);
+                    
+                    img.src = `http://localhost:${port}/favicon.ico?t=${Date.now()}`;
+                });
+                
+                const isRunning = !isAvailable; // Invert for "isRunning" status
+                console.log(`Port ${port}: Available=${isAvailable}, Running=${isRunning}`);
+                results.innerHTML += `<p><strong>Port ${port}: Available=${isAvailable}, Running=${isRunning}</strong></p>`;
+                
+                return isRunning;
+            } catch (error) {
+                console.error(`Port ${port} check failed:`, error);
+                results.innerHTML += `<p>Port ${port} check failed: ${error.message}</p>`;
+                return false;
+            }
+        }
+        
+        // Test multiple ports
+        const portsToTest = [3001, 3002, 3003, 3004, 3005, 3006, 3007, 5173, 5174, 9323];
+        
+        async function runTests() {
+            results.innerHTML += `<h2>Starting port tests...</h2>`;
+            
+            for (const port of portsToTest) {
+                const isRunning = await testPortCheck(port);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait between tests
+            }
+            
+            results.innerHTML += `<h2>All tests completed!</h2>`;
+        }
+        
+        // Start tests when page loads
+        window.onload = runTests;
+    </script>
+</body>
+</html>

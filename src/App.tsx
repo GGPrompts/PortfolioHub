@@ -14,6 +14,7 @@ import SvgIcon from './components/SvgIcon'
 import { useProjectData } from './hooks/useProjectData'
 import { usePortfolioStore } from './store/portfolioStore'
 import { getProjectPort, setPortCheckingEnabled } from './utils/portManager'
+import { optimizedPortManager } from './utils/optimizedPortManager'
 import { copyToClipboard, executeCommand, isVSCodeEnvironment, showNotification } from './utils/vsCodeIntegration'
 
 // TypeScript declaration for VS Code integration
@@ -49,6 +50,7 @@ function PortfolioApp() {
     projectStatus,
     isLoading: isLoadingProjects,
     refreshProjectData,
+    refreshProjectStatus,
     getProjectStatus,
     getRunningProjects
   } = useProjectData()
@@ -68,6 +70,12 @@ function PortfolioApp() {
   const [vsCodeServerStatus, setVsCodeServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking')
   const [runningStatus, setRunningStatus] = useState<{[key: string]: boolean}>({})
   const [projectPorts, setProjectPorts] = useState<{[key: string]: number | null}>({})
+
+  // Clear port cache on app startup for fresh status detection
+  useEffect(() => {
+    console.log('🧹 Clearing port cache on app startup for fresh status detection')
+    optimizedPortManager.clearCache()
+  }, [])
 
   // Sync React Query projects with portfolio store
   useEffect(() => {
@@ -192,65 +200,12 @@ function PortfolioApp() {
     console.log('🔄 Manual portfolio refresh triggered')
     
     try {
-      // Force clear cache and refresh project data
-      console.log('🧹 Clearing port cache...')
-      await refreshProjectData()
-      console.log('✅ refreshProjectData completed')
+      // Use refreshProjectStatus instead of refreshProjectData to preserve VS Code data
+      console.log('🔄 Refreshing project status only (preserving project data)...')
+      await refreshProjectStatus()
+      console.log('✅ refreshProjectStatus completed')
       
-      // Test direct port check for matrix-cards using multiple methods
-      console.log('🧪 Testing matrix-cards port 3002 with multiple approaches...')
-    
-    // Test 1: Direct fetch HEAD
-    try {
-      const testResponse = await fetch('http://localhost:3002', {
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-cache'
-      })
-      console.log('✅ Test 1 - HEAD no-cors succeeded:', testResponse.type, testResponse.status)
-    } catch (error) {
-      console.log('❌ Test 1 - HEAD no-cors failed:', error)
-    }
-    
-    // Test 2: Direct fetch GET
-    try {
-      const testResponse = await fetch('http://localhost:3002', {
-        method: 'GET',
-        mode: 'no-cors',
-        cache: 'no-cache'
-      })
-      console.log('✅ Test 2 - GET no-cors succeeded:', testResponse.type, testResponse.status)
-    } catch (error) {
-      console.log('❌ Test 2 - GET no-cors failed:', error)
-    }
-    
-    // Test 3: Using optimized port manager directly (bypass cache)
-    console.log('🧪 Testing with optimized port manager (bypass cache)...')
-    const { optimizedPortManager } = await import('./utils/optimizedPortManager')
-    const directResult = await optimizedPortManager.isPortAvailable(3002, true) // Skip cache
-    console.log('📊 Direct port manager result for 3002:', directResult)
-    
-    // Update local state as well for legacy components
-    const newRunningStatus: { [key: string]: boolean } = {}
-    const newPortStatus: { [key: string]: number | null } = {}
-    
-    // Use optimized port manager for both VS Code and web environments
-    const running = await getRunningProjects()
-    console.log('🏃 Running projects found:', running.map(p => `${p.id}:${p.localPort}`))
-    
-    for (const project of projects) {
-      if (project.displayType === 'external') {
-        const isRunning = running.some(p => p.id === project.id)
-        newRunningStatus[project.id] = isRunning
-        newPortStatus[project.id] = project.localPort || null
-        console.log(`📊 Project ${project.id}: ${isRunning ? '✅ RUNNING' : '❌ STOPPED'}`)
-      }
-    }
-    
-    setRunningStatus(newRunningStatus)
-    setProjectPorts(newPortStatus)
-    
-    console.log('✅ Portfolio refresh complete')
+      console.log('✅ Header refresh completed using React Query')
     } catch (error) {
       console.error('❌ Portfolio refresh failed:', error)
     }

@@ -725,12 +725,24 @@ export class WebSocketBridgeService {
             const projects = await this.loadProjectsFromManifest();
             const statuses = await this.portDetectionService.checkProjectStatuses(projects);
             
+            console.log(`🔍 VS Code: Got ${statuses.length} project statuses for React app`);
+            
+            // Convert ProjectStatusInfo[] to simple projectId -> boolean map for React
+            const statusMap: { [projectId: string]: boolean } = {};
+            statuses.forEach(status => {
+                // A project is running if status is 'active' or 'multiple'
+                const isRunning = status.status === 'active' || status.status === 'multiple';
+                statusMap[status.projectId] = isRunning;
+                console.log(`📊 VS Code: ${status.projectId} = ${isRunning ? 'RUNNING' : 'STOPPED'} (${status.status})`);
+            });
+            
             // Broadcast status update to all connected clients
             this.broadcast({
                 type: 'project-status-update',
                 data: {
                     projects: projects,
                     statuses: statuses,
+                    statusMap: statusMap,
                     timestamp: Date.now()
                 }
             });
@@ -738,10 +750,11 @@ export class WebSocketBridgeService {
             return {
                 id,
                 success: true,
-                result: { projects, statuses },
-                message: 'Project status synchronized'
+                result: statusMap, // Return simple map for React
+                message: `Project status synchronized - ${Object.keys(statusMap).length} projects`
             };
         } catch (error) {
+            console.error('❌ VS Code: Project status sync failed:', error);
             return {
                 id,
                 success: false,

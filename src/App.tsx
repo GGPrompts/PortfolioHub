@@ -3,8 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import './utils/consoleHelper' // Import console helper for development
 import './services/environmentBridge' // Import environment bridge for initialization
-import 'xterm/css/xterm.css' // Essential for terminal rendering
-import CenterArea from './components/CenterArea'
 import EnhancedProjectViewer from './components/EnhancedProjectViewer'
 import EnvironmentBadge from './components/EnvironmentBadge'
 import GitUpdateButton from './components/GitUpdateButton'
@@ -13,7 +11,6 @@ import ProjectGrid from './components/ProjectGrid'
 import ProjectViewer from './components/ProjectViewer'
 import { RightSidebar } from './components/RightSidebar'
 import SvgIcon from './components/SvgIcon'
-import SetupCommandsPanel from './components/SetupCommandsPanel'
 import { useProjectData } from './hooks/useProjectData'
 import { usePortfolioStore } from './store/portfolioStore'
 import { getProjectPort, setPortCheckingEnabled } from './utils/portManager'
@@ -71,8 +68,6 @@ function PortfolioApp() {
   const [vsCodeServerStatus, setVsCodeServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking')
   const [runningStatus, setRunningStatus] = useState<{[key: string]: boolean}>({})
   const [projectPorts, setProjectPorts] = useState<{[key: string]: number | null}>({})
-  const [centerAreaMode, setCenterAreaMode] = useState(false) // Toggle between ProjectGrid and CenterArea
-  const [showSetupCommands, setShowSetupCommands] = useState(false) // Setup commands panel visibility
 
   // Sync React Query projects with portfolio store
   useEffect(() => {
@@ -297,10 +292,7 @@ function PortfolioApp() {
 
   // Smart responsive layout strategy
   const getLayoutStrategy = () => {
-    if (centerAreaMode) {
-      // Terminal mode: always overlay to prevent terminal resizing
-      return { marginLeft: 0, contentStrategy: 'overlay' }
-    } else if (isMobile) {
+    if (isMobile) {
       // Mobile: sidebar overlays content
       return { marginLeft: 0, contentStrategy: 'overlay' }
     } else if (isNarrowScreen && sidebarWidth > 320) {
@@ -329,17 +321,14 @@ function PortfolioApp() {
         <div 
           className="sidebar-backdrop"
           onClick={() => {
-            // Close sidebars when clicking backdrop in terminal mode
-            if (centerAreaMode) {
-              // You can implement sidebar closing logic here if needed
-            }
+            // Close sidebars when clicking backdrop
           }}
         />
       )}
       
       <main 
-        className={`main-content ${centerAreaMode ? 'terminal-mode' : ''}`}
-        style={centerAreaMode ? {} : { 
+        className="main-content"
+        style={{ 
           marginLeft: `${currentMarginLeft}px`,
           marginRight: `${rightSidebarWidth}px`,
           transition: 'margin-left 0.3s ease, margin-right 0.3s ease'
@@ -347,9 +336,8 @@ function PortfolioApp() {
       >
         {showGrid ? (
           <>
-            {/* Hide header completely in center area mode for full-height terminal grid */}
-            {!centerAreaMode && (
-              <header className="portfolio-header">
+            {/* Portfolio Header */}
+            <header className="portfolio-header">
                 <div className="header-content">
                   <div className="header-text">
                     <div className="header-title-row">
@@ -404,25 +392,10 @@ function PortfolioApp() {
                   </button>
                   {/* Interface Mode Toggle */}
                   <div className="view-mode-toggle">
-                    <button 
-                      className={`view-toggle-btn ${!centerAreaMode ? 'active' : ''}`}
-                      onClick={() => setCenterAreaMode(false)}
-                      title="Project Grid View"
-                    >
-                      <SvgIcon name="grid" size={16} />
-                    </button>
-                    <button 
-                      className={`view-toggle-btn ${centerAreaMode ? 'active' : ''}`}
-                      onClick={() => setCenterAreaMode(true)}
-                      title="Terminal Grid + Chat Interface"
-                    >
-                      <SvgIcon name="terminal" size={16} />
-                    </button>
                   </div>
                   
-                  {/* View Mode Toggle Buttons (only for Grid mode) */}
-                  {!centerAreaMode && (
-                    <div className="view-mode-toggle">
+                  {/* View Mode Toggle Buttons */}
+                  <div className="view-mode-toggle">
                       <button 
                         className={`view-toggle-btn ${globalViewMode === 'mobile' ? 'active' : ''}`}
                         onClick={() => setGlobalViewMode('mobile')}
@@ -464,46 +437,8 @@ function PortfolioApp() {
                 </div>
               </div>
             </header>
-            )}
             
-            {/* Mode toggle for center area - floating button when header is hidden */}
-            {centerAreaMode && (
-              <div className="floating-mode-toggle">
-                <button 
-                  className="floating-toggle-btn"
-                  onClick={() => setCenterAreaMode(false)}
-                  title="Return to Project Grid View"
-                >
-                  <SvgIcon name="grid" size={16} />
-                </button>
-              </div>
-            )}
-            
-            {/* Setup Commands Panel for Multi-Claude orchestration */}
-            {centerAreaMode && (
-              <SetupCommandsPanel 
-                isVisible={showSetupCommands}
-                onToggle={() => setShowSetupCommands(!showSetupCommands)}
-              />
-            )}
-            
-            {centerAreaMode ? (
-              <CenterArea 
-                initialLayout="split"
-                maxTerminals={8}
-                onTerminalAdd={(terminal) => {
-                  console.log('Terminal added:', terminal);
-                }}
-                onTerminalRemove={(terminalId) => {
-                  console.log('Terminal removed:', terminalId);
-                }}
-                onLayoutChange={(layout) => {
-                  console.log('Layout changed to:', layout);
-                }}
-              />
-            ) : (
-              <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
-            )}
+            <ProjectGrid onProjectClick={handleProjectClick} globalViewMode={globalViewMode} livePreviewsEnabled={livePreviewsEnabled} />
           </>
         ) : selectedProject ? (
           <EnhancedProjectViewer 

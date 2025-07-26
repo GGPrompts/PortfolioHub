@@ -53,25 +53,21 @@ const EnhancedProjectViewer: React.FC<EnhancedProjectViewerProps> = ({ project, 
           // In VS Code environment, try to read the actual file
           if (isVSCodeEnvironment()) {
             try {
-              // Request file content from VS Code extension
+              // Use unified WebSocket bridge for file reading
               const fileContent = await new Promise<string>((resolve, reject) => {
-                const message = {
-                  type: 'read-file',
-                  filePath: readmePath,
-                  id: `read-${Date.now()}`
-                }
-                
-                // Send message to VS Code extension via global bridge
-                if ((window as any).vsCodePortfolio?.sendMessage) {
-                  (window as any).vsCodePortfolio.sendMessage(message, (response: any) => {
-                    if (response.success && response.content) {
-                      resolve(response.content)
-                    } else {
-                      reject(new Error('File not found or could not be read'))
-                    }
-                  })
+                // Use executeCommand for file reading through unified architecture
+                if (isVSCodeEnvironment()) {
+                  executeCommand(`Get-Content -Path "${readmePath}" -Raw`, `Read README for ${project.title}`)
+                    .then((result) => {
+                      if (result && typeof result === 'string') {
+                        resolve(result)
+                      } else {
+                        reject(new Error('File not found or could not be read'))
+                      }
+                    })
+                    .catch(() => reject(new Error('File read failed')))
                 } else {
-                  reject(new Error('VS Code bridge not available'))
+                  reject(new Error('VS Code not available'))
                 }
               })
               
@@ -97,25 +93,21 @@ const EnhancedProjectViewer: React.FC<EnhancedProjectViewerProps> = ({ project, 
           // In VS Code environment, try to read the actual file
           if (isVSCodeEnvironment()) {
             try {
-              // Request file content from VS Code extension
+              // Use unified WebSocket bridge for file reading
               const fileContent = await new Promise<string>((resolve, reject) => {
-                const message = {
-                  type: 'read-file',
-                  filePath: claudePath,
-                  id: `read-${Date.now()}`
-                }
-                
-                // Send message to VS Code extension via global bridge
-                if ((window as any).vsCodePortfolio?.sendMessage) {
-                  (window as any).vsCodePortfolio.sendMessage(message, (response: any) => {
-                    if (response.success && response.content) {
-                      resolve(response.content)
-                    } else {
-                      reject(new Error('File not found or could not be read'))
-                    }
-                  })
+                // Use executeCommand for file reading through unified architecture
+                if (isVSCodeEnvironment()) {
+                  executeCommand(`Get-Content -Path "${claudePath}" -Raw`, `Read CLAUDE.md for ${project.title}`)
+                    .then((result) => {
+                      if (result && typeof result === 'string') {
+                        resolve(result)
+                      } else {
+                        reject(new Error('File not found or could not be read'))
+                      }
+                    })
+                    .catch(() => reject(new Error('File read failed')))
                 } else {
-                  reject(new Error('VS Code bridge not available'))
+                  reject(new Error('VS Code not available'))
                 }
               })
               
@@ -643,9 +635,7 @@ Thank you!`
   }
 
   const handleStartServer = async () => {
-    const projectPath = isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath 
-      ? `${(window as any).vsCodePortfolio.portfolioPath}\\projects\\${project.id}`
-      : `D:\\ClaudeWindows\\claude-dev-portfolio\\projects\\${project.id}`
+    const projectPath = getProjectFilePath('')
     
     const command = `cd "${projectPath}" && ${project.buildCommand || 'npm run dev'}`
     
@@ -937,9 +927,7 @@ Thank you!`
                       </div>
                       <button 
                         onClick={async () => {
-                          const projectPath = isVSCodeEnvironment() && (window as any).vsCodePortfolio?.portfolioPath 
-                            ? `${(window as any).vsCodePortfolio.portfolioPath}\\`
-                            : `D:\\ClaudeWindows\\claude-dev-portfolio\\`
+                          const projectPath = 'D:\\ClaudeWindows\\claude-dev-portfolio\\'
                           
                           const fullCommand = `cd "${projectPath}" && ${cmd.command}`
                           

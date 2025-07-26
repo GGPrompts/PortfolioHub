@@ -20,16 +20,15 @@ export const DEFAULT_PORTS = {
   'ggprompts-style-guide': 3001,
   '3d-file-system': 3004,
   'ggprompts-professional': 3006,
-  'testproject': 3009
-
+  'standalone-terminal-system': 3007
 };
 
 // Fallback ports if defaults are taken (excluding portfolio port 5173)
-const FALLBACK_PORTS = [3007, 3008, 3009, 3010, 5174, 5175, 5176, 5177];
+const FALLBACK_PORTS = [3008, 3009, 3010, 5174, 5175, 5176, 5177];
 
 // Global flag to disable port checking (can be set by user preference)
 // DISABLED: Using optimizedPortManager instead to avoid conflicts
-export let portCheckingEnabled = false;
+export let portCheckingEnabled = true;
 
 export function setPortCheckingEnabled(enabled: boolean) {
   portCheckingEnabled = enabled;
@@ -154,3 +153,4 @@ export async function getProjectUrl(project: Project): Promise<string | null> {
   
   return null;
 }
+

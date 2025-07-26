@@ -411,7 +411,6 @@ function PortfolioApp() {
                         <SvgIcon name="monitor" size={16} />
                       </button>
                     </div>
-                  )}
                   
                   {/* Git Update Button */}
                   <div className="header-dropdown">

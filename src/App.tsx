@@ -6,6 +6,7 @@ import './services/environmentBridge' // Import environment bridge for initializ
 import 'xterm/css/xterm.css' // Essential for terminal rendering
 import CenterArea from './components/CenterArea'
 import EnhancedProjectViewer from './components/EnhancedProjectViewer'
+import EnvironmentBadge from './components/EnvironmentBadge'
 import GitUpdateButton from './components/GitUpdateButton'
 import PortfolioSidebar from './components/PortfolioSidebar'
 import ProjectGrid from './components/ProjectGrid'
@@ -357,6 +358,9 @@ function PortfolioApp() {
                     <p>A collection of creative coding experiments and applications</p>
                   </div>
                   <div className="header-actions">
+                  {/* Environment Status Badge */}
+                  <EnvironmentBadge size="small" />
+                  
                   {/* VS Code Server Control */}
                   {vsCodeServerStatus === 'stopped' && (
                     <button 

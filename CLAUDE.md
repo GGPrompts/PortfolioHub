@@ -217,6 +217,16 @@ The portfolio system now uses **one React application** that adapts to different
   - Real-time communication bridge for status synchronization
   - All "Run" buttons now work without browser security conflicts
 
+#### Critical Status Detection Fix (July 26, 2025)
+- **✅ Resolved Project Status Detection Issues**: Fixed false positive/negative status reporting
+  - **Root Cause**: Race conditions in Image-based port checking causing all projects to show as "online"
+  - **Solution**: Hybrid architecture prioritizing VS Code WebSocket data over local port checking
+  - **Smart Fallback**: VS Code bridge for accuracy, local port checking for standalone web mode
+  - **Performance**: Eliminated browser fetch conflicts and timeout race conditions
+  - **Reliability**: Uses VS Code's comprehensive process detection and netstat integration
+  - **Architecture**: `fetchProjectStatus()` now prioritizes `environmentBridge.getAllProjectStatus()`
+  - **Data Flow**: VS Code `ProjectStatusInfo[]` → Simple `Map<string, boolean>` for React consumption
+
 ## Modular Component Architecture
 
 ### 🧩 **Component Refactoring Achievement (July 23, 2025)**
@@ -600,6 +610,58 @@ console.log('Status cache:', queryClient.getQueryData(['projectStatus']));
 - Use `netstat -ano | findstr :PORT` to identify process on specific port
 - Kill conflicting process: `powershell "Stop-Process -Id PROCESS_ID -Force"`
 - Portfolio port (5173) is excluded from project detection to prevent false positives
+
+### Status Detection Troubleshooting (July 26, 2025)
+
+#### **Problem**: All projects showing as "online" when most are offline
+**Root Cause**: Race conditions in Image-based port checking where timeout and server response events conflict
+
+**Diagnostic Steps**:
+```javascript
+// 1. Check environment bridge connection
+console.log('VS Code available:', window.environmentBridge?.isVSCodeAvailable());
+console.log('Connection status:', window.environmentBridge?.getConnectionStatus());
+
+// 2. Test VS Code status data
+window.environmentBridge?.getAllProjectStatus().then(status => {
+  console.log('VS Code status:', status);
+  if (status) console.log('Entries:', Array.from(status.entries()));
+});
+
+// 3. Check local port manager state
+console.log('Port cache stats:', optimizedPortManager.getCacheStats());
+```
+
+**Solution**: Hybrid architecture implemented
+- **Primary**: VS Code WebSocket bridge status (most reliable)
+- **Fallback**: Local port checking for standalone web mode
+- **Key Files**: `src/hooks/useProjectData.ts`, `src/services/environmentBridge.ts`
+
+#### **Problem**: Port checking disabled via localStorage settings  
+**Symptoms**: Console shows `[PortCheck] Port checking disabled via settings`
+**Solution**:
+```javascript
+// Enable port checking
+localStorage.setItem('performanceSettings', JSON.stringify({ portCheckingEnabled: true }));
+location.reload();
+
+// Or clear settings completely
+localStorage.removeItem('performanceSettings');
+location.reload();
+```
+
+#### **Problem**: VS Code extension not returning status data
+**Symptoms**: `✅ Using VS Code project status data for 0 projects`
+**Solution**:
+1. Restart VS Code Extension Host: `Ctrl+Shift+P → "Developer: Restart Extension Host"`
+2. Check VS Code Output: `View → Output → Select "Claude Portfolio"`
+3. Verify WebSocket bridge: Should see `"WebSocket bridge started on ws://localhost:8123"`
+4. Update extension if needed: `npx vsce package` → `code --install-extension`
+
+#### **Problem**: Data format mismatch between VS Code and React
+**Symptoms**: VS Code returns data but React shows empty status map
+**Root Cause**: VS Code returns `{projects, statuses}` but React expects simple `Map<string, boolean>`
+**Solution**: Updated VS Code extension `handleProjectStatusSync()` to convert `ProjectStatusInfo[]` to simple status map
 
 **Problem**: DEV NOTES system clipboard not working
 **Solution**:

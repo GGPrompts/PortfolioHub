@@ -48,6 +48,8 @@ This VS Code extension serves as a **WebSocket bridge service** for the unified 
 - **Message Handling**: Secure command validation and routing to appropriate services
 - **Real-time Communication**: Bidirectional messaging with connection management
 - **Client Management**: Tracks connected React app instances
+- **Status Sync**: `project-status-sync` handler provides reliable project status to React app
+- **Data Conversion**: Converts `ProjectStatusInfo[]` to simple `Map<string, boolean>` for React consumption
 
 ### **Modular Service Layer** (`/src/services/`)
 - **PortDetectionService**: Advanced port checking with enhanced capabilities
@@ -379,6 +381,13 @@ window.vsCodePortfolio = {
 - **Network Diagnostics**: Use `netstat -ano | Select-String ":300[0-9]"` for manual port checking
 - **Portfolio Port**: Fixed from 5175 to 5173 in manifest.json to match Vite defaults
 - Kill conflicting process: `powershell "Stop-Process -Id PROCESS_ID -Force"`
+
+**WebSocket Bridge Issues (July 26, 2025)**
+- **React App Shows Wrong Status**: Restart Extension Host with `Ctrl+Shift+P → "Developer: Restart Extension Host"`
+- **Bridge Not Starting**: Check Output panel (`View → Output → Claude Portfolio`) for startup messages
+- **Data Format Errors**: Ensure `handleProjectStatusSync()` converts `ProjectStatusInfo[]` to simple status map
+- **Connection Timeouts**: Verify VS Code extension loads properly and WebSocket server starts on port 8123
+- **Empty Status Map**: Extension should return `{ projectId: boolean }` format, not `{projects, statuses}` format
 
 ### **Debug Mode**
 Enable debug logging in VS Code settings:

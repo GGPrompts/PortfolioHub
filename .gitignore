@@ -49,6 +49,9 @@ lib/
 !projects/.gitkeep
 !projects/dev-journals/
 
+# Standalone projects with their own git repositories
+projects/standalone-terminal-system/
+
 # Notes system - exclude user notes from version control
 notes/to-sort/
 notes/organized/

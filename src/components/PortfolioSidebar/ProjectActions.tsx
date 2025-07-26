@@ -21,6 +21,7 @@ interface ProjectActionsProps {
   isExpanded: boolean
   isSelected: boolean
   selectedProjects: Set<string>
+  isLoadingStatus?: boolean
   onToggleExpanded: (projectId: string) => void
   onToggleSelection: (projectId: string) => void
   onSelectProject: (project: Project) => void
@@ -33,6 +34,7 @@ export default function ProjectActions({
   isExpanded,
   isSelected,
   selectedProjects,
+  isLoadingStatus = false,
   onToggleExpanded,
   onToggleSelection,
   onSelectProject,
@@ -117,8 +119,15 @@ export default function ProjectActions({
           {project.title}
         </span>
         {project.localPort && (
-          <span className={`${styles.statusDot} ${isRunning ? styles.running : styles.stopped}`}>
-            {isRunning ? '🟢' : '🔴'}
+          <span className={`${styles.statusDot} ${isLoadingStatus ? styles.loading : isRunning ? styles.running : styles.stopped}`}>
+            {(() => {
+              console.log(`🔍 Project ${project.id} status:`, { isLoadingStatus, isRunning });
+              if (isLoadingStatus) {
+                console.log(`🔄 ${project.id} LOADING STATE ACTIVE`);
+                return <span style={{ color: '#00ff88', animation: 'pulse 1s infinite' }}>⏳</span>;
+              }
+              return isRunning ? '🟢' : '🔴';
+            })()}
           </span>
         )}
       </div>

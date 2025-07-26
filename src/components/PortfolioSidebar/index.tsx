@@ -266,7 +266,21 @@ export default function PortfolioSidebar({
             <div className={styles.statusHeader}>
               <div className={styles.statusInfo}>
                 <span className={styles.statusText}>
-                  {runningProjectsCount} / {totalProjects} projects running
+                  {(() => {
+                    console.log('🔍 Sidebar loading check:', { isLoadingStatus, runningProjectsCount, totalProjects });
+                    if (isLoadingStatus) {
+                      console.log('🔄 LOADING STATE ACTIVE - showing loading indicator');
+                      return (
+                        <>
+                          <span className={styles.loadingDot} style={{ color: '#00ff88', fontWeight: 'bold' }}>⏳</span>
+                          <span style={{ color: '#00ff88', fontWeight: 'bold' }}>Loading project status...</span>
+                        </>
+                      );
+                    } else {
+                      console.log('✅ NOT LOADING - showing project count');
+                      return `${runningProjectsCount} / ${totalProjects} projects running`;
+                    }
+                  })()}
                 </span>
                 <span className={styles.lastUpdated}>
                   Last updated: {new Date().toLocaleTimeString()}
@@ -342,6 +356,7 @@ export default function PortfolioSidebar({
                       isExpanded={expandedProjects.has(project.id)}
                       isSelected={selectedProject?.id === project.id}
                       selectedProjects={selectedProjects}
+                      isLoadingStatus={isLoadingStatus}
                       onToggleExpanded={toggleProjectExpanded}
                       onToggleSelection={toggleProjectSelection}
                       onSelectProject={selectProject}
@@ -376,6 +391,7 @@ export default function PortfolioSidebar({
                       isExpanded={expandedProjects.has(project.id)}
                       isSelected={selectedProject?.id === project.id}
                       selectedProjects={selectedProjects}
+                      isLoadingStatus={isLoadingStatus}
                       onToggleExpanded={toggleProjectExpanded}
                       onToggleSelection={toggleProjectSelection}
                       onSelectProject={selectProject}

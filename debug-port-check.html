@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Port Checking</title>
+</head>
+<body>
+    <h1>Debug Port Checking</h1>
+    <button onclick="enableDebugMode()">Enable Debug Mode</button>
+    <button onclick="testPortChecking()">Test All Ports</button>
+    <div id="results"></div>
+    
+    <script>
+        function enableDebugMode() {
+            localStorage.setItem('debugPortChecks', 'true');
+            console.log('🐛 Debug mode enabled');
+            document.getElementById('results').innerHTML += '<p>✅ Debug mode enabled - check console</p>';
+        }
+        
+        async function testPortChecking() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Testing Port Checking...</h2>';
+            
+            const ports = [3001, 3002, 3003, 3004, 3005, 3006, 9323, 5173];
+            
+            for (const port of ports) {
+                console.log(`🔍 Testing port ${port}...`);
+                
+                try {
+                    // Test the exact same method as optimizedPortManager
+                    const response = await fetch(`http://localhost:${port}`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    
+                    console.log(`Port ${port} - Response type: ${response.type}, Status: ${response.status}, OK: ${response.ok}`);
+                    
+                    // Check what we can actually detect
+                    const isDetected = response.type === 'opaque' || response.ok;
+                    results.innerHTML += `<p>Port ${port}: ${isDetected ? '✅ DETECTED' : '❌ FAILED'} (type: ${response.type})</p>`;
+                    
+                } catch (error) {
+                    console.log(`Port ${port} - Error: ${error.message}`);
+                    results.innerHTML += `<p>Port ${port}: ❌ ERROR - ${error.message}</p>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

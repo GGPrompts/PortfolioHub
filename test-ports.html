@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Port Test</title>
+</head>
+<body>
+    <h1>Port Testing</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        const ports = [3001, 3002, 3003, 3004, 3005, 3006, 9323];
+        
+        async function testPort(port) {
+            try {
+                const response = await fetch(`http://localhost:${port}`, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                });
+                console.log(`✅ Port ${port} - Response type:`, response.type);
+                return true;
+            } catch (error) {
+                console.log(`❌ Port ${port} - Error:`, error.message);
+                return false;
+            }
+        }
+        
+        async function testAllPorts() {
+            results.innerHTML = '<h2>Testing ports...</h2>';
+            
+            for (const port of ports) {
+                const isRunning = await testPort(port);
+                const status = isRunning ? '✅ RUNNING' : '❌ STOPPED';
+                results.innerHTML += `<p>Port ${port}: ${status}</p>`;
+            }
+            
+            results.innerHTML += '<h2>Test completed - check browser console for details</h2>';
+        }
+        
+        testAllPorts();
+    </script>
+</body>
+</html>

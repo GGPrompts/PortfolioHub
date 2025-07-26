@@ -26,8 +26,8 @@ export interface CachedPortInfo {
  */
 export class OptimizedPortManager {
     private cache = new Map<number, CachedPortInfo>();
-    private readonly CACHE_TTL = 120000; // 2 minutes TTL (much less aggressive)
-    private readonly CACHE_TTL_FAILED = 30000; // 30 seconds for failed checks (less retry spam)
+    private readonly CACHE_TTL = 30000; // 30 seconds instead of 2 minutes
+    private readonly CACHE_TTL_FAILED = 10000; // 10 seconds instead of 30
     private readonly MAX_RETRY_COUNT = 3;
     private readonly REQUEST_TIMEOUT = 2000; // 2 second timeout
     
@@ -44,9 +44,18 @@ export class OptimizedPortManager {
     // Global toggle for port checking
     private portCheckingEnabled = true;
     
+    // Debug mode toggle
+    private debugMode = localStorage.getItem('debugPortChecks') === 'true';
+    
     setPortCheckingEnabled(enabled: boolean) {
         this.portCheckingEnabled = enabled;
         console.log(`🔧 Optimized port checking ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    setDebugMode(enabled: boolean) {
+        this.debugMode = enabled;
+        localStorage.setItem('debugPortChecks', enabled.toString());
+        console.log(`🐛 Port check debugging ${enabled ? 'enabled' : 'disabled'}`);
     }
     
     disablePortChecking() {
@@ -146,95 +155,75 @@ export class OptimizedPortManager {
      * @returns Promise<boolean>
      */
     private async doPortCheck(port: number, signal: AbortSignal): Promise<boolean> {
-    try {
-    // Check if port checking is disabled
-    const settings = JSON.parse(localStorage.getItem('performanceSettings') || '{}');
-    if (!settings.portCheckingEnabled) {
-      return false;
-    }
-    
-    // Self-detection: If we're checking our own port (5173), we're obviously running
-    if (port === 5173 && window.location.port === '5173') {
-      return true;
-    }
-    
-    // Suppress console errors during port checking
-    const originalError = console.error;
-    console.error = () => {}; // Temporarily disable console.error
-    
-    try {
-    // Try multiple approaches to detect the server
-    const approaches = [
-    // Approach 1: GET with no-cors (matches VS Code extension method)
-      async () => {
-        const response = await fetch(`http://localhost:${port}`, {
-          method: 'GET',
-          mode: 'no-cors',
-        signal,
-      cache: 'no-cache'
-    });
-    return true;
-    },
-    
-    // Approach 2: HEAD with no-cors (fallback)
-    async () => {
-        const response = await fetch(`http://localhost:${port}`, {
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal,
-        cache: 'no-cache'
-    });
-    return true;
-    },
-    
-    // Approach 3: Try favicon.ico (like VS Code extension does)
-    async () => {
-      const response = await fetch(`http://localhost:${port}/favicon.ico`, {
-          method: 'HEAD',
-            mode: 'no-cors',
-            signal,
-            cache: 'no-cache'
-          });
-        return true;
-    }
-    ];
-    
-    // Try approaches in sequence
-    for (let i = 0; i < approaches.length; i++) {
-      try {
-      const result = await approaches[i]();
-      if (result) {
-      console.error = originalError; // Restore console.error
-      return true;
-      }
-      } catch (error: any) {
-          // Expected when port is not in use
-          if (i === approaches.length - 1) {
-            throw error;
-          }
-          }
-      }
-      
-    return false;
-    } finally {
-        console.error = originalError; // Always restore console.error
-    }
-      
-    } catch (error: any) {
-    // Check if request was aborted
-    if (signal.aborted) {
-      throw error;
-      }
+        if (this.debugMode) {
+            console.log(`[PortCheck] Checking port ${port}...`);
+        }
+        
+        // Check if port checking is disabled
+        const settings = JSON.parse(localStorage.getItem('performanceSettings') || '{}');
+        if (!settings.portCheckingEnabled) {
+            if (this.debugMode) {
+                console.log(`[PortCheck] Port checking disabled via settings`);
+            }
+            return false;
+        }
+        
+        // Self-detection: If we're checking our own port (5173), we're obviously running
+        if (port === 5173 && window.location.port === '5173') {
+            return true;
+        }
+        
+        try {
+            // Use Image object to bypass CORB - this method works reliably for port detection
+            return await new Promise<boolean>((resolve) => {
+                const img = new Image();
+                const timeout = setTimeout(() => {
+                    if (this.debugMode) {
+                        console.log(`[PortCheck] Port ${port} - Timeout = PORT AVAILABLE (no server running)`);
+                    }
+                    resolve(true); // Port is available because no server responded
+                }, 2000);
+                
+                // Both onload and onerror mean the server responded
+                const handleResponse = (isLoad: boolean) => {
+                    clearTimeout(timeout);
+                    if (this.debugMode) {
+                        console.log(`[PortCheck] Port ${port} - ${isLoad ? 'Image loaded' : 'Server responded (404/error)'} = PORT NOT AVAILABLE (server running)`);
+                    }
+                    resolve(false); // Port is NOT available because server is running
+                };
+                
+                img.onload = () => handleResponse(true);
+                img.onerror = () => handleResponse(false);
+                
+                // Try to load favicon.ico from the port - any response means server is running
+                img.src = `http://localhost:${port}/favicon.ico?t=${Date.now()}`;
+            });
+              
+        } catch (error: any) {
+            // Check if request was aborted
+            if (signal.aborted) {
+                if (this.debugMode) {
+                    console.log(`[PortCheck] Port ${port} check aborted`);
+                }
+                throw error;
+            }
 
-    // Network errors usually mean the server is not running
-      if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-          return false;
-      }
+            // Network errors usually mean the server is not running
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                if (this.debugMode) {
+                    console.log(`[PortCheck] Port ${port} not running (network error)`);
+                }
+                return false;
+            }
 
-      // For other errors, assume server is not available
-      return false;
+            // For other errors, assume server is not available
+            if (this.debugMode) {
+                console.log(`[PortCheck] Port ${port} check failed:`, error.message);
+            }
+            return false;
+        }
     }
-  }
 
     /**
      * Batch check multiple ports efficiently
@@ -289,7 +278,10 @@ export class OptimizedPortManager {
 
         projects.forEach(project => {
             if (project.localPort) {
-                const isRunning = portResults.get(project.localPort) || false;
+                // CRITICAL FIX: isPortAvailable returns true when port is AVAILABLE (not running)
+                // So we need to invert the logic to get isRunning
+                const isAvailable = portResults.get(project.localPort);
+                const isRunning = isAvailable === false; // Port not available = server is running
                 projectResults.set(project.id, isRunning);
                 if (isRunning) runningCount++;
             } else {

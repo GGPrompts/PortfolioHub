@@ -80,7 +80,9 @@ export function useProjectData() {
    * Force refresh of project data (clears cache and refetches)
    */
   const refreshProjectData = async () => {
-    console.log('🔄 Refreshing project data - clearing all caches (unified architecture)')
+    console.log('🔄🔄🔄 REFRESH PROJECT DATA STARTED 🔄🔄🔄')
+    console.log('📊 Current project count:', projects.length)
+    console.log('📊 Current status map:', projectStatus)
     
     // Clear port cache for fresh data
     optimizedPortManager.clearCache()
@@ -92,20 +94,29 @@ export function useProjectData() {
     
     // Manual refetch to ensure immediate update
     console.log('🔄 Refetching projects...')
-    await refetchProjects()
-    console.log('🔄 Refetching status...')
-    await refetchStatus()
+    const projectResult = await refetchProjects()
+    console.log('📦 Projects refetch result:', projectResult.data?.length, 'projects')
     
-    console.log('✅ All data refreshed')
+    console.log('🔄 Refetching status...')
+    const statusResult = await refetchStatus()
+    console.log('📊 Status refetch result:', statusResult.data?.size, 'entries')
+    
+    console.log('✅✅✅ ALL DATA REFRESHED ✅✅✅')
   }
 
   /**
    * Refresh only project status (lighter operation)
    */
   const refreshProjectStatus = async () => {
-    console.log('🔄 Refreshing project status (unified architecture)')
+    console.log('🔄🔄🔄 REFRESH PROJECT STATUS STARTED 🔄🔄🔄')
+    console.log('📊 Current status before refresh:', projectStatus)
+    
     optimizedPortManager.clearCache()
-    await refetchStatus()
+    console.log('🧹 Port cache cleared for status refresh')
+    
+    const statusResult = await refetchStatus()
+    console.log('📊 Status refresh result:', statusResult.data?.size, 'entries')
+    console.log('✅✅✅ PROJECT STATUS REFRESHED ✅✅✅')
   }
 
   /**

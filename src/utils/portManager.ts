@@ -46,10 +46,11 @@ export async function checkPort(port: number): Promise<boolean> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
     
-    const response = await fetch(`http://localhost:${port}/favicon.ico?t=${Date.now()}`, {
+    const response = await fetch(`http://localhost:${port}/?t=${Date.now()}`, {
       method: 'HEAD',  // Use HEAD to avoid downloading content
       signal: controller.signal,
-      cache: 'no-cache'
+      cache: 'no-cache',
+      mode: 'no-cors'  // Allow cross-origin requests for dev servers
     });
     
     clearTimeout(timeoutId);

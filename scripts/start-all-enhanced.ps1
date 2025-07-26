@@ -143,9 +143,15 @@ function Start-Project {
     
     $fullCommand = $commandParts -join '; '
     
-    # Start the process
+    # Start the process using PowerShell 7 (pwsh) instead of Windows PowerShell 5.1
     Write-Verbose "Starting process - $fullCommand"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $fullCommand
+    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+        Start-Process pwsh -ArgumentList "-NoExit", "-Command", $fullCommand
+        Write-Host "  [INFO] Started with PowerShell 7 (pwsh)" -ForegroundColor Blue
+    } else {
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", $fullCommand
+        Write-Host "  [WARN] PowerShell 7 not found, using Windows PowerShell 5.1" -ForegroundColor Yellow
+    }
     
     Start-Sleep -Seconds 3
     

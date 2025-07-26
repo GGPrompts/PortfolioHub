@@ -23,6 +23,9 @@ export default function LiveProjectPreview({
   globalViewMode,
   livePreviewsEnabled = true
 }: LiveProjectPreviewProps) {
+  // Check if live preview is disabled for this specific project
+  const isLivePreviewDisabled = project.disableLivePreview === true
+  const effectiveLivePreviewsEnabled = livePreviewsEnabled && !isLivePreviewDisabled
   // Get project data from unified hook
   const { projects: allProjects, getProjectStatus: getUnifiedProjectStatus } = useProjectData()
   
@@ -290,12 +293,12 @@ export default function LiveProjectPreview({
       actualIsRunning,
       actualPort,
       showLivePreview,
-      livePreviewsEnabled,
+      effectiveLivePreviewsEnabled,
       isVSCode,
-      willEnable: actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled
+      willEnable: actualIsRunning && actualPort && !showLivePreview && effectiveLivePreviewsEnabled
     })
     
-    if (actualIsRunning && actualPort && !showLivePreview && livePreviewsEnabled && !iframeBlocked && !isCommonlyBlocked) {
+    if (actualIsRunning && actualPort && !showLivePreview && effectiveLivePreviewsEnabled && !iframeBlocked && !isCommonlyBlocked) {
       setIsRefreshing(false) // Start without refresh indicator
       console.log(`✅ Enabling live preview for ${project.id} on port ${actualPort}`)
       // Small delay to let the server fully start
@@ -305,7 +308,7 @@ export default function LiveProjectPreview({
         setIsRefreshing(false)
       }, 1500) // Reduced from 2000ms
     }
-    if (!actualIsRunning || !livePreviewsEnabled) {
+    if (!actualIsRunning || !effectiveLivePreviewsEnabled) {
       if (showLivePreview) {
         console.log(`❌ Disabling live preview for ${project.id}`)
       }
@@ -313,7 +316,7 @@ export default function LiveProjectPreview({
       setPreviewLoaded(false)
       setIsRefreshing(false)
     }
-  }, [actualIsRunning, actualPort, livePreviewsEnabled, project.id, showLivePreview])
+  }, [actualIsRunning, actualPort, effectiveLivePreviewsEnabled, project.id, showLivePreview])
 
   // Force iframe reload when zoom mode or view mode changes (URL changes)
   useEffect(() => {
@@ -393,7 +396,7 @@ export default function LiveProjectPreview({
 
   const togglePreview = () => {
     // Only allow toggling if global previews are enabled
-    if (livePreviewsEnabled) {
+    if (effectiveLivePreviewsEnabled) {
       if (!showLivePreview && iframeBlocked) {
         // If trying to show preview for a blocked project, reset the blocked flag and try again
         console.log(`🔄 Resetting iframe blocked flag for ${project.id} - user requested retry`)
@@ -443,7 +446,7 @@ export default function LiveProjectPreview({
   const commonlyBlockedProjects = ['ggprompts', 'ggprompts-style-guide']
   const isCommonlyBlocked = commonlyBlockedProjects.includes(project.id)
   
-  const shouldShowPreview = showLivePreview && previewUrl && livePreviewsEnabled && !isPortfolioApp
+  const shouldShowPreview = showLivePreview && previewUrl && effectiveLivePreviewsEnabled && !isPortfolioApp
 
   return (
     <div className={`${styles.projectCard} ${actualIsRunning ? styles.running : ''}`}>
@@ -513,6 +516,15 @@ export default function LiveProjectPreview({
                 onError={handleImageError}
                 className={styles.thumbnailImage}
               />
+            ) : isLivePreviewDisabled ? (
+              // Show specific message for projects with disabled live preview (like terminal systems)
+              <div className={styles.placeholderThumbnail}>
+                <div className={styles.placeholderIcon}>⚠️</div>
+                <p>{project.title}</p>
+                <small style={{color: '#888', fontSize: '10px', marginTop: '4px', textAlign: 'center'}}>
+                  Preview disabled to prevent duplicate sessions
+                </small>
+              </div>
             ) : (
               <div className={styles.placeholderThumbnail}>
                 <div className={styles.placeholderIcon}>🚀</div>

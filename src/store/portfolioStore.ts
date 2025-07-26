@@ -20,6 +20,7 @@ export interface Project {
   status: 'active' | 'archived' | 'experimental'
   devJournal?: string
   requires3D?: boolean  // New property for projects needing pointer lock
+  disableLivePreview?: boolean  // Disable live preview for projects like terminal systems
 }
 
 interface PortfolioStore {

@@ -276,6 +276,7 @@
       "localPort": 3007,
       "buildCommand": "npm run dev",
       "path": "projects/standalone-terminal-system",
+      "disableLivePreview": true,
       "repository": "https://github.com/GGPrompts/MultiTerminals",
       "thumbnail": "thumbnails/standalone-terminal-system.png",
       "tags": [

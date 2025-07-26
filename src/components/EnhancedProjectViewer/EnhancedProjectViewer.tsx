@@ -862,14 +862,6 @@ Thank you!`
                   </div>
                 </section>
 
-                {project.thumbnail && (
-                  <section className={styles.section}>
-                    <h3>Preview</h3>
-                    <div className={styles.previewImage}>
-                      <img src={project.thumbnail} alt={`${project.title} preview`} />
-                    </div>
-                  </section>
-                )}
               </div>
             )}
             

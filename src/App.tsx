@@ -188,14 +188,17 @@ function PortfolioApp() {
 
   const handleRefreshPortfolio = async (event: React.MouseEvent) => {
     event.stopPropagation()
+    console.log('🔄🔄🔄 HEADER REFRESH BUTTON CLICKED 🔄🔄🔄')
     console.log('🔄 Manual portfolio refresh triggered')
     
-    // Force clear cache and refresh project data
-    console.log('🧹 Clearing port cache...')
-    await refreshProjectData()
-    
-    // Test direct port check for matrix-cards using multiple methods
-    console.log('🧪 Testing matrix-cards port 3002 with multiple approaches...')
+    try {
+      // Force clear cache and refresh project data
+      console.log('🧹 Clearing port cache...')
+      await refreshProjectData()
+      console.log('✅ refreshProjectData completed')
+      
+      // Test direct port check for matrix-cards using multiple methods
+      console.log('🧪 Testing matrix-cards port 3002 with multiple approaches...')
     
     // Test 1: Direct fetch HEAD
     try {
@@ -248,6 +251,9 @@ function PortfolioApp() {
     setProjectPorts(newPortStatus)
     
     console.log('✅ Portfolio refresh complete')
+    } catch (error) {
+      console.error('❌ Portfolio refresh failed:', error)
+    }
   }
 
   const startVSCodeServer = async () => {

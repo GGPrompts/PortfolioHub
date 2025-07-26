@@ -274,10 +274,17 @@ export default function PortfolioSidebar({
               </div>
               <button 
                 className={styles.refreshBtn}
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation()
-                  refreshProjectStatus()
-                  showBrowserNotification('🔄 Project status refreshed', 'info')
+                  console.log('🔄🔄🔄 SIDEBAR REFRESH BUTTON CLICKED 🔄🔄🔄')
+                  try {
+                    await refreshProjectStatus()
+                    console.log('✅ refreshProjectStatus completed')
+                    showBrowserNotification('🔄 Project status refreshed', 'info')
+                  } catch (error) {
+                    console.error('❌ refreshProjectStatus failed:', error)
+                    showBrowserNotification('❌ Refresh failed', 'error')
+                  }
                 }}
                 title="Refresh project status"
               >

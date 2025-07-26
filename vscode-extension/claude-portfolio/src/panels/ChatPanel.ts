@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { VSCodeSecurityService } from '../securityService';
+import { CopilotIntegrationService } from '../services/CopilotIntegrationService';
 
 /**
  * Chat Panel for Multi-AI Communication
@@ -8,12 +9,14 @@ import { VSCodeSecurityService } from '../securityService';
 export class ChatPanel {
     public static readonly viewType = 'claudePortfolio.chat';
     private static _instance: ChatPanel | undefined;
+    private copilotService: CopilotIntegrationService;
 
     private constructor(
         private readonly _panel: vscode.WebviewPanel,
         private readonly _extensionUri: vscode.Uri,
         private readonly _context: vscode.ExtensionContext
     ) {
+        this.copilotService = new CopilotIntegrationService();
         this._update();
 
         // Handle messages from the webview
@@ -187,9 +190,45 @@ export class ChatPanel {
     }
 
     private async _sendToCopilot(content: string): Promise<string> {
-        // Integration with GitHub Copilot Chat
-        await vscode.commands.executeCommand('github.copilot.interactiveEditor.explain');
-        return `Copilot activated for: ${content}`;
+        try {
+            // Use the enhanced Copilot integration service
+            const result = await this.copilotService.sendMessage(content, {
+                preferDirectAPI: true,  // Try Language Model API first
+                showInstructions: true  // Show helpful UI messages
+            });
+
+            if (result.success) {
+                if (result.method === 'language-model') {
+                    // Direct API response
+                    return `🤖 Copilot (Direct): ${result.content}`;
+                } else {
+                    // UI integration
+                    return `📋 ${result.content}`;
+                }
+            } else {
+                throw new Error(result.error || 'Unknown error');
+            }
+            
+        } catch (error) {
+            // Fallback: Copy to clipboard with instructions
+            await vscode.env.clipboard.writeText(content);
+            
+            const instructions = [
+                "⚠️ Copilot integration failed. Manual steps:",
+                "1. Press Ctrl+Alt+I to open Copilot Chat",
+                "2. Press Ctrl+V to paste your message", 
+                "3. Press Enter to send",
+                "",
+                "Or press Ctrl+I for inline chat (with selected text)"
+            ].join('\n');
+            
+            vscode.window.showWarningMessage(
+                'Copilot integration failed. Message copied to clipboard.',
+                'Open Chat Manually'
+            );
+            
+            return `📋 Message copied to clipboard.\n\n${instructions}`;
+        }
     }
 
     private async _sendToTerminal(content: string): Promise<string> {

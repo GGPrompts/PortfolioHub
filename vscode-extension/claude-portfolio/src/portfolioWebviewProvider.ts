@@ -1,25 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
-import * as os from 'os';
 import { VSCodeSecurityService } from './securityService';
-
-interface TerminalSession {
-    id: string;
-    ptyTerminal: pty.IPty;
-    workbranchId: string;
-    projectId?: string;
-    shell: string;
-    createdAt: Date;
-}
 
 export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'claude-portfolio.main';
     
     private _view?: vscode.WebviewView;
     private _cachedProjectData?: any;
-    private _terminalSessions = new Map<string, TerminalSession>();
 
     public getCachedProjectData(): any {
         return this._cachedProjectData;
@@ -167,22 +155,6 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                     // Refresh only project status
                     console.log('🔄 Refreshing VS Code project status on request');
                     await this._refreshProjectStatus();
-                    break;
-                case 'terminal:create':
-                    // Create a new terminal session with real output streaming
-                    await this._createTerminalSession(message.workbranchId, message.projectId, message.shell);
-                    break;
-                case 'terminal:command':
-                    // Execute command in terminal session
-                    await this._executeTerminalCommand(message.terminalId, message.command);
-                    break;
-                case 'terminal:destroy':
-                    // Destroy terminal session
-                    await this._destroyTerminalSession(message.terminalId);
-                    break;
-                case 'terminal:resize':
-                    // Resize terminal session
-                    await this._resizeTerminalSession(message.terminalId, message.cols, message.rows);
                     break;
                 default:
                     console.log('Unhandled message type:', message.type);
@@ -1520,40 +1492,8 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
             closeEmbeddedPreview: (title) => {
                 console.log('Closing embedded preview for:', title);
                 vscode.postMessage({ type: 'preview:close', title });
-            },
-            
-            // Real terminal functions using node-pty
-            createTerminal: (workbranchId, projectId, shell = 'powershell') => {
-                console.log('Creating real terminal session:', workbranchId, projectId, shell);
-                vscode.postMessage({ type: 'terminal:create', workbranchId, projectId, shell });
-            },
-            
-            executeTerminalCommand: (terminalId, command) => {
-                console.log('Executing command in real terminal:', terminalId, command);
-                vscode.postMessage({ type: 'terminal:command', terminalId, command });
-            },
-            
-            destroyTerminal: (terminalId) => {
-                console.log('Destroying real terminal:', terminalId);
-                vscode.postMessage({ type: 'terminal:destroy', terminalId });
-            },
-            
-            resizeTerminal: (terminalId, cols, rows) => {
-                vscode.postMessage({ type: 'terminal:resize', terminalId, cols, rows });
             }
         };
-        
-        // Listen for messages from extension to React
-        window.addEventListener('message', (event) => {
-            const message = event.data;
-            console.log('📨 Received message from VS Code extension:', message);
-            
-            // Dispatch terminal events to React components
-            if (message.type?.startsWith('terminal:')) {
-                const terminalEvent = new CustomEvent('terminal-message', { detail: message });
-                window.dispatchEvent(terminalEvent);
-            }
-        });
         
         // Verify data injection worked
         console.log('🔧 Verification - window.vsCodePortfolio exists:', !!window.vsCodePortfolio);
@@ -1709,234 +1649,6 @@ export class PortfolioWebviewProvider implements vscode.WebviewViewProvider {
                 console.log('🔄 Webview updated with fresh status data');
             }
         }
-    }
-
-    /**
-     * Create a new terminal session with real output streaming
-     */
-    private async _createTerminalSession(workbranchId: string, projectId?: string, shell: string = 'powershell'): Promise<void> {
-        try {
-            const terminalId = `${workbranchId}_${Date.now()}`;
-            
-            // Determine shell executable
-            const shellInfo = this._getShellInfo(shell);
-            
-            // Determine working directory
-            const workingDirectory = projectId 
-                ? this._resolveProjectDirectory(projectId)
-                : path.join(this._portfolioPath, 'workbranches', workbranchId);
-
-            // Create node-pty terminal for real output streaming
-            const ptyTerminal = pty.spawn(shellInfo.executable, shellInfo.args, {
-                name: 'xterm-color',
-                cols: 80,
-                rows: 30,
-                cwd: workingDirectory,
-                env: {
-                    ...process.env,
-                    WORKBRANCH_ID: workbranchId,
-                    PORTFOLIO_ROOT: this._portfolioPath
-                }
-            });
-
-            // Create session
-            const session: TerminalSession = {
-                id: terminalId,
-                ptyTerminal,
-                workbranchId,
-                projectId,
-                shell,
-                createdAt: new Date()
-            };
-
-            // Set up real output streaming to React webview
-            ptyTerminal.onData((data: string) => {
-                this._sendToWebview({
-                    type: 'terminal:output',
-                    terminalId,
-                    data
-                });
-            });
-
-            ptyTerminal.onExit((e: { exitCode: number; signal?: number }) => {
-                console.log(`Terminal ${terminalId} exited with code ${e.exitCode}, signal ${e.signal}`);
-                this._sendToWebview({
-                    type: 'terminal:exit',
-                    terminalId,
-                    exitCode: e.exitCode,
-                    signal: e.signal
-                });
-                this._terminalSessions.delete(terminalId);
-            });
-
-            // Store session
-            this._terminalSessions.set(terminalId, session);
-
-            // Send creation confirmation to React
-            this._sendToWebview({
-                type: 'terminal:created',
-                terminalId,
-                workbranchId,
-                projectId,
-                shell
-            });
-
-            console.log(`✅ Real terminal session created: ${terminalId} (${shell}) in ${workingDirectory}`);
-
-        } catch (error) {
-            console.error('Failed to create terminal session:', error);
-            this._sendToWebview({
-                type: 'terminal:error',
-                error: error instanceof Error ? error.message : 'Failed to create terminal'
-            });
-        }
-    }
-
-    /**
-     * Execute command in terminal session
-     */
-    private async _executeTerminalCommand(terminalId: string, command: string): Promise<void> {
-        try {
-            const session = this._terminalSessions.get(terminalId);
-            if (!session) {
-                this._sendToWebview({
-                    type: 'terminal:error',
-                    terminalId,
-                    error: `Terminal session not found: ${terminalId}`
-                });
-                return;
-            }
-
-            // Security validation
-            if (!VSCodeSecurityService.validateCommand(command)) {
-                this._sendToWebview({
-                    type: 'terminal:error',
-                    terminalId,
-                    error: `Command blocked for security: ${command}`
-                });
-                return;
-            }
-
-            // Send command to real terminal
-            session.ptyTerminal.write(command + '\r\n');
-            
-            console.log(`📤 Command sent to real terminal ${terminalId}: ${command}`);
-
-        } catch (error) {
-            console.error('Failed to execute terminal command:', error);
-            this._sendToWebview({
-                type: 'terminal:error',
-                terminalId,
-                error: error instanceof Error ? error.message : 'Command execution failed'
-            });
-        }
-    }
-
-    /**
-     * Destroy terminal session
-     */
-    private async _destroyTerminalSession(terminalId: string): Promise<void> {
-        try {
-            const session = this._terminalSessions.get(terminalId);
-            if (!session) {
-                console.warn(`Terminal session not found for destruction: ${terminalId}`);
-                return;
-            }
-
-            // Kill the pty terminal
-            session.ptyTerminal.kill();
-            this._terminalSessions.delete(terminalId);
-
-            // Notify React
-            this._sendToWebview({
-                type: 'terminal:destroyed',
-                terminalId
-            });
-
-            console.log(`🗑️ Real terminal session destroyed: ${terminalId}`);
-
-        } catch (error) {
-            console.error('Failed to destroy terminal session:', error);
-        }
-    }
-
-    /**
-     * Resize terminal session
-     */
-    private async _resizeTerminalSession(terminalId: string, cols: number, rows: number): Promise<void> {
-        try {
-            const session = this._terminalSessions.get(terminalId);
-            if (!session) {
-                console.warn(`Terminal session not found for resize: ${terminalId}`);
-                return;
-            }
-
-            // Resize the pty terminal
-            session.ptyTerminal.resize(cols, rows);
-            console.log(`📏 Terminal resized ${terminalId}: ${cols}x${rows}`);
-
-        } catch (error) {
-            console.error('Failed to resize terminal:', error);
-        }
-    }
-
-    /**
-     * Send message to React webview
-     */
-    private _sendToWebview(message: any): void {
-        if (this._view?.webview) {
-            this._view.webview.postMessage(message);
-        }
-    }
-
-    /**
-     * Get shell executable information
-     */
-    private _getShellInfo(shell: string): { executable: string; args: string[] } {
-        const platform = os.platform();
-        
-        switch (shell) {
-            case 'powershell':
-                return platform === 'win32' 
-                    ? { executable: 'powershell.exe', args: ['-NoLogo'] }
-                    : { executable: 'pwsh', args: ['-NoLogo'] };
-            case 'cmd':
-                return { executable: 'cmd.exe', args: ['/K'] };
-            case 'bash':
-            default:
-                return { executable: 'bash', args: ['--login'] };
-        }
-    }
-
-    /**
-     * Resolve project directory for terminal working directory
-     */
-    private _resolveProjectDirectory(projectId: string): string {
-        try {
-            // Load project manifest to find project path
-            const manifestPath = path.join(this._portfolioPath, 'projects', 'manifest.json');
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-            const project = manifest.projects.find((p: any) => p.id === projectId);
-            
-            if (project?.path) {
-                if (path.isAbsolute(project.path)) {
-                    return project.path;
-                } else if (project.path === '.') {
-                    return this._portfolioPath;
-                } else if (project.path.startsWith('../Projects/')) {
-                    return path.resolve(this._portfolioPath, project.path);
-                } else if (project.path.startsWith('projects/')) {
-                    return path.join(this._portfolioPath, project.path); 
-                } else {
-                    return path.join(this._portfolioPath, 'projects', project.path);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to resolve project directory:', error);
-        }
-        
-        // Fallback to portfolio root
-        return this._portfolioPath;
     }
 }
 

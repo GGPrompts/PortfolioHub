@@ -13,9 +13,7 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": [
-    "Other"
-  ],
+  "categories": ["Other"],
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -93,7 +91,7 @@
         "category": "Claude Portfolio"
       },
       {
-        "command": "claude-portfolio.stopProject",
+        "command": "claude-portfolio.stopProject", 
         "title": "Stop Project",
         "category": "Claude Portfolio"
       },
@@ -124,7 +122,7 @@
       },
       {
         "command": "claude-portfolio.batchStopProjects",
-        "title": "Stop Selected Projects",
+        "title": "Stop Selected Projects", 
         "category": "Claude Portfolio"
       },
       {
@@ -174,52 +172,69 @@
         "icon": "$(comment-discussion)"
       },
       {
-        "command": "claudePortfolio.terminal.create",
-        "title": "Create Terminal Session",
-        "category": "Claude Portfolio",
-        "icon": "$(terminal)"
+        "command": "claude-portfolio.runAIComparison",
+        "title": "🔬 Compare AI Models (Claude vs Copilot)",
+        "category": "AI Testing",
+        "icon": "$(beaker)"
       },
       {
-        "command": "claudePortfolio.terminal.list",
-        "title": "List Terminal Sessions",
-        "category": "Claude Portfolio",
-        "icon": "$(list-unordered)"
+        "command": "claude-portfolio.runScenarioTest",
+        "title": "🧪 Run Predefined Test Scenario",
+        "category": "AI Testing",
+        "icon": "$(test-view-icon)"
       },
       {
-        "command": "claudePortfolio.terminal.destroy",
-        "title": "Destroy Terminal Session",
-        "category": "Claude Portfolio",
-        "icon": "$(trash)"
+        "command": "claude-portfolio.quickAITest",
+        "title": "⚡ Quick AI Test (Selected Code)",
+        "category": "AI Testing",
+        "icon": "$(zap)"
       },
       {
-        "command": "claudePortfolio.terminal.status",
-        "title": "Terminal Service Status",
-        "category": "Claude Portfolio",
-        "icon": "$(info)"
+        "command": "claude-portfolio.viewTestResults",
+        "title": "📊 View AI Test Results",
+        "category": "AI Testing",
+        "icon": "$(graph)"
       },
       {
-        "command": "claudePortfolio.workbranch.create",
-        "title": "Create Workbranch",
-        "category": "Claude Portfolio",
-        "icon": "$(git-branch)"
+        "command": "claude-portfolio.sendToCopilotDirect",
+        "title": "Send to Copilot (Direct API)",
+        "category": "AI Testing",
+        "icon": "$(rocket)"
       },
       {
-        "command": "claudePortfolio.workbranch.switch",
-        "title": "Switch Workbranch",
-        "category": "Claude Portfolio",
-        "icon": "$(arrow-swap)"
+        "command": "claude-portfolio.sendToCopilotUI",
+        "title": "Send to Copilot (UI Integration)",
+        "category": "AI Testing",
+        "icon": "$(browser)"
       },
       {
-        "command": "claudePortfolio.terminal.validateCommand",
-        "title": "Validate Terminal Command",
-        "category": "Claude Portfolio",
-        "icon": "$(shield)"
+        "command": "claude-portfolio.aiTestingQuickStart",
+        "title": "🚀 AI Testing Quick Start",
+        "category": "AI Testing",
+        "icon": "$(rocket)"
       },
       {
-        "command": "claudePortfolio.terminal.attach",
-        "title": "Attach to Terminal Session",
-        "category": "Claude Portfolio",
-        "icon": "$(plug)"
+        "command": "claude-portfolio.showTestingTips",
+        "title": "💡 AI Testing Pro Tips",
+        "category": "AI Testing",
+        "icon": "$(lightbulb)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "claude-portfolio.runAIComparison",
+        "key": "ctrl+alt+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "claude-portfolio.quickAITest",
+        "key": "ctrl+alt+q",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "claude-portfolio.aiTestingQuickStart",
+        "key": "ctrl+alt+shift+t",
+        "when": "true"
       }
     ],
     "viewsContainers": {
@@ -240,22 +255,25 @@
           "canSelectMany": true
         },
         {
-          "id": "claudeMultiProjectCommands",
-          "name": "Batch Operations",
-          "contextualTitle": "Batch Operations for Selected Projects",
-          "when": "true"
+          "id": "claudeProjectCommands",
+          "name": "Project Commands",
+          "contextualTitle": "Project Commands",
+          "when": "true",
+          "icon": "$(terminal)"
         },
         {
-          "id": "claudeTerminalCommands",
-          "name": "Terminal Management",
-          "contextualTitle": "Terminal & Process Management Commands",
-          "when": "true"
+          "id": "claudeMultiProjectCommands",
+          "name": "Batch Commands",
+          "contextualTitle": "Multi-Project Batch Commands",
+          "when": "true",
+          "icon": "$(layers)"
         },
         {
           "id": "claudeVSCodePages",
           "name": "VS Code Pages",
           "contextualTitle": "VS Code Integrated Pages",
-          "when": "true"
+          "when": "true",
+          "icon": "$(browser)"
         }
       ]
     },
@@ -330,12 +348,7 @@
         },
         "claudePortfolio.defaultBrowser": {
           "type": "string",
-          "enum": [
-            "chrome",
-            "firefox",
-            "edge",
-            "default"
-          ],
+          "enum": ["chrome", "firefox", "edge", "default"],
           "default": "default",
           "description": "Default browser for opening projects"
         }
@@ -348,19 +361,15 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "rebuild:node-pty": "npm rebuild node-pty --build-from-source",
-    "test:node-pty": "node -e \"console.log('Testing node-pty...'); require('node-pty'); console.log('✓ Success')\""
+    "test": "node ./out/test/runTest.js"
   },
   "dependencies": {
-    "@homebridge/node-pty-prebuilt-multiarch": "^0.13.1",
-    "node-pty": "^1.0.0",
     "open": "^9.1.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {
-    "@types/node": "18.x",
     "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",

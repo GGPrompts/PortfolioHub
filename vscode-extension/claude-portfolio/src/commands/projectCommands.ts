@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ProjectService } from '../services/projectService';
-// ProjectCommandsProvider removed - commands now accessible via command palette only
+import { ProjectCommandsProvider } from '../projectCommandsProvider';
 import { VSCodeSecurityService } from '../securityService';
 
 /**
@@ -11,8 +11,8 @@ export class ProjectCommands {
     private projectProvider: any; // Will be injected
 
     constructor(
-        private projectService: ProjectService
-        // projectCommandsProvider removed - commands now accessible via command palette only
+        private projectService: ProjectService,
+        private projectCommandsProvider: ProjectCommandsProvider
     ) {}
 
     // Method to inject project provider after construction
@@ -148,7 +148,8 @@ export class ProjectCommands {
         try {
             const project = treeItem?.project || treeItem;
             
-            // Project commands panel removed - commands now accessible via command palette only
+            // Update project commands panel to show commands for this project
+            this.projectCommandsProvider.setSelectedProject(project);
             
             const result = await this.projectService.openProject(project);
             
@@ -178,7 +179,8 @@ export class ProjectCommands {
             if (this.projectProvider) {
                 this.projectProvider.setCurrentSelectedProject(project);
             } else {
-                // Project commands panel removed - commands now accessible via command palette only
+                // Fallback to direct method
+                this.projectCommandsProvider.setSelectedProject(project);
             }
             
             vscode.window.showInformationMessage(`📋 Showing commands for ${project.title}`);

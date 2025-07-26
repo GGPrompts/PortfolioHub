@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { ProjectProvider, ProjectItem } from './projectProvider';
 import { DashboardPanel } from './dashboardPanel';
-// ProjectCommandsProvider removed - commands now accessible via command palette only
+import { ProjectCommandsProvider } from './projectCommandsProvider';
 import { MultiProjectCommandsProvider } from './multiProjectCommandsProvider';
-import { TerminalCommandsProvider } from './terminalCommandsProvider';
 // PortfolioWebviewProvider removed - replaced with WebSocket bridge
 import { PortfolioTaskProvider } from './taskProvider';
 import { VSCodePageProvider } from './vscodePageProvider';
@@ -21,7 +20,9 @@ import { ProjectCommands } from './commands/projectCommands';
 import { BatchCommands } from './commands/batchCommands';
 import { SelectionCommands } from './commands/selectionCommands';
 import { WorkspaceCommands } from './commands/workspaceCommands';
-import { TerminalCommands } from './commands/terminalCommands';
+
+// AI Testing Services
+import { activateCopilotIntegration } from './services/CopilotActivation';
 
 /**
  * Services container for dependency injection
@@ -38,9 +39,8 @@ interface ExtensionServices {
  */
 interface ExtensionProviders {
     projectProvider: ProjectProvider;
-    // projectCommandsProvider removed - commands now accessible via command palette only
+    projectCommandsProvider: ProjectCommandsProvider;
     multiProjectCommandsProvider: MultiProjectCommandsProvider;
-    terminalCommandsProvider: TerminalCommandsProvider;
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     taskProvider: PortfolioTaskProvider;
     vscodePageProvider: VSCodePageProvider;
@@ -55,16 +55,13 @@ interface ExtensionCommands {
     batchCommands: BatchCommands;
     selectionCommands: SelectionCommands;
     workspaceCommands: WorkspaceCommands;
-    terminalCommands: TerminalCommands;
 }
 
 /**
  * Extension activation
  */
-export function activate(context: vscode.ExtensionContext) {
-    console.log('🚀🚀🚀 CLAUDE PORTFOLIO EXTENSION ACTIVATING 🚀🚀🚀');
-    console.log('Extension context:', context);
-    console.log('Workspace folders:', vscode.workspace.workspaceFolders);
+export async function activate(context: vscode.ExtensionContext) {
+    console.log('🚀 Claude Portfolio extension is now active!');
 
     try {
         // Initialize services
@@ -84,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
         console.log('✅ Command handlers created');
 
         // Register all commands
-        registerCommands(context, commands, providers);
+        registerCommands(context, commands);
         console.log('✅ Commands registered');
 
         // Set up cross-provider communication
@@ -104,6 +101,25 @@ export function activate(context: vscode.ExtensionContext) {
                 console.warn('⚠️ WebSocket bridge failed to start - React app will use clipboard mode');
             }
         });
+
+        // Initialize AI Testing Services
+        await activateCopilotIntegration(context);
+        console.log('✅ AI Testing services activated');
+
+        // Show welcome message for AI testing
+        const showTestingGuide = await vscode.window.showInformationMessage(
+            '🧪 AI Model Testing is now available! Compare Claude Max vs Copilot Pro.',
+            'Show Testing Guide',
+            'Try Quick Test',
+            'Dismiss'
+        );
+
+        if (showTestingGuide === 'Show Testing Guide') {
+            const guideUri = vscode.Uri.file(context.asAbsolutePath('src/docs/AI_TESTING_GUIDE.md'));
+            await vscode.commands.executeCommand('markdown.showPreview', guideUri);
+        } else if (showTestingGuide === 'Try Quick Test') {
+            await vscode.commands.executeCommand('claude-portfolio.runAIComparison');
+        }
 
         console.log('🎉 Claude Portfolio extension fully activated!');
 
@@ -156,9 +172,8 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
     const portfolioPath = services.configService.getPortfolioPath();
 
     const projectProvider = new ProjectProvider(portfolioPath);
-    // projectCommandsProvider removed - commands now accessible via command palette only
+    const projectCommandsProvider = new ProjectCommandsProvider();
     const multiProjectCommandsProvider = new MultiProjectCommandsProvider(projectProvider);
-    const terminalCommandsProvider = new TerminalCommandsProvider();
     // portfolioWebviewProvider removed - replaced with WebSocket bridge
     const taskProvider = new PortfolioTaskProvider(portfolioPath);
     const vscodePageProvider = new VSCodePageProvider();
@@ -166,9 +181,8 @@ function createProviders(services: ExtensionServices, context: vscode.ExtensionC
 
     return {
         projectProvider,
-        // projectCommandsProvider removed
+        projectCommandsProvider,
         multiProjectCommandsProvider,
-        terminalCommandsProvider,
         // portfolioWebviewProvider removed
         taskProvider,
         vscodePageProvider,
@@ -205,9 +219,8 @@ function registerProviders(context: vscode.ExtensionContext, providers: Extensio
     
     context.subscriptions.push(projectTreeView);
     
-    // claudeProjectCommands panel removed - commands now accessible via command palette only
+    vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
-    vscode.window.registerTreeDataProvider('claudeTerminalCommands', providers.terminalCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
 
@@ -228,8 +241,8 @@ function createCommandHandlers(
     context: vscode.ExtensionContext
 ): ExtensionCommands {
     const projectCommands = new ProjectCommands(
-        services.projectService
-        // projectCommandsProvider removed - commands now accessible via command palette only
+        services.projectService,
+        providers.projectCommandsProvider
     );
     
     // Inject project provider for selection management
@@ -246,7 +259,7 @@ function createCommandHandlers(
     );
     
     // Inject project commands provider for unified behavior
-    // projectCommandsProvider removed - commands now accessible via command palette only
+    selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
 
     const workspaceCommands = new WorkspaceCommands(
         services.configService,
@@ -256,29 +269,22 @@ function createCommandHandlers(
         providers.multiProjectCommandsProvider
     );
 
-    const terminalCommands = new TerminalCommands(
-        services.websocketBridgeService.getTerminalService()
-    );
-
     return {
         projectCommands,
         batchCommands,
         selectionCommands,
-        workspaceCommands,
-        terminalCommands
+        workspaceCommands
     };
 }
 
 /**
  * Register all commands
  */
-function registerCommands(context: vscode.ExtensionContext, commands: ExtensionCommands, providers: ExtensionProviders): void {
+function registerCommands(context: vscode.ExtensionContext, commands: ExtensionCommands): void {
     commands.projectCommands.registerCommands(context);
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
-    commands.terminalCommands.registerCommands(context);
-    providers.terminalCommandsProvider.registerCommands(context);
     
     // Register Chat Panel command
     const chatCommand = vscode.commands.registerCommand('claudePortfolio.openChat', () => {
@@ -337,14 +343,16 @@ function setupProviderCommunication(providers: ExtensionProviders): void {
     const originalSetCurrentSelectedProject = providers.projectProvider.setCurrentSelectedProject.bind(providers.projectProvider);
     providers.projectProvider.setCurrentSelectedProject = (project: any) => {
         originalSetCurrentSelectedProject(project);
-        // Project commands panel removed - commands now accessible via command palette only
+        // Update project commands panel when a single project is selected
+        providers.projectCommandsProvider.setSelectedProject(project);
     };
 
     // Hook into clearing project selection for commands panel
     const originalClearCurrentSelection = providers.projectProvider.clearCurrentSelection.bind(providers.projectProvider);
     providers.projectProvider.clearCurrentSelection = () => {
         originalClearCurrentSelection();
-        // Project commands panel removed - commands now accessible via command palette only
+        // Clear project commands panel when no project is selected
+        providers.projectCommandsProvider.clearSelection();
     };
 }
 

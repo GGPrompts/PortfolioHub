@@ -2,14 +2,11 @@ import * as vscode from 'vscode';
 import { ProjectService } from '../services/projectService';
 import { ConfigurationService } from '../services/configurationService';
 import { ProjectProvider } from '../projectProvider';
-import { TerminalCleanupService } from '../services/terminalCleanupService';
 
 /**
  * Multi-project batch operation commands
  */
 export class BatchCommands {
-    private cleanupService = TerminalCleanupService.getInstance();
-
     constructor(
         private projectService: ProjectService,
         private configService: ConfigurationService,
@@ -25,9 +22,7 @@ export class BatchCommands {
             vscode.commands.registerCommand('claude-portfolio.batchStopProjects', this.batchStopProjectsCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.batchOpenBrowser', this.batchOpenBrowserCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.startAllProjects', this.startAllProjectsCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.killAllServers', this.killAllServersCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.cleanupTerminals', this.cleanupTerminalsCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.scheduleCleanup', this.scheduleCleanupCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.killAllServers', this.killAllServersCommand.bind(this))
         ];
 
         commands.forEach(command => context.subscriptions.push(command));
@@ -425,7 +420,7 @@ export class BatchCommands {
                         const pid = parseInt(match[1]);
                         try {
                             // Kill the process
-                            const taskkill = spawn('taskkill', ['/F', '/PID', pid.toString()], { shell: true });
+                            const taskkill = spawn('taskkill', ['/PID', pid.toString(), '/F'], { shell: true });
                             taskkill.on('close', (killCode: number) => {
                                 resolve(killCode === 0);
                             });
@@ -443,67 +438,5 @@ export class BatchCommands {
                 resolve(false);
             });
         });
-    }
-
-    /**
-     * Clean up external terminals (preserve VS Code integrated terminals)
-     */
-    private async cleanupTerminalsCommand(): Promise<void> {
-        try {
-            // Show confirmation
-            const confirmation = await vscode.window.showInformationMessage(
-                'Clean up external terminal windows? (VS Code integrated terminals will be preserved)',
-                { modal: true },
-                'Yes', 'No'
-            );
-            
-            if (confirmation !== 'Yes') {
-                return;
-            }
-
-            await this.cleanupService.performCleanup(true);
-            vscode.window.showInformationMessage('External terminals cleaned up successfully');
-            
-        } catch (error) {
-            const message = `Error cleaning terminals: ${error instanceof Error ? error.message : String(error)}`;
-            vscode.window.showErrorMessage(message);
-            console.error('Terminal cleanup command error:', error);
-        }
-    }
-
-    /**
-     * Schedule automatic terminal cleanup after delay
-     */
-    private async scheduleCleanupCommand(): Promise<void> {
-        try {
-            // Ask user for delay time
-            const delayInput = await vscode.window.showInputBox({
-                prompt: 'Enter delay in seconds before cleanup (default: 10)',
-                value: '10',
-                validateInput: (value) => {
-                    const num = parseInt(value);
-                    if (isNaN(num) || num < 0 || num > 300) {
-                        return 'Please enter a number between 0 and 300';
-                    }
-                    return null;
-                }
-            });
-
-            if (delayInput === undefined) {
-                return; // User cancelled
-            }
-
-            const delaySeconds = parseInt(delayInput) || 10;
-            
-            this.cleanupService.scheduleCleanup(delaySeconds, true);
-            vscode.window.showInformationMessage(
-                `Terminal cleanup scheduled in ${delaySeconds} seconds. External terminals will be closed automatically.`
-            );
-            
-        } catch (error) {
-            const message = `Error scheduling cleanup: ${error instanceof Error ? error.message : String(error)}`;
-            vscode.window.showErrorMessage(message);
-            console.error('Schedule cleanup command error:', error);
-        }
     }
 }

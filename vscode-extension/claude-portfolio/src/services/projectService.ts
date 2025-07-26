@@ -80,7 +80,7 @@ export class ProjectService {
                 if (portInfo.isRunning && portInfo.processId) {
                     try {
                         const success = await VSCodeSecurityService.executeSecureCommand(
-                            `taskkill /F /PID ${portInfo.processId}`,
+                            `taskkill /PID ${portInfo.processId} /F`,
                             `Stop ${project.title}`,
                             this.portfolioPath
                         );
@@ -145,7 +145,7 @@ export class ProjectService {
             
             return {
                 success: true,
-                message: `Opened ${project.title} in VS Code Simple Browser (port ${portToUse})`
+                message: `Opened ${project.title} in integrated browser (port ${portToUse})`
             };
         } catch (error) {
             return {
@@ -324,37 +324,46 @@ export class ProjectService {
     }
 
     /**
-     * Open project in VS Code Edge Tools browser
-     * Note: VS Code webview panels are still used for Portfolio Dashboard and Command Cheat Sheet
+     * Open project in VS Code integrated browser with webview panel
      */
     private async openProjectInVSCodeBrowser(project: any, portToUse: number): Promise<void> {
         const url = `http://localhost:${portToUse}`;
         
-        // Check if this is a 3D project for special messaging
+        // Check if this is a 3D project that needs external browser for pointer lock
         const requires3D = project.requires3D === true || 
                          project.id?.includes('3d') || 
                          project.title?.toLowerCase().includes('3d');
         
+        if (requires3D) {
+            console.log(`🎮 Opening 3D project ${project.title} in external browser for pointer lock support`);
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            vscode.window.showInformationMessage(`Opened ${project.title} in external browser (3D/pointer lock support)`);
+            return;
+        }
+
         try {
-            // Use Simple Browser as primary (most reliable)
-            console.log(`🌐 Opening ${project.title} in VS Code Simple Browser: ${url}`);
-            await vscode.commands.executeCommand('simpleBrowser.show', url);
+            // Create webview panel for integrated browser experience
+            console.log(`🌐 Opening ${project.title} in VS Code integrated browser: ${url}`);
             
-            if (requires3D) {
-                vscode.window.showInformationMessage(`Opened ${project.title} in VS Code Simple Browser (3D/pointer lock support)`);
-            } else {
-                vscode.window.showInformationMessage(`Opened ${project.title} in VS Code Simple Browser`);
-            }
-            
+            const panel = vscode.window.createWebviewPanel(
+                'projectPreview',
+                `${project.title} - Port ${portToUse}`,
+                vscode.ViewColumn.Beside,
+                {
+                    enableScripts: true,
+                    retainContextWhenHidden: true,
+                    localResourceRoots: []
+                }
+            );
+
+            // Set the webview HTML to load the project
+            panel.webview.html = this.getWebviewHtml(project, url);
+
         } catch (error) {
-            console.error('Failed to open in Simple Browser, trying external browser:', error);
-            // Fallback to external browser if Simple Browser fails
-            try {
-                await vscode.env.openExternal(vscode.Uri.parse(url));
-                vscode.window.showInformationMessage(`Opened ${project.title} in external browser`);
-            } catch (fallbackError) {
-                vscode.window.showErrorMessage(`Failed to open ${project.title}: ${error instanceof Error ? error.message : String(error)}`);
-            }
+            console.error('Failed to create webview panel:', error);
+            // Fallback to external browser
+            await vscode.env.openExternal(vscode.Uri.parse(url));
+            vscode.window.showInformationMessage(`Opened ${project.title} in external browser (webview failed)`);
         }
     }
 

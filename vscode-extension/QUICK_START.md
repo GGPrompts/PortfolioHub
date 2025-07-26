@@ -3,6 +3,7 @@
 ## Why a VS Code Extension?
 
 Your suggestion was brilliant! Instead of fighting with iframes and web limitations, a VS Code extension provides:
+
 - ✅ **Native integration** - No more state loss when switching tabs
 - ✅ **Persistent workspace** - Everything stays open
 - ✅ **Better UX** - Proper sidebars, keyboard shortcuts, context menus
@@ -12,8 +13,9 @@ Your suggestion was brilliant! Instead of fighting with iframes and web limitati
 ## Installation Steps
 
 ### 1. Build the Extension
-```powershell
-cd D:\ClaudeWindows\claude-dev-portfolio\vscode-extension\claude-portfolio
+
+```powershcdell
+ D:\ClaudeWindows\claude-dev-portfolio\vscode-extension\claude-portfolio
 npm install
 npm run compile
 ```
@@ -21,12 +23,14 @@ npm run compile
 ### 2. Install in VS Code
 
 **Option A: Extension Development Host (for testing)**
+
 ```powershell
 # This opens a new VS Code window with the extension loaded
 code --extensionDevelopmentPath=D:\ClaudeWindows\claude-dev-portfolio\vscode-extension\claude-portfolio
 ```
 
 **Option B: Install from VSIX (permanent)**
+
 ```powershell
 # First, install vsce (VS Code Extension manager)
 npm install -g vsce
@@ -42,6 +46,7 @@ code --install-extension claude-portfolio-0.0.1.vsix
 ## Features
 
 ### 1. Activity Bar Icon
+
 - New Claude Portfolio icon in the activity bar (left sidebar)
 - Shows three views:
   - **Projects**: All your portfolio projects
@@ -49,6 +54,7 @@ code --install-extension claude-portfolio-0.0.1.vsix
   - **Cheat Sheet**: Development command reference
 
 ### 2. Project Management
+
 - Click any project to open it in the workspace
 - Right-click for options:
   - Run Project (starts dev server)
@@ -56,12 +62,14 @@ code --install-extension claude-portfolio-0.0.1.vsix
 - Projects show their port numbers and status
 
 ### 3. Dashboard Webview
+
 - Click "Claude Portfolio" in the status bar
 - Or use Command Palette: "Claude Portfolio: Show Dashboard"
 - Beautiful overview of all projects
 - Quick actions to run all servers
 
 ### 4. Command Palette Integration
+
 - Press `Ctrl+Shift+P`
 - Type "Claude" to see all commands:
   - Quick Open Project
@@ -71,16 +79,19 @@ code --install-extension claude-portfolio-0.0.1.vsix
 ## Benefits Over the Previous Approach
 
 1. **No More iFrame Issues**
+
    - Workspace stays open
    - No "workspace does not exist" errors
    - State persists perfectly
 
 2. **Better Integration**
+
    - Projects appear in Explorer
    - Terminals are native VS Code terminals
    - Full keyboard shortcut support
 
 3. **Extensibility**
+
    - Easy to add AI features
    - Can integrate with Claude Code
    - Custom snippets and templates

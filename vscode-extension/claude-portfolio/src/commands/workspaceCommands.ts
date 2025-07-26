@@ -73,40 +73,22 @@ export class WorkspaceCommands {
      */
     private async openPortfolioCommand(): Promise<void> {
         try {
-            // Check if portfolio is running on port 5173
+            // Portfolio webview removed - instruct user to open React app directly
             const portfolioUrl = 'http://localhost:5173';
-            const portDetection = PortDetectionService.getInstance();
-            const portfolioPortInfo = await portDetection.getPortRangeStatus(5173, 5173);
-            const isRunning = portfolioPortInfo.length > 0 && portfolioPortInfo[0].isRunning;
             
-            if (!isRunning) {
-                // Portfolio not running - ask user if they want to start it
-                const choice = await vscode.window.showInformationMessage(
-                    '📱 Portfolio is not running. Would you like to start it first?',
-                    'Start & Open',
-                    'Open Anyway',
-                    'Cancel'
-                );
-                
-                if (choice === 'Start & Open') {
-                    // Start portfolio first, then open
-                    await this.startPortfolioServerCommand();
-                    // Wait a moment for server to start
-                    setTimeout(async () => {
-                        await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
-                    }, 2000);
-                    return;
-                } else if (choice === 'Cancel') {
-                    return;
-                }
-                // If "Open Anyway" is selected, continue to open
+            const choice = await vscode.window.showInformationMessage(
+                '📱 Portfolio now runs as standalone React app with VS Code bridge!\n\nClick "Open Portfolio" to launch at http://localhost:5173',
+                'Open Portfolio',
+                'Copy URL'
+            );
+            
+            if (choice === 'Open Portfolio') {
+                // Open in Edge browser for better debugging with Edge DevTools
+                await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
+            } else if (choice === 'Copy URL') {
+                await vscode.env.clipboard.writeText(portfolioUrl);
+                vscode.window.showInformationMessage('Portfolio URL copied to clipboard!');
             }
-            
-            // Open in Edge browser for better debugging with Edge DevTools
-            await vscode.env.openExternal(vscode.Uri.parse(portfolioUrl));
-            
-            // Show brief success message
-            vscode.window.showInformationMessage('📱 Opened Portfolio at http://localhost:5173');
         } catch (error) {
             const message = `Error opening portfolio: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
@@ -137,10 +119,7 @@ export class WorkspaceCommands {
                 
                 // Also refresh other providers after a brief delay
                 setTimeout(() => {
-                    // Only refresh if webview provider exists (unified architecture may not have it)
-                    if (this.portfolioWebviewProvider) {
-                        this.portfolioWebviewProvider.refreshProjectData();
-                    }
+                    this.portfolioWebviewProvider.refreshProjectData();
                     if (this.multiProjectCommandsProvider) {
                         this.multiProjectCommandsProvider.refresh();
                     }
@@ -150,9 +129,7 @@ export class WorkspaceCommands {
             } else {
                 // Fallback if providers not available
                 console.log('⚠️ ProjectProvider not available, using basic refresh');
-                if (this.portfolioWebviewProvider) {
-                    this.portfolioWebviewProvider.refreshProjectData();
-                }
+                this.portfolioWebviewProvider.refreshProjectData();
                 vscode.window.showInformationMessage('Projects refreshed (basic mode)');
             }
         } catch (error) {

@@ -5,7 +5,8 @@
       "Bash(npx vsce package:*)",
       "WebFetch(domain:code.visualstudio.com)",
       "WebFetch(domain:code.visualstudio.com)",
-      "Bash(code:*)"
+      "Bash(code:*)",
+      "Bash(dir:*)"
     ],
     "deny": []
   }

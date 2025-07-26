@@ -26,8 +26,8 @@ export interface CachedPortInfo {
  */
 export class OptimizedPortManager {
     private cache = new Map<number, CachedPortInfo>();
-    private readonly CACHE_TTL = 30000; // 30 seconds TTL
-    private readonly CACHE_TTL_FAILED = 5000; // 5 seconds for failed checks
+    private readonly CACHE_TTL = 120000; // 2 minutes TTL (much less aggressive)
+    private readonly CACHE_TTL_FAILED = 30000; // 30 seconds for failed checks (less retry spam)
     private readonly MAX_RETRY_COUNT = 3;
     private readonly REQUEST_TIMEOUT = 2000; // 2 second timeout
     

@@ -45,7 +45,11 @@
       "WebFetch(domain:www.eddymens.com)",
       "WebFetch(domain:www.qovery.com)",
       "Bash(start \"D:\\ClaudeWindows\\claude-dev-portfolio\\test_port_check.html\")",
-      "Bash(explorer.exe:*)"
+      "Bash(explorer.exe:*)",
+      "Bash(del \"D:\\ClaudeWindows\\claude-dev-portfolio\\list-terminals.js\")",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(cmd.exe /c \"where.exe claude\")"
     ],
     "deny": []
   }

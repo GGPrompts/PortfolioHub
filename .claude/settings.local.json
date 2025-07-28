@@ -49,7 +49,8 @@
       "Bash(del \"D:\\ClaudeWindows\\claude-dev-portfolio\\list-terminals.js\")",
       "Bash(cat:*)",
       "Bash(sed:*)",
-      "Bash(cmd.exe /c \"where.exe claude\")"
+      "Bash(cmd.exe /c \"where.exe claude\")",
+      "Bash(cmd /c:*)"
     ],
     "deny": []
   }

@@ -71,7 +71,7 @@ async function testPortfolioAutomation() {
     
     // Test 5: Test specific project ports
     console.log('🌐 Testing individual project ports...');
-    const projectPorts = [3002, 3005, 3004, 9323]; // Matrix Cards, 3D Matrix, 3D File System, GGPrompts
+    const projectPorts = [3002, 3005, 3004, 3007, 9323]; // Matrix Cards, 3D Matrix, 3D File System, Terminal System, GGPrompts
     
     for (const port of projectPorts) {
       try {

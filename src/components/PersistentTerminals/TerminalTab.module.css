@@ -1,0 +1,68 @@
+.terminalTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #2d2d30;
+  border-right: 1px solid #252526;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.terminalTab:hover {
+  background: #37373d;
+}
+
+.terminalTab.active {
+  background: #1e1e1e;
+  border-bottom: 2px solid #0e639c;
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  fill: #cccccc;
+  flex-shrink: 0;
+}
+
+.title {
+  flex: 1;
+  font-size: 13px;
+  color: #cccccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.terminalTab:hover .closeButton,
+.terminalTab.active .closeButton {
+  opacity: 0.7;
+}
+
+.closeButton:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.closeButton svg {
+  width: 12px;
+  height: 12px;
+  fill: #cccccc;
+}

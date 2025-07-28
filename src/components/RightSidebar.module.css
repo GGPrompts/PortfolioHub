@@ -162,6 +162,7 @@
 
 /* Panel Styles */
 .commandsPanel,
+.terminalsPanel,
 .vscodePanel,
 .previewPanel {
   flex: 1;
@@ -172,6 +173,11 @@
 
 /* Commands Panel - No header since QuickCommandsPanel has its own */
 .commandsPanel {
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+/* Terminals Panel */
+.terminalsPanel {
   background: var(--bg-secondary, #1a1a1a);
 }
 
@@ -393,6 +399,195 @@
   font-size: 16px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.headerSubtitle {
+  margin-left: auto;
+  font-size: 12px;
+  color: rgba(0, 255, 150, 0.7);
+  font-style: italic;
+}
+
+/* Terminal iframe container and styling */
+.terminalIframeContainer {
+  flex: 1;
+  display: flex;
+  background: #000;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.terminalIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Enhanced terminal iframe in overlay mode */
+.overlayMode .terminalIframeContainer {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.95) 0%, 
+    rgba(0, 20, 0, 0.95) 100%);
+  border: 1px solid rgba(0, 255, 150, 0.3);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 150, 0.2),
+    inset 0 0 20px rgba(0, 255, 150, 0.05);
+}
+
+.overlayMode .terminalIframe {
+  border-radius: 0 0 8px 8px;
+  background: transparent;
+}
+
+/* Terminal status indicator */
+.terminalStatus {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 255, 150, 0.3);
+  border-radius: 4px;
+  padding: 6px 12px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.statusIndicator {
+  font-size: 11px;
+  color: rgba(0, 255, 150, 0.9);
+  font-weight: 500;
+  text-align: center;
+  display: block;
+  animation: pulse-text 3s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Enhanced terminal status in overlay mode */
+.overlayMode .terminalStatus {
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(0, 255, 150, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 150, 0.2);
+}
+
+.overlayMode .statusIndicator {
+  color: rgba(0, 255, 150, 1);
+  text-shadow: 0 0 5px rgba(0, 255, 150, 0.3);
+}
+
+/* Terminal placeholder for loading and offline states */
+.terminalPlaceholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.9) 0%, 
+    rgba(0, 20, 0, 0.9) 100%);
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.terminalPlaceholder h4 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: rgba(0, 255, 150, 0.9);
+  font-weight: 600;
+}
+
+.terminalPlaceholder p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.placeholderIcon {
+  width: 48px;
+  height: 48px;
+  color: rgba(0, 255, 150, 0.6);
+  margin-bottom: 16px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 255, 150, 0.2);
+  border-top: 3px solid rgba(0, 255, 150, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.startInstructions {
+  margin: 20px 0;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 150, 0.3);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.startInstructions p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: rgba(0, 255, 150, 0.9);
+}
+
+.startInstructions code {
+  display: block;
+  margin: 4px 0;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 150, 0.2);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: rgba(0, 255, 150, 0.9);
+}
+
+.note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(0, 255, 150, 0.7);
+  font-style: italic;
+}
+
+/* Enhanced placeholder in overlay mode */
+.overlayMode .terminalPlaceholder {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.95) 0%, 
+    rgba(0, 30, 0, 0.95) 100%);
+  border: 1px solid rgba(0, 255, 150, 0.4);
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 150, 0.2),
+    inset 0 0 20px rgba(0, 255, 150, 0.05);
+}
+
+.overlayMode .loadingSpinner {
+  border: 3px solid rgba(0, 255, 150, 0.3);
+  border-top: 3px solid rgba(0, 255, 150, 1);
+  box-shadow: 0 0 10px rgba(0, 255, 150, 0.3);
 }
 
 /* Drag Overlay */

@@ -248,6 +248,17 @@ $projects = @{
         }
         Command = "npm run dev"
     }
+    "Standalone Terminal System" = @{
+        Path = (Resolve-Path "$rootPath/projects/standalone-terminal-system").Path
+        Port = 3007
+        EnvVars = @{
+            PORT = "3007"
+            HOSTNAME = "0.0.0.0"
+            BROWSER = "none"
+            OPEN_BROWSER = "false"
+        }
+        Command = "npm run dev"
+    }
 }
 
 # Show current status first
@@ -331,14 +342,15 @@ Write-Host ""
 Write-Host "[COMPLETE] Portfolio Development Environment (Tabbed) Ready!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your projects:" -ForegroundColor Cyan
-Write-Host "  Portfolio:              http://localhost:5173" -ForegroundColor White
-Write-Host "  3D Matrix Cards:        http://localhost:3005" -ForegroundColor White
-Write-Host "  3D File System:         http://localhost:3004" -ForegroundColor White
-Write-Host "  Matrix Cards:           http://localhost:3002" -ForegroundColor White
-Write-Host "  Sleak Card:             http://localhost:3003" -ForegroundColor White
-Write-Host "  GGPrompts:              http://localhost:9323" -ForegroundColor White
-Write-Host "  GGPrompts Style Guide:  http://localhost:3001" -ForegroundColor White
-Write-Host "  GGPrompts Professional: http://localhost:3006" -ForegroundColor White
+Write-Host "  Portfolio:               http://localhost:5173" -ForegroundColor White
+Write-Host "  3D Matrix Cards:         http://localhost:3005" -ForegroundColor White
+Write-Host "  3D File System:          http://localhost:3004" -ForegroundColor White
+Write-Host "  Matrix Cards:            http://localhost:3002" -ForegroundColor White
+Write-Host "  Sleak Card:              http://localhost:3003" -ForegroundColor White
+Write-Host "  GGPrompts:               http://localhost:9323" -ForegroundColor White
+Write-Host "  GGPrompts Style Guide:   http://localhost:3001" -ForegroundColor White
+Write-Host "  GGPrompts Professional:  http://localhost:3006" -ForegroundColor White
+Write-Host "  Standalone Terminal:     http://localhost:3007" -ForegroundColor White
 Write-Host ""
 Write-Host "Tips:" -ForegroundColor Yellow
 Write-Host "  - Each project runs in its own tab in Windows Terminal" -ForegroundColor Gray

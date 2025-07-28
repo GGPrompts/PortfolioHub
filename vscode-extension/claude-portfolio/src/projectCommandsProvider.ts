@@ -90,6 +90,7 @@ export class ProjectCommandsProvider implements vscode.TreeDataProvider<ProjectC
                 description: 'Start standalone terminal system (MCP)',
                 category: 'Development'
             },
+            {
                 label: 'Install Dependencies',
                 command: 'claude-portfolio.npmInstall',
                 icon: 'package',

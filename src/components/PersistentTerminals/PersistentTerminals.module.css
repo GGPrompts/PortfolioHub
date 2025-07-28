@@ -1,0 +1,222 @@
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  color: #cccccc;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #cccccc;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.modeSelector {
+  background: #3c3c3c;
+  color: #cccccc;
+  border: 1px solid #3e3e42;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.modeSelector:hover {
+  background: #4a4a4a;
+}
+
+/* VS Code Terminal Mode */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.newTerminalBtn {
+  background: #0e639c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.newTerminalBtn:hover {
+  background: #1177bb;
+}
+
+.sessionInfo {
+  font-size: 12px;
+  color: #999;
+}
+
+.terminalContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.noTerminal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  color: #999;
+}
+
+.createBtn {
+  margin-top: 16px;
+  background: #0e639c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.createBtn:hover {
+  background: #1177bb;
+}
+
+/* Standalone Terminal Mode */
+.standaloneMode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.standaloneOptions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  gap: 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.standaloneOptions p {
+  margin: 0;
+  color: #999;
+  font-size: 12px;
+}
+
+.openButton {
+  background: #4ec9b0;
+  color: #1e1e1e;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.openButton:hover {
+  background: #5ed4bb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(78, 201, 176, 0.3);
+}
+
+.iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #1e1e1e;
+}
+
+/* Not Running State */
+.notRunning {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.notRunning h4 {
+  color: #f14c4c;
+  margin-bottom: 16px;
+}
+
+.notRunning code {
+  display: block;
+  background: #252526;
+  padding: 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 16px;
+  border: 1px solid #3e3e42;
+  text-align: left;
+}
+
+/* Scrollbar Styling */
+.container ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.container ::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.container ::-webkit-scrollbar-thumb {
+  background: #3e3e42;
+  border-radius: 5px;
+}
+
+.container ::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+  }
+  
+  .toolbar {
+    padding: 6px 12px;
+  }
+  
+  .newTerminalBtn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}

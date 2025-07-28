@@ -68,6 +68,8 @@ $ports = @{
     3003 = "Sleak Card"
     9323 = "GGPrompts"
     3004 = "3D File System"
+    3006 = "GGPrompts Professional"
+    3007 = "Standalone Terminal System"
 }
 
 # Stop all servers

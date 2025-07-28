@@ -233,6 +233,51 @@ export default function BatchCommands({
     },
     // Terminal Management commands
     {
+      id: 'vscode-terminal',
+      label: 'VS Code Terminal',
+      icon: 'terminal',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          const vscodeCommand = 'workbench.action.terminal.new'
+          await executeOrCopyCommand(vscodeCommand, 'VS Code terminal created!', 'New VS Code Terminal')
+        } else {
+          showBrowserNotification('⚠️ This command requires VS Code environment', 'warning')
+        }
+      },
+      condition: () => true,
+      description: "Create a new VS Code integrated terminal"
+    },
+    {
+      id: 'terminal-focus',
+      label: 'Focus Terminal Panel',
+      icon: 'maximize',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          const vscodeCommand = 'workbench.action.terminal.focus'
+          await executeOrCopyCommand(vscodeCommand, 'Terminal panel focused!', 'Focus Terminal')
+        } else {
+          showBrowserNotification('⚠️ This command requires VS Code environment', 'warning')
+        }
+      },
+      condition: () => true,
+      description: "Focus on the VS Code terminal panel"
+    },
+    {
+      id: 'restart-websocket',
+      label: 'Restart Terminal Server',
+      icon: 'rotateCcw',
+      action: async () => {
+        if (isVSCodeEnvironment()) {
+          const vscodeCommand = 'claudedev.restartServer'
+          await executeOrCopyCommand(vscodeCommand, 'Terminal WebSocket server restarted!', 'Restart Server')
+        } else {
+          showBrowserNotification('⚠️ This command requires VS Code environment', 'warning')
+        }
+      },
+      condition: () => true,
+      description: "Restart the terminal WebSocket server (port 3002)"
+    },
+    {
       id: 'cleanup-terminals',
       label: 'Clean Up Terminals',
       icon: 'trash',

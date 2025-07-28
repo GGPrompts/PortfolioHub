@@ -13,7 +13,8 @@ $projects = @(
     "ggprompts-style-guide",
     "sleak-card",
     "3d-matrix-cards",
-    "3d-file-system"
+    "3d-file-system",
+    "standalone-terminal-system"
 )
 
 foreach ($project in $projects) {

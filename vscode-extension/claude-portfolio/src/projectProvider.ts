@@ -199,11 +199,18 @@ export class ProjectItem extends vscode.TreeItem {
         // Set checkbox state for VS Code tree view
         this.checkboxState = isSelected ? vscode.TreeItemCheckboxState.Checked : vscode.TreeItemCheckboxState.Unchecked;
         
-        // Set contextValue based on project type and selection state
+        // Set contextValue based on project type, selection state, and project ID
         if (this.project.displayType === 'vscode-embedded') {
             this.contextValue = isSelected ? 'selectedVSCodeProject' : 'vsCodeProject';
+        } else if (this.project.id === 'standalone-terminal-system') {
+            this.contextValue = isSelected ? 'selectedTerminalSystemProject' : 'terminalSystemProject';
         } else {
             this.contextValue = isSelected ? 'selectedProject' : 'project';
+        }
+        
+        // Set resource URI for terminal system to enable context menu filtering
+        if (this.project.id === 'standalone-terminal-system') {
+            this.resourceUri = vscode.Uri.parse(`terminal-system://${this.project.id}`);
         }
         
         // Set icon based on status (gg-devhub style)

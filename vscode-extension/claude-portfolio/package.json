@@ -171,6 +171,24 @@
         "command": "claude-portfolio.launchTerminalSystem",
         "title": "Launch Terminal System",
         "category": "Claude Portfolio"
+      },
+      {
+        "command": "claude-portfolio.checkTerminalSystemHealth",
+        "title": "Check Terminal System Health",
+        "category": "Claude Portfolio",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "claude-portfolio.killTerminalSystemPorts",
+        "title": "Kill Terminal System Processes",
+        "category": "Claude Portfolio",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "claude-portfolio.openTerminalSystemLogs",
+        "title": "Open Terminal System Logs",
+        "category": "Claude Portfolio",
+        "icon": "$(output)"
       }
     ],
     "viewsContainers": {
@@ -255,6 +273,21 @@
           "command": "claude-portfolio.openAIAssistant",
           "when": "view == claudeProjects && (viewItem == project || viewItem == selectedProject || viewItem == vsCodeProject || viewItem == selectedVSCodeProject)",
           "group": "2_ai"
+        },
+        {
+          "command": "claude-portfolio.checkTerminalSystemHealth",
+          "when": "view == claudeProjects && (viewItem == terminalSystemProject || viewItem == selectedTerminalSystemProject)",
+          "group": "3_terminal@1"
+        },
+        {
+          "command": "claude-portfolio.killTerminalSystemPorts",
+          "when": "view == claudeProjects && (viewItem == terminalSystemProject || viewItem == selectedTerminalSystemProject)",
+          "group": "3_terminal@2"
+        },
+        {
+          "command": "claude-portfolio.openTerminalSystemLogs",
+          "when": "view == claudeProjects && (viewItem == terminalSystemProject || viewItem == selectedTerminalSystemProject)",
+          "group": "3_terminal@3"
         }
       ]
     },

@@ -1,0 +1,65 @@
+.terminalContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.toolbar button {
+  padding: 4px 12px;
+  background: #0e639c;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toolbar button:hover {
+  background: #1177bb;
+}
+
+.searchInput {
+  margin-left: auto;
+  padding: 4px 8px;
+  background: #3c3c3c;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  color: #cccccc;
+  font-size: 12px;
+  width: 200px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0e639c;
+}
+
+.terminal {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+}
+
+/* Override xterm.js styles for better integration */
+.terminal :global(.xterm) {
+  height: 100%;
+}
+
+.terminal :global(.xterm-viewport) {
+  background-color: #1e1e1e !important;
+}
+
+.terminal :global(.xterm-screen) {
+  height: 100% !important;
+}

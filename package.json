@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Unified development portfolio with multi-terminal support",
   "main": "src/App.tsx",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -21,12 +22,15 @@
     "@react-spring/web": "^10.0.1",
     "@serialport/bindings-cpp": "^13.0.1",
     "@tanstack/react-query": "^5.83.0",
+    "@types/uuid": "^10.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
+    "uuid": "^11.1.0",
     "ws": "^8.14.2",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0",
+    "xterm-addon-search": "^0.13.0",
     "xterm-addon-web-links": "^0.9.0",
     "zustand": "^5.0.6"
   },

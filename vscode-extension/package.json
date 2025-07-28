@@ -1,0 +1,66 @@
+{
+    "name": "claude-dev-portfolio-terminal",
+    "displayName": "Claude Dev Portfolio Terminal",
+    "description": "Terminal integration for Claude Dev Portfolio",
+    "version": "1.0.0",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": ["Other"],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "claudedev.showTerminalPanel",
+                "title": "Claude Dev: Show Terminal Panel"
+            },
+            {
+                "command": "claudedev.createTerminal",
+                "title": "Claude Dev: Create New Terminal"
+            },
+            {
+                "command": "claudedev.restartServer",
+                "title": "Claude Dev: Restart WebSocket Server"
+            }
+        ],
+        "configuration": {
+            "title": "Claude Dev Portfolio",
+            "properties": {
+                "claudedev.terminalPort": {
+                    "type": "number",
+                    "default": 3002,
+                    "description": "Port for the terminal WebSocket server"
+                },
+                "claudedev.defaultShell": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Default shell for terminals (leave empty for system default)"
+                },
+                "claudedev.autoConnect": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically connect to the portfolio app when extension starts"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.80.0",
+        "@types/node": "20.x",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "eslint": "^8.42.0",
+        "typescript": "^5.1.3"
+    },
+    "dependencies": {
+        "ws": "^8.14.2"
+    }
+}

@@ -31,8 +31,11 @@ export class ProjectCommands {
             vscode.commands.registerCommand('claude-portfolio.openProjectInExternalBrowser', this.openInExternalBrowserCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.openProject', this.openProjectCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.selectProject', this.selectProjectCommand.bind(this)),
-            vscode.commands.registerCommand('claude-portfolio.openAIAssistant', this.openAIAssistantCommand.bind(this))
+            vscode.commands.registerCommand('claude-portfolio.openAIAssistant', this.openAIAssistantCommand.bind(this)),
             vscode.commands.registerCommand('claude-portfolio.launchTerminalSystem', this.launchTerminalSystemCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.checkTerminalSystemHealth', this.checkTerminalSystemHealthCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.killTerminalSystemPorts', this.killTerminalSystemPortsCommand.bind(this)),
+            vscode.commands.registerCommand('claude-portfolio.openTerminalSystemLogs', this.openTerminalSystemLogsCommand.bind(this))
         ];
 
         commands.forEach(command => context.subscriptions.push(command));
@@ -291,7 +294,7 @@ export class ProjectCommands {
             default:
                 vscode.window.showErrorMessage(`Unknown AI assistant type: ${assistantType}`);
         }
-
+    }
 
     /**
      * Launch the standalone terminal system
@@ -303,14 +306,29 @@ export class ProjectCommands {
             
             const options = [
                 {
-                    label: "🚀 Start Backend Server",
-                    description: "Launch standalone terminal backend (ports 8124, 8125)",
+                    label: "🚀 Start Complete System",
+                    description: "Launch both Web UI (3007) and Backend servers (8124, 8125)",
+                    value: "complete"
+                },
+                {
+                    label: "🌐 Start Web UI Only",
+                    description: "Launch terminal system web interface (port 3007)",
+                    value: "webui"
+                },
+                {
+                    label: "🔌 Start Backend Only",
+                    description: "Launch WebSocket backend server (ports 8124, 8125)",
                     value: "backend"
                 },
                 {
-                    label: "🔌 Start MCP Server",
+                    label: "🤖 Start MCP Server",
                     description: "Launch MCP server for Claude Code integration",
                     value: "mcp"
+                },
+                {
+                    label: "📊 Health Check",
+                    description: "Check status of all terminal system components",
+                    value: "health"
                 },
                 {
                     label: "📂 Open Project Folder",
@@ -324,7 +342,7 @@ export class ProjectCommands {
                 matchOnDescription: true
             });
 
-            if (\!selected) {
+            if (!selected) {
                 return;
             }
 
@@ -341,15 +359,52 @@ export class ProjectCommands {
         const workspaceRoot = path.dirname(terminalSystemPath);
         
         switch (launchType) {
-            case "backend":
+            case "complete":
+                // Start both web UI and backend
+                const webuiSuccess = await VSCodeSecurityService.executeSecureCommand(
+                    `cd "${terminalSystemPath}" && npm run dev`,
+                    "Terminal System Web UI",
+                    workspaceRoot
+                );
+                
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+                
                 const backendSuccess = await VSCodeSecurityService.executeSecureCommand(
                     `cd "${terminalSystemPath}" && npm run backend:prod`,
                     "Terminal System Backend",
                     workspaceRoot
                 );
                 
-                if (backendSuccess) {
-                    vscode.window.showInformationMessage("🚀 Terminal system backend started on ports 8124 & 8125");
+                if (webuiSuccess && backendSuccess) {
+                    vscode.window.showInformationMessage("🚀 Complete terminal system started:\n• Web UI (port 3007)\n• Backend (ports 8124, 8125)");
+                } else {
+                    vscode.window.showErrorMessage("Failed to start complete terminal system");
+                }
+                break;
+
+            case "webui":
+                const webUISuccess = await VSCodeSecurityService.executeSecureCommand(
+                    `cd "${terminalSystemPath}" && npm run dev`,
+                    "Terminal System Web UI",
+                    workspaceRoot
+                );
+                
+                if (webUISuccess) {
+                    vscode.window.showInformationMessage("🌐 Terminal system Web UI started on port 3007");
+                } else {
+                    vscode.window.showErrorMessage("Failed to start terminal system Web UI");
+                }
+                break;
+
+            case "backend":
+                const backendOnlySuccess = await VSCodeSecurityService.executeSecureCommand(
+                    `cd "${terminalSystemPath}" && npm run backend:prod`,
+                    "Terminal System Backend",
+                    workspaceRoot
+                );
+                
+                if (backendOnlySuccess) {
+                    vscode.window.showInformationMessage("🔌 Terminal system backend started on ports 8124 & 8125");
                 } else {
                     vscode.window.showErrorMessage("Failed to start terminal system backend");
                 }
@@ -363,10 +418,15 @@ export class ProjectCommands {
                 );
                 
                 if (mcpSuccess) {
-                    vscode.window.showInformationMessage("🔌 Terminal system MCP server started");
+                    vscode.window.showInformationMessage("🤖 Terminal system MCP server started");
                 } else {
                     vscode.window.showErrorMessage("Failed to start terminal system MCP server");
                 }
+                break;
+
+            case "health":
+                // Delegate to health check command
+                await this.checkTerminalSystemHealthCommand();
                 break;
 
             case "open":
@@ -377,6 +437,123 @@ export class ProjectCommands {
 
             default:
                 vscode.window.showErrorMessage(`Unknown launch type: ${launchType}`);
+        }
+    }
+
+    /**
+     * Check terminal system health and status
+     */
+    private async checkTerminalSystemHealthCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.projectService.getPortfolioPath();
+            const terminalSystemPath = `${portfolioPath}/projects/standalone-terminal-system`;
+            
+            // Check if the terminal system is running on its ports
+            const ports = [3007, 8124, 8125]; // Web UI, WebSocket, MCP
+            const portStatuses: string[] = [];
+            
+            for (const port of ports) {
+                const success = await VSCodeSecurityService.executeSecureCommand(
+                    `netstat -ano | findstr :${port}`,
+                    "Port Check",
+                    this.projectService.getPortfolioPath()
+                );
+                
+                const portName = port === 3007 ? "Web UI" : port === 8124 ? "WebSocket" : "MCP";
+                portStatuses.push(`${portName} (${port}): ${success ? '✅ ACTIVE' : '❌ INACTIVE'}`);
+            }
+            
+            // Show health status
+            const healthMessage = `Terminal System Health Check:\n\n${portStatuses.join('\n')}`;
+            
+            const result = await vscode.window.showInformationMessage(
+                healthMessage,
+                { modal: true },
+                'View Logs', 'Kill Processes', 'Close'
+            );
+            
+            if (result === 'View Logs') {
+                await this.openTerminalSystemLogsCommand();
+            } else if (result === 'Kill Processes') {
+                await this.killTerminalSystemPortsCommand();
+            }
+            
+        } catch (error) {
+            const message = `Error checking terminal system health: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Terminal system health check error:', error);
+        }
+    }
+
+    /**
+     * Kill all terminal system processes on their ports
+     */
+    private async killTerminalSystemPortsCommand(): Promise<void> {
+        try {
+            const confirmation = await vscode.window.showWarningMessage(
+                'Kill all terminal system processes?\n\nThis will stop:\n• Web UI (port 3007)\n• WebSocket Server (port 8124)\n• MCP Server (port 8125)',
+                { modal: true },
+                'Yes, Kill All', 'Cancel'
+            );
+            
+            if (confirmation !== 'Yes, Kill All') {
+                return;
+            }
+
+            const ports = [3007, 8124, 8125];
+            let killedCount = 0;
+            
+            for (const port of ports) {
+                const success = await VSCodeSecurityService.executeSecureCommand(
+                    `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"`,
+                    `Kill Port ${port}`,
+                    this.projectService.getPortfolioPath()
+                );
+                
+                if (success) {
+                    killedCount++;
+                }
+            }
+            
+            if (killedCount > 0) {
+                vscode.window.showInformationMessage(`✅ Killed processes on ${killedCount} ports`);
+            } else {
+                vscode.window.showInformationMessage(`ℹ️ No terminal system processes were running`);
+            }
+            
+        } catch (error) {
+            const message = `Error killing terminal system processes: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Kill terminal system processes error:', error);
+        }
+    }
+
+    /**
+     * Open terminal system logs in VS Code
+     */
+    private async openTerminalSystemLogsCommand(): Promise<void> {
+        try {
+            const portfolioPath = this.projectService.getPortfolioPath();
+            const terminalSystemPath = `${portfolioPath}/projects/standalone-terminal-system`;
+            const logsPath = `${terminalSystemPath}/logs`;
+            
+            // Check if logs directory exists
+            const fs = require('fs');
+            if (!fs.existsSync(logsPath)) {
+                vscode.window.showInformationMessage('No logs directory found. Start the terminal system first to generate logs.');
+                return;
+            }
+            
+            // Open logs directory in VS Code
+            const logsUri = vscode.Uri.file(logsPath);
+            await vscode.commands.executeCommand('vscode.openFolder', logsUri, { forceNewWindow: true });
+            
+            vscode.window.showInformationMessage('📂 Opened terminal system logs directory');
+            
+        } catch (error) {
+            const message = `Error opening terminal system logs: ${error instanceof Error ? error.message : String(error)}`;
+            vscode.window.showErrorMessage(message);
+            console.error('Open terminal system logs error:', error);
         }
     }
 }

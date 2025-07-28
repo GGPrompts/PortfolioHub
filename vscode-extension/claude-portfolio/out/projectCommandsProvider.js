@@ -98,6 +98,13 @@ class ProjectCommandsProvider {
             },
             // Development
             {
+                label: 'Launch Terminal System',
+                command: 'claude-portfolio.launchTerminalSystem',
+                icon: 'terminal',
+                description: 'Start standalone terminal system (MCP)',
+                category: 'Development'
+            },
+            {
                 label: 'Install Dependencies',
                 command: 'claude-portfolio.npmInstall',
                 icon: 'package',

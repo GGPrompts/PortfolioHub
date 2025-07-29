@@ -1,7 +1,7 @@
 {
   "name": "claude-dev-portfolio",
   "version": "1.0.0",
-  "description": "Unified development portfolio with multi-terminal support",
+  "description": "Development portfolio with project showcase and VS Code integration",
   "main": "src/App.tsx",
   "type": "module",
   "scripts": {
@@ -9,16 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --fix",
-    "test": "node tests/run-all-terminal-tests.js",
-    "test:quick": "node tests/run-all-terminal-tests.js --quick",
-    "test:integration": "node tests/terminal-integration-test-suite.js",
-    "test:performance": "node tests/terminal-performance-tests.js",
-    "test:workflow": "node tests/terminal-workflow-tests.js",
-    "test:watch": "nodemon --watch tests --exec \"npm run test:quick\"",
     "compile-extension": "cd vscode-extension/claude-portfolio && npm run compile"
   },
   "dependencies": {
-    "@homebridge/node-pty-prebuilt-multiarch": "^0.13.1",
     "@react-spring/web": "^10.0.1",
     "@serialport/bindings-cpp": "^13.0.1",
     "@tanstack/react-query": "^5.83.0",
@@ -27,18 +20,12 @@
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
     "uuid": "^11.1.0",
-    "ws": "^8.14.2",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0",
-    "xterm-addon-search": "^0.13.0",
-    "xterm-addon-web-links": "^0.9.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@types/ws": "^8.5.10",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.55.0",
     "nodemon": "^3.0.2",
@@ -49,9 +36,7 @@
   "keywords": [
     "portfolio",
     "development",
-    "terminal",
-    "multi-terminal",
-    "websocket",
+    "showcase",
     "vscode",
     "react"
   ],

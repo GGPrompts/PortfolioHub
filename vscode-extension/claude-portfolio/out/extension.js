@@ -44,57 +44,60 @@ const multiProjectCommandsProvider_1 = require("./multiProjectCommandsProvider")
 const taskProvider_1 = require("./taskProvider");
 const vscodePageProvider_1 = require("./vscodePageProvider");
 // CheatSheetProvider removed - functionality available in QuickCommandsPanel
+const mcpCommandsProvider_1 = require("./mcpCommandsProvider");
 // Services
 const projectService_1 = require("./services/projectService");
 const configurationService_1 = require("./services/configurationService");
 const portDetectionService_1 = require("./services/portDetectionService");
 const websocketBridge_1 = require("./services/websocketBridge");
+const mcpService_1 = require("./services/mcpService");
 // Command handlers
 const projectCommands_1 = require("./commands/projectCommands");
 const batchCommands_1 = require("./commands/batchCommands");
 const selectionCommands_1 = require("./commands/selectionCommands");
 const workspaceCommands_1 = require("./commands/workspaceCommands");
+const mcpCommands_1 = require("./commands/mcpCommands");
 /**
  * Extension activation
  */
 async function activate(context) {
-    console.log('🚀 Claude Portfolio extension is now active!');
+    console.log('Claude Portfolio extension is now active!');
     try {
         // Initialize services
         const services = initializeServices();
-        console.log('✅ Services initialized');
+        console.log('Services initialized');
         // Create providers
         const providers = createProviders(services, context);
-        console.log('✅ Providers created');
+        console.log('Providers created');
         // Register providers with VS Code
         registerProviders(context, providers);
-        console.log('✅ Providers registered');
+        console.log('Providers registered');
         // Create command handlers
         const commands = createCommandHandlers(services, providers, context);
-        console.log('✅ Command handlers created');
+        console.log('Command handlers created');
         // Register all commands
         registerCommands(context, commands);
-        console.log('✅ Commands registered');
+        console.log('Commands registered');
         // Set up cross-provider communication
         setupProviderCommunication(providers);
-        console.log('✅ Provider communication setup');
+        console.log('Provider communication setup');
         // Set up periodic refresh
         setupPeriodicRefresh(context, providers, services);
-        console.log('✅ Periodic refresh setup');
+        console.log('Periodic refresh setup');
         // Start WebSocket bridge service
         services.websocketBridgeService.start().then(success => {
             if (success) {
-                console.log('✅ WebSocket bridge started on ws://localhost:8123');
-                vscode.window.showInformationMessage('💡 Portfolio React app can now connect to VS Code at ws://localhost:8123');
+                console.log('WebSocket bridge started on ws://localhost:8123');
+                vscode.window.showInformationMessage('Portfolio React app can now connect to VS Code at ws://localhost:8123');
             }
             else {
-                console.warn('⚠️ WebSocket bridge failed to start - React app will use clipboard mode');
+                console.warn('WebSocket bridge failed to start - React app will use clipboard mode');
             }
         });
-        console.log('🎉 Claude Portfolio extension fully activated!');
+        console.log('Claude Portfolio extension fully activated!');
     }
     catch (error) {
-        console.error('❌ Extension activation failed:', error);
+        console.error('Extension activation failed:', error);
         vscode.window.showErrorMessage(`Claude Portfolio extension failed to activate: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -102,7 +105,7 @@ async function activate(context) {
  * Extension deactivation
  */
 function deactivate() {
-    console.log('👋 Claude Portfolio extension is deactivating...');
+    console.log('Claude Portfolio extension is deactivating...');
     // Note: WebSocket bridge will be cleaned up automatically when VS Code closes
     // Individual service cleanup is handled by VS Code's disposal system
 }
@@ -116,11 +119,14 @@ function initializeServices() {
     const portDetectionService = portDetectionService_1.PortDetectionService.getInstance();
     // Initialize WebSocket bridge service
     const websocketBridgeService = new websocketBridge_1.WebSocketBridgeService(portfolioPath, projectService, portDetectionService);
+    // Initialize MCP service
+    const mcpService = mcpService_1.MCPService.getInstance();
     return {
         configService,
         projectService,
         portDetectionService,
-        websocketBridgeService
+        websocketBridgeService,
+        mcpService
     };
 }
 /**
@@ -135,6 +141,7 @@ function createProviders(services, context) {
     const taskProvider = new taskProvider_1.PortfolioTaskProvider(portfolioPath);
     const vscodePageProvider = new vscodePageProvider_1.VSCodePageProvider();
     // cheatSheetProvider removed - functionality in QuickCommandsPanel
+    const mcpCommandsProvider = new mcpCommandsProvider_1.MCPCommandsProvider();
     return {
         projectProvider,
         projectCommandsProvider,
@@ -143,6 +150,7 @@ function createProviders(services, context) {
         taskProvider,
         vscodePageProvider,
         // cheatSheetProvider removed
+        mcpCommandsProvider
     };
 }
 /**
@@ -174,6 +182,7 @@ function registerProviders(context, providers) {
     vscode.window.registerTreeDataProvider('claudeProjectCommands', providers.projectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeMultiProjectCommands', providers.multiProjectCommandsProvider);
     vscode.window.registerTreeDataProvider('claudeVSCodePages', providers.vscodePageProvider);
+    vscode.window.registerTreeDataProvider('claudeMCPControls', providers.mcpCommandsProvider);
     // cheatSheetProvider registration removed - functionality in QuickCommandsPanel
     // Register task provider
     const taskProviderDisposable = vscode.tasks.registerTaskProvider(taskProvider_1.PortfolioTaskProvider.taskType, providers.taskProvider);
@@ -192,11 +201,13 @@ function createCommandHandlers(services, providers, context) {
     selectionCommands.setProjectCommandsProvider(providers.projectCommandsProvider);
     const workspaceCommands = new workspaceCommands_1.WorkspaceCommands(services.configService, null, // portfolioWebviewProvider removed - replaced with WebSocket bridge
     context, providers.projectProvider, providers.multiProjectCommandsProvider);
+    const mcpCommands = new mcpCommands_1.MCPCommands(services.mcpService, providers.mcpCommandsProvider);
     return {
         projectCommands,
         batchCommands,
         selectionCommands,
-        workspaceCommands
+        workspaceCommands,
+        mcpCommands
     };
 }
 /**
@@ -207,6 +218,7 @@ function registerCommands(context, commands) {
     commands.batchCommands.registerCommands(context);
     commands.selectionCommands.registerCommands(context);
     commands.workspaceCommands.registerCommands(context);
+    commands.mcpCommands.registerCommands(context);
 }
 /**
  * Set up cross-provider communication with enhanced port detection
@@ -218,7 +230,7 @@ function setupProviderCommunication(providers) {
         // Use enhanced port detection during refresh
         const portDetectionService = portDetectionService_1.PortDetectionService.getInstance();
         const projects = await providers.projectProvider.getProjects();
-        console.log('🔄 Provider communication: Enhanced refresh triggered');
+        console.log('Provider communication: Enhanced refresh triggered');
         await portDetectionService.refreshAll(projects);
         // Now call the original refresh
         originalRefresh();
@@ -269,7 +281,7 @@ function setupPeriodicRefresh(context, providers, services) {
     const refreshInterval = services.configService.getRefreshInterval();
     const intervalId = setInterval(() => {
         if (services.configService.isDebugLogsEnabled()) {
-            console.log('🔄 Periodic refresh triggered');
+            console.log('Periodic refresh triggered');
         }
         providers.projectProvider.refresh();
         // portfolioWebviewProvider removed - WebSocket bridge handles data refresh
@@ -278,7 +290,7 @@ function setupPeriodicRefresh(context, providers, services) {
     context.subscriptions.push({
         dispose: () => {
             clearInterval(intervalId);
-            console.log('🛑 Periodic refresh stopped');
+            console.log('Periodic refresh stopped');
         }
     });
 }

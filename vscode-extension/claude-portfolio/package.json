@@ -189,6 +189,24 @@
         "title": "Open Terminal System Logs",
         "category": "Claude Portfolio",
         "icon": "$(output)"
+      },
+      {
+        "command": "claude-portfolio.toggleMCPSecurity",
+        "title": "Toggle MCP Security Validation",
+        "category": "Claude Portfolio",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "claude-portfolio.checkMCPStatus",
+        "title": "Check MCP Server Status",
+        "category": "Claude Portfolio",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "claude-portfolio.restartMCPServer",
+        "title": "Restart MCP Server",
+        "category": "Claude Portfolio",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -209,13 +227,6 @@
           "canSelectMany": true
         },
         {
-          "id": "claudeProjectCommands",
-          "name": "Project Commands",
-          "contextualTitle": "Project Commands",
-          "when": "true",
-          "icon": "$(terminal)"
-        },
-        {
           "id": "claudeMultiProjectCommands",
           "name": "Batch Commands",
           "contextualTitle": "Multi-Project Batch Commands",
@@ -228,6 +239,13 @@
           "contextualTitle": "VS Code Integrated Pages",
           "when": "true",
           "icon": "$(browser)"
+        },
+        {
+          "id": "claudeMCPControls",
+          "name": "MCP Controls",
+          "contextualTitle": "MCP Server Management",
+          "when": "true",
+          "icon": "$(server-process)"
         }
       ]
     },
@@ -314,6 +332,27 @@
           ],
           "default": "default",
           "description": "Default browser for opening projects"
+        },
+        "claudePortfolio.mcpSecurityLevel": {
+          "type": "string",
+          "enum": [
+            "enhanced",
+            "basic",
+            "disabled"
+          ],
+          "default": "enhanced",
+          "description": "MCP security validation level"
+        },
+        "claudePortfolio.powerShellExecutionPolicy": {
+          "type": "string",
+          "enum": [
+            "Restricted",
+            "RemoteSigned",
+            "Unrestricted",
+            "Bypass"
+          ],
+          "default": "RemoteSigned",
+          "description": "PowerShell execution policy for commands"
         }
       }
     }

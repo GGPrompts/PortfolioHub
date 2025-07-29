@@ -163,6 +163,19 @@ class WebSocketBridgeService {
                     return await this.handleEnhancedProjectLaunch(id, data);
                 case 'project-status-sync':
                     return await this.handleProjectStatusSync(id);
+                // New batch command handlers
+                case 'batch-add-to-workspace':
+                    return await this.handleBatchAddToWorkspace(id, data.projectIds);
+                case 'batch-npm-install':
+                    return await this.handleBatchNpmInstall(id, data.projectIds);
+                case 'batch-npm-build':
+                    return await this.handleBatchNpmBuild(id, data.projectIds);
+                case 'batch-npm-test':
+                    return await this.handleBatchNpmTest(id, data.projectIds);
+                case 'batch-git-status':
+                    return await this.handleBatchGitStatus(id, data.projectIds);
+                case 'batch-git-pull':
+                    return await this.handleBatchGitPull(id, data.projectIds);
                 default:
                     return {
                         id,
@@ -673,6 +686,157 @@ class WebSocketBridgeService {
                 id,
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to sync project status'
+            };
+        }
+    }
+    // New batch command handler methods
+    async handleBatchAddToWorkspace(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchAddToWorkspace');
+            return {
+                id,
+                success: true,
+                message: `Batch add to workspace initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to add projects to workspace'
+            };
+        }
+    }
+    async handleBatchNpmInstall(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchNpmInstall');
+            return {
+                id,
+                success: true,
+                message: `Batch npm install initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to run npm install on projects'
+            };
+        }
+    }
+    async handleBatchNpmBuild(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchNpmBuild');
+            return {
+                id,
+                success: true,
+                message: `Batch npm build initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to build projects'
+            };
+        }
+    }
+    async handleBatchNpmTest(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchNpmTest');
+            return {
+                id,
+                success: true,
+                message: `Batch npm test initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to test projects'
+            };
+        }
+    }
+    async handleBatchGitStatus(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchGitStatus');
+            return {
+                id,
+                success: true,
+                message: `Batch git status initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to check git status on projects'
+            };
+        }
+    }
+    async handleBatchGitPull(id, projectIds) {
+        try {
+            if (!projectIds || projectIds.length === 0) {
+                return {
+                    id,
+                    success: false,
+                    error: 'No project IDs provided'
+                };
+            }
+            // Execute the VS Code command
+            await vscode.commands.executeCommand('claude-portfolio.batchGitPull');
+            return {
+                id,
+                success: true,
+                message: `Batch git pull initiated for ${projectIds.length} projects`
+            };
+        }
+        catch (error) {
+            return {
+                id,
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to pull updates for projects'
             };
         }
     }

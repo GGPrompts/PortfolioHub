@@ -50,8 +50,12 @@ class VSCodePageProvider {
         if (!element) {
             // Return the VS Code pages
             return Promise.resolve([
-                new VSCodePageItem('📊 Portfolio Dashboard', 'View project status and management dashboard', 'claude-portfolio.showDashboard', vscode.TreeItemCollapsibleState.None, 'dashboard'),
-                new VSCodePageItem('📚 Command Cheat Sheet', 'Windows command reference for Claude Code development', 'claude-portfolio.openCheatSheet', vscode.TreeItemCollapsibleState.None, 'cheatsheet')
+                new VSCodePageItem('Portfolio Dashboard', 'View project status and management dashboard', 'claude-portfolio.showDashboard', vscode.TreeItemCollapsibleState.None, 'dashboard'),
+                new VSCodePageItem('Command Cheat Sheet', 'Windows command reference for Claude Code development', 'claude-portfolio.openCheatSheet', vscode.TreeItemCollapsibleState.None, 'cheatsheet'),
+                // Temporary MCP controls for testing
+                new VSCodePageItem('MCP Security Toggle', 'Toggle MCP security validation level', 'claude-portfolio.toggleMCPSecurity', vscode.TreeItemCollapsibleState.None, 'mcp-security'),
+                new VSCodePageItem('Check MCP Status', 'Check MCP server status', 'claude-portfolio.checkMCPStatus', vscode.TreeItemCollapsibleState.None, 'mcp-status'),
+                new VSCodePageItem('Test MCP Tools', 'Test MCP server connectivity', 'claude-portfolio.testMCPTools', vscode.TreeItemCollapsibleState.None, 'mcp-test')
             ]);
         }
         return Promise.resolve([]);

@@ -179,18 +179,95 @@ export class ProjectCommands {
         try {
             const project = treeItem?.project || treeItem;
             
-            // Use the project provider's method to set current selection
-            if (this.projectProvider) {
-                this.projectProvider.setCurrentSelectedProject(project);
-            } else {
-                // Fallback to direct method
-                this.projectCommandsProvider.setSelectedProject(project);
+            if (!project || !project.id) {
+                vscode.window.showErrorMessage('No project information found');
+                return;
             }
             
-            vscode.window.showInformationMessage(`📋 Showing commands for ${project.title}`);
-            console.log(`🎯 Selected project: ${project.title} for commands panel`);
+            // Create project-specific command options
+            const commands = [];
+            
+            // Basic project commands
+            if (project.status === 'stopped') {
+                commands.push({
+                    label: '$(play) Start Project',
+                    description: `Start ${project.title}`,
+                    command: 'claude-portfolio.runProject',
+                    args: [project]
+                });
+            } else if (project.status === 'active') {
+                commands.push({
+                    label: '$(stop) Stop Project',
+                    description: `Stop ${project.title}`,
+                    command: 'claude-portfolio.stopProject',
+                    args: [project]
+                });
+            }
+            
+            commands.push({
+                label: '$(browser) Open in Browser',
+                description: `Open ${project.title} in browser`,
+                command: 'claude-portfolio.openProjectInBrowser',
+                args: [project]
+            });
+            
+            commands.push({
+                label: '$(link-external) Open in External Browser',
+                description: `Open ${project.title} in external browser`,
+                command: 'claude-portfolio.openProjectInExternalBrowser',
+                args: [project]
+            });
+            
+            // Terminal System specific commands
+            if (project.id === 'standalone-terminal-system') {
+                commands.push({
+                    label: '$(terminal) Launch Terminal System',
+                    description: 'Start the full terminal system (backend + frontend + MCP)',
+                    command: 'claude-portfolio.launchTerminalSystem',
+                    args: [project]
+                });
+                
+                commands.push({
+                    label: '$(pulse) Check System Health',
+                    description: 'Check terminal system backend and MCP status',
+                    command: 'claude-portfolio.checkTerminalSystemHealth',
+                    args: [project]
+                });
+                
+                commands.push({
+                    label: '$(close-all) Kill Terminal Processes',
+                    description: 'Kill all terminal system processes on ports 8124/8125',
+                    command: 'claude-portfolio.killTerminalSystemPorts',
+                    args: [project]
+                });
+                
+                commands.push({
+                    label: '$(output) View System Logs',
+                    description: 'Open terminal system logs for debugging',
+                    command: 'claude-portfolio.openTerminalSystemLogs',
+                    args: [project]
+                });
+            }
+            
+            commands.push({
+                label: '$(sparkle) Open AI Assistant',
+                description: 'Claude Code, ChatGPT, or Copilot options',
+                command: 'claude-portfolio.openAIAssistant',
+                args: [project]
+            });
+            
+            // Show command palette with project-specific options
+            const selected = await vscode.window.showQuickPick(commands, {
+                placeHolder: `Select action for ${project.title}`,
+                matchOnDescription: true
+            });
+            
+            if (selected) {
+                await vscode.commands.executeCommand(selected.command, ...(selected.args || []));
+            }
+            
         } catch (error) {
-            const message = `Error selecting project: ${error instanceof Error ? error.message : String(error)}`;
+            const message = `Error showing project commands: ${error instanceof Error ? error.message : String(error)}`;
             vscode.window.showErrorMessage(message);
             console.error('Select project command error:', error);
         }
@@ -360,25 +437,29 @@ export class ProjectCommands {
         
         switch (launchType) {
             case "complete":
-                // Start both web UI and backend
-                const webuiSuccess = await VSCodeSecurityService.executeSecureCommand(
-                    `cd "${terminalSystemPath}" && npm run dev`,
-                    "Terminal System Web UI",
+                // Use the main startup script to start all components (backend, frontend, MCP)
+                const completeSystemSuccess = await VSCodeSecurityService.executeSecureCommand(
+                    `cd "${terminalSystemPath}" && .\\start-all.bat`,
+                    "Complete Terminal System",
                     workspaceRoot
                 );
                 
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-                
-                const backendSuccess = await VSCodeSecurityService.executeSecureCommand(
-                    `cd "${terminalSystemPath}" && npm run backend:prod`,
-                    "Terminal System Backend",
-                    workspaceRoot
-                );
-                
-                if (webuiSuccess && backendSuccess) {
-                    vscode.window.showInformationMessage("🚀 Complete terminal system started:\n• Web UI (port 3007)\n• Backend (ports 8124, 8125)");
+                if (completeSystemSuccess) {
+                    vscode.window.showInformationMessage("🚀 Complete terminal system started:\n• Backend Server (port 8124)\n• WebSocket Server (port 8125)\n• MCP Server (background)\n• Frontend (port 3007)");
+                    
+                    // Show helpful information after a delay
+                    setTimeout(() => {
+                        vscode.window.showInformationMessage(
+                            "Terminal system is ready! Access at http://localhost:3007",
+                            "Open in Browser"
+                        ).then(selection => {
+                            if (selection === "Open in Browser") {
+                                vscode.env.openExternal(vscode.Uri.parse("http://localhost:3007"));
+                            }
+                        });
+                    }, 8000); // Wait 8 seconds for services to start
                 } else {
-                    vscode.window.showErrorMessage("Failed to start complete terminal system");
+                    vscode.window.showErrorMessage("Failed to start complete terminal system using start-all.bat");
                 }
                 break;
 
